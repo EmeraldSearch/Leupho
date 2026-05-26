@@ -251,8 +251,6 @@
       height: 260px;
     }
 
-    /* heatmap is taller + square-ish */
-    #card-heatmap .plotly-chart { height: 420px; }
 
     /* item flow */
     #card-items .plotly-chart { height: 320px; }
@@ -492,7 +490,6 @@
         <label><input type="checkbox" checked data-card="card-hp">       Health</label>
         <label><input type="checkbox" checked data-card="card-speed">    Speed</label>
         <label><input type="checkbox" checked data-card="card-dist">     Distance (XZ)</label>
-        <label><input type="checkbox" checked data-card="card-heatmap">  Chemin (XZ)</label>
         <label><input type="checkbox" checked data-card="card-items">    Item flow</label>
         <label><input type="checkbox" checked data-card="card-elevation"> Élévation</label>
         <label><input type="checkbox" checked data-card="card-deaths">   Death log</label>
@@ -562,11 +559,6 @@
       <div class="plotly-chart" id="chart-dist"></div>
     </div>
 
-    <!-- Heatmap -->
-    <div class="chart-card" id="card-heatmap">
-      <h2>🗺 Chemin parcouru (XZ)</h2>
-      <div class="plotly-chart" id="chart-heatmap"></div>
-    </div>
 
     <!-- Item flow -->
     <div class="chart-card" id="card-items">
@@ -683,6 +675,17 @@ function rangeParams() {
   return p.toString() ? "?" + p.toString() : "";
 }
 
+// Filtre côté client sur le champ igt (ou world_time selon les données)
+function filterByIgt(rows, igtKey = "igt") {
+  if (filterFromTicks === null && filterToTicks === null) return rows;
+  return rows.filter(r => {
+    const v = r[igtKey];
+    if (filterFromTicks !== null && v < filterFromTicks) return false;
+    if (filterToTicks   !== null && v > filterToTicks)   return false;
+    return true;
+  });
+}
+
 // ================================================================
 // Fetch helpers
 // ================================================================
@@ -692,7 +695,6 @@ const API_MAP = {
   "/api/hp":        "data/hp.json",
   "/api/speed":     "data/speed.json",
   "/api/distance":  "data/distance.json",
-  "/api/heatmap":   "data/heatmap.json",
   "/api/elevation": "data/elevation.json",
   "/api/item_flow": "data/item_flow.json",
   "/api/deaths":    "data/deaths.json",
@@ -775,7 +777,9 @@ async function loadSummary() {
 // ================================================================
 async function loadHP() {
   try {
-    const { data, deaths } = await apiFetch("/api/hp" + rangeParams());
+    let { data, deaths } = await apiFetch("/api/hp" + rangeParams());
+    data = filterByIgt(data);
+    deaths = deaths.filter(d => (!filterFromTicks || d >= filterFromTicks) && (!filterToTicks || d <= filterToTicks));
     const x = igtAxis(data);
     const lbl = igtLabels(data);
 
@@ -821,7 +825,8 @@ async function loadHP() {
 // ================================================================
 async function loadSpeed() {
   try {
-    const data = await apiFetch("/api/speed" + rangeParams());
+    let data = await apiFetch("/api/speed" + rangeParams());
+    data = filterByIgt(data);
     const x   = igtAxis(data);
     const lbl = igtLabels(data);
 
@@ -893,7 +898,8 @@ async function loadSpeed() {
 // ================================================================
 async function loadDistance() {
   try {
-    const data = await apiFetch("/api/distance" + rangeParams());
+    let data = await apiFetch("/api/distance" + rangeParams());
+    data = filterByIgt(data);
     const x   = igtAxis(data);
     const lbl = igtLabels(data);
 
@@ -935,45 +941,6 @@ async function loadX() {}
 // ================================================================
 // Path trace (XZ)
 // ================================================================
-async function loadHeatmap() {
-  try {
-    const pts = await apiFetch("/api/heatmap" + rangeParams());
-    if (!pts.length) return;
-
-    const xs = pts.map(p => p.x);
-    const zs = pts.map(p => p.z);
-
-    const traces = [
-      {
-        x: xs, y: zs,
-        type: "scatter", mode: "lines",
-        name: "Chemin",
-        line: { color: "#53d8fb", width: 1, opacity: 0.7 },
-        hovertemplate: "X: %{x:.0f}<br>Z: %{y:.0f}<extra></extra>",
-      },
-      {
-        x: [xs[0]], y: [zs[0]],
-        type: "scatter", mode: "markers", name: "Départ",
-        marker: { color: "#a8ff78", size: 10, symbol: "triangle-up" },
-      },
-      {
-        x: [xs[xs.length-1]], y: [zs[zs.length-1]],
-        type: "scatter", mode: "markers", name: "Position actuelle",
-        marker: { color: "#e94560", size: 10, symbol: "circle" },
-      },
-    ];
-
-    const layout = {
-      ...LAYOUT_BASE,
-      yaxis: { ...LAYOUT_BASE.yaxis, title: "Z (blocks)", scaleanchor: "x", autorange: "reversed" },
-      xaxis: { ...LAYOUT_BASE.xaxis, title: "X (blocks)" },
-      margin: { ...LAYOUT_BASE.margin, t: 10 },
-      legend: { ...LAYOUT_BASE.legend, itemclick: "toggle", itemdoubleclick: "toggleothers" },
-    };
-    Plotly.react("chart-heatmap", traces, layout, PLOTLY_CONFIG);
-  } catch(e) { showError(e.message); }
-}
-
 // ================================================================
 // Item flow (gained only, sorted by gained desc)
 // ================================================================
@@ -1081,7 +1048,8 @@ async function lastHourFilter() {
 // ================================================================
 async function loadElevation() {
   try {
-    const data = await apiFetch("/api/elevation" + rangeParams());
+    let data = await apiFetch("/api/elevation" + rangeParams());
+    data = filterByIgt(data);
     if (!data.length) return;
     const x   = igtAxis(data);
     const lbl = igtLabels(data);
@@ -1189,7 +1157,6 @@ function loadAll() {
   loadSpeed();
   loadDistance();
   loadX();
-  loadHeatmap();
   loadElevation();
   loadItems();
   loadDeaths();

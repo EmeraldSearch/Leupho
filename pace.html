@@ -174,7 +174,6 @@ function renderPace(data) {
   document.getElementById('s-pace').textContent   = last.pace_overall.toFixed(4) + ' bl/s';
   document.getElementById('s-eta').textContent    = fmtS(last.eta_ovr_s);
 
-  var lastPctInt = Math.ceil(last.pct);
   var pctF  = last.pct;
   var lo    = Math.floor(pctF);
   var hi    = Math.ceil(pctF);
@@ -196,8 +195,8 @@ function renderPace(data) {
     pctGroups[p].push(d);
   });
 
-  // Moyenne des durées de % terminés (tous sauf le % en cours)
-  var completedPcts = Object.keys(pctGroups).map(Number).filter(function(p){ return p >= 1 && p !== currentPct; }).sort(function(a,b){ return a-b; });
+  // Un % est terminé seulement si le % suivant a au moins un millième dans les données
+  var completedPcts = Object.keys(pctGroups).map(Number).filter(function(p){ return p >= 1 && pctGroups[p + 1] != null; }).sort(function(a,b){ return a-b; });
   var avgSegS = null;
   if (completedPcts.length > 0) {
     var prevIgtAvg = 0;
@@ -211,7 +210,8 @@ function renderPace(data) {
   }
   document.getElementById('s-seg').textContent = avgSegS != null ? fmtS(avgSegS) : '--';
 
-  var currentPct = Math.ceil(last.pct);
+  // Le % en cours = le plus grand % dont le suivant n'existe pas encore
+  var currentPct = Math.max.apply(null, Object.keys(pctGroups).map(Number).filter(function(p){ return pctGroups[p + 1] == null; }));
   var prevIGT    = 0;
   var rows       = [];
 
