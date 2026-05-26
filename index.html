@@ -1,0 +1,1188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Farlands Tracker</title>
+  <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.27.0/plotly.min.js"></script>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #1a1a2e;
+      --panel:    #16213e;
+      --border:   #2a2a4a;
+      --accent1:  #e94560;
+      --accent3:  #53d8fb;
+      --accent4:  #a8ff78;
+      --gold:     #f5c542;
+      --text:     #e0e0e0;
+      --subtext:  #8888aa;
+      --input-bg: #0f3460;
+      --radius:   8px;
+      --brown:    #a0522d;
+      --brown2:   #c8874a;
+      --purple:   #9b59b6;
+      --purple2:  #c39bd3;
+      --blue:     #3498db;
+      --blue2:    #1a5276;
+      --pink:     #ff69b4;
+      --red2:     #ff6b6b;
+      --silver:   #a8a8b3;
+      --brown3:   #d4956a;
+      --green-dark: #4caf72;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+    }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    .layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: 56px 1fr;
+      grid-template-areas:
+        "header header"
+        "sidebar main";
+      min-height: 100vh;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      grid-area: header;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 0 24px;
+    }
+    header h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      color: var(--accent3);
+    }
+    header .subtitle {
+      color: var(--subtext);
+      font-size: .8rem;
+    }
+    header .live-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent4);
+      box-shadow: 0 0 6px var(--accent4);
+      margin-left: auto;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity: 1; }
+      50%      { opacity: .3; }
+    }
+    #last-updated {
+      color: var(--subtext);
+      font-size: .75rem;
+    }
+
+    /* ── Sidebar ──────────────────────────────────────────────── */
+    aside {
+      grid-area: sidebar;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      overflow-y: auto;
+    }
+
+    .sidebar-section h3 {
+      font-size: .7rem;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--subtext);
+      margin-bottom: 10px;
+    }
+
+    /* stat cards */
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .stat-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+    }
+    .stat-card .label {
+      font-size: .68rem;
+      color: var(--subtext);
+      margin-bottom: 3px;
+    }
+    .stat-card .value {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .stat-card .value.accent1 { color: var(--accent1); }
+    .stat-card .value.accent3 { color: var(--accent3); }
+    .stat-card .value.accent4 { color: var(--accent4); }
+    .stat-card .value.gold    { color: var(--gold);    }
+    .stat-card .value.gray    { color: #888888;         }
+    .stat-card .value.brown   { color: var(--brown);    }
+    .stat-card .value.brown2  { color: var(--brown2);   }
+    .stat-card .value.purple  { color: var(--purple);   }
+    .stat-card .value.purple2 { color: var(--purple2);  }
+    .stat-card .value.blue    { color: var(--blue);     }
+    .stat-card .value.blue2   { color: var(--blue2);    }
+    .stat-card .value.pink    { color: var(--pink);     }
+    .stat-card .value.red2    { color: var(--red2);     }
+    .stat-card .value.silver  { color: var(--silver);   }
+    .stat-card .value.brown3  { color: var(--brown3);   }
+    .stat-card .value.green-dark { color: var(--green-dark); }
+
+    /* time filter */
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .filter-group label {
+      font-size: .75rem;
+      color: var(--subtext);
+    }
+    .filter-row {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .filter-row input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      color: var(--text);
+      padding: 5px 8px;
+      font-size: .8rem;
+      width: 0; /* let flex handle it */
+    }
+    .filter-row input:focus {
+      outline: none;
+      border-color: var(--accent3);
+    }
+    .filter-row span {
+      color: var(--subtext);
+      font-size: .75rem;
+      white-space: nowrap;
+    }
+    .btn {
+      width: 100%;
+      padding: 8px;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      font-size: .85rem;
+      font-weight: 600;
+      transition: filter .15s;
+    }
+    .btn:hover { filter: brightness(1.15); }
+    .btn-primary { background: var(--accent3); color: #000; }
+    .btn-ghost   {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--subtext);
+    }
+
+    /* chart toggle checkboxes */
+    .toggle-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .toggle-list label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: .82rem;
+      user-select: none;
+    }
+    .toggle-list input[type=checkbox] {
+      accent-color: var(--accent3);
+      width: 14px; height: 14px;
+    }
+
+    /* ── Main content ─────────────────────────────────────────── */
+    main {
+      grid-area: main;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      overflow-y: auto;
+    }
+
+    .chart-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 16px 8px;
+      transition: opacity .3s;
+    }
+    .chart-card.hidden { display: none; }
+    .chart-card h2 {
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--subtext);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: 10px;
+    }
+    .chart-card .plotly-chart {
+      width: 100%;
+      height: 260px;
+    }
+
+    /* heatmap is taller + square-ish */
+    #card-heatmap .plotly-chart { height: 420px; }
+
+    /* item flow */
+    #card-items .plotly-chart { height: 320px; }
+
+    /* loading spinner */
+    .spinner {
+      width: 100%; height: 260px;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--subtext);
+      font-size: .85rem;
+    }
+
+
+    /* ── Progression block ───────────────────────────────────── */
+    #card-progression {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+    #card-progression h2 {
+      font-size: .88rem;
+      font-weight: 600;
+      color: var(--subtext);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #card-progression h2 a {
+      font-size: .72rem;
+      color: var(--accent3);
+      text-decoration: none;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-weight: 400;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    .prog-bar-wrap {
+      background: var(--bg);
+      border-radius: 4px;
+      overflow: hidden;
+      height: 10px;
+      margin-bottom: 12px;
+    }
+    .prog-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent3), var(--accent4));
+      transition: width .5s;
+    }
+    .prog-stats {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .prog-stat {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+      flex: 1;
+      min-width: 100px;
+    }
+    .prog-stat .lbl { font-size: .67rem; color: var(--subtext); margin-bottom: 3px; }
+    .prog-stat .val { font-size: .9rem; font-weight: 700; }
+
+    /* death table */
+    .death-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: .8rem;
+      margin-top: 8px;
+    }
+    .death-table th {
+      text-align: left;
+      color: var(--subtext);
+      padding: 4px 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .death-table td {
+      padding: 5px 8px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+    .death-table tr:last-child td { border-bottom: none; }
+
+    /* error banner */
+    .error-banner {
+      background: #4a1a1a;
+      border: 1px solid var(--accent1);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      color: var(--accent1);
+      font-size: .82rem;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- ── Header ─────────────────────────────────────────────── -->
+  <header>
+    <h1>⛏ Farlands Tracker</h1>
+    <span class="subtitle">Beta 1.7.3 · Walking to the Farlands</span>
+    <a href="/pace" style="margin-left:12px;color:var(--accent3);text-decoration:none;font-size:.85rem;padding:5px 10px;border:1px solid var(--border);border-radius:5px">📊 Pace</a>
+    <div class="live-dot" title="Data refreshes every 30s"></div>
+    <span id="last-updated"></span>
+  </header>
+
+  <!-- ── Sidebar ────────────────────────────────────────────── -->
+  <aside>
+
+    <!-- Summary stats -->
+    <div class="sidebar-section">
+      <h3>Run summary</h3>
+      <div class="stat-grid">
+        <!-- Row 1: Distance -X alone (gold, full width, centred) -->
+        <div class="stat-card" style="grid-column:span 2; text-align:center">
+          <div class="label">Distance -X</div>
+          <div class="value gold" id="stat-x" style="font-size:1.35rem">—</div>
+        </div>
+        <!-- Row 2: IGT + RTA -->
+        <div class="stat-card">
+          <div class="label">In Game Time</div>
+          <div class="value accent3" id="stat-igt">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">RTA</div>
+          <div class="value blue" id="stat-rta">—</div>
+        </div>
+        <!-- Row 3: -X Speed (all) + -X Speed (last hour) -->
+        <div class="stat-card">
+          <div class="label">-X Speed (all)</div>
+          <div class="value accent4" id="stat-avgx-global">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">-X Speed (last hour)</div>
+          <div class="value green-dark" id="stat-avgx-hour">—</div>
+        </div>
+        <!-- Row 3: HP lost + Deaths -->
+        <div class="stat-card">
+          <div class="label">HP Lost</div>
+          <div class="value accent1" id="stat-hp">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Deaths</div>
+          <div class="value gray" id="stat-deaths">—</div>
+        </div>
+        <!-- Row 4: Boats + Crafting Tables -->
+        <div class="stat-card">
+          <div class="label">Boats Used</div>
+          <div class="value brown" id="stat-boats">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Craft. Tables Used</div>
+          <div class="value brown3" id="stat-ct">—</div>
+        </div>
+        <!-- Row 5: Soups + Pork -->
+        <div class="stat-card">
+          <div class="label">Soups Used</div>
+          <div class="value red2" id="stat-soups">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Pork Eaten</div>
+          <div class="value pink" id="stat-pork">—</div>
+        </div>
+        <!-- Row: Iron Axes + Shears -->
+        <div class="stat-card">
+          <div class="label">Iron Axes Crafted</div>
+          <div class="value silver" id="stat-axes">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Shears Crafted</div>
+          <div class="value" id="stat-shears">—</div>
+        </div>
+        <!-- Row: Walked Nights + Nights Slept -->
+        <div class="stat-card">
+          <div class="label">Walked Nights</div>
+          <div class="value purple" id="stat-nights-walked">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Nights Slept</div>
+          <div class="value purple2" id="stat-nights">—</div>
+        </div>
+        <!-- Row 6: Rain + Thunder -->
+        <div class="stat-card">
+          <div class="label">🌧 Rain</div>
+          <div class="value blue" id="stat-rain">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">⛈ Thunder</div>
+          <div class="value blue2" id="stat-thunder">—</div>
+        </div>
+        <!-- Hidden -->
+        <div style="display:none" id="stat-dist">—</div>
+        <div style="display:none" id="stat-saves">—</div>
+      </div>
+    </div>
+
+    <!-- Time filter -->
+    <div class="sidebar-section">
+      <h3>Time window (IGT)</h3>
+      <div class="filter-group">
+        <label>From</label>
+        <div class="filter-row">
+          <input type="number" id="from-h" placeholder="h" min="0"/>
+          <span>h</span>
+          <input type="number" id="from-m" placeholder="mm" min="0" max="59"/>
+          <span>m</span>
+          <input type="number" id="from-s" placeholder="ss" min="0" max="59"/>
+          <span>s</span>
+        </div>
+        <label>To (leave empty = end)</label>
+        <div class="filter-row">
+          <input type="number" id="to-h" placeholder="h" min="0"/>
+          <span>h</span>
+          <input type="number" id="to-m" placeholder="mm" min="0" max="59"/>
+          <span>m</span>
+          <input type="number" id="to-s" placeholder="ss" min="0" max="59"/>
+          <span>s</span>
+        </div>
+        <button class="btn btn-primary" onclick="applyFilter()">Apply</button>
+        <button class="btn btn-ghost"   onclick="resetFilter()">Reset</button>
+        <button class="btn btn-ghost"   onclick="lastHourFilter()" style="color:var(--accent3);border-color:var(--accent3)">Dernière heure IGT</button>
+      </div>
+    </div>
+
+    <!-- Chart toggles -->
+    <div class="sidebar-section">
+      <h3>Charts</h3>
+      <div class="toggle-list">
+        <label><input type="checkbox" checked data-card="card-hp">       Health</label>
+        <label><input type="checkbox" checked data-card="card-speed">    Speed</label>
+        <label><input type="checkbox" checked data-card="card-dist">     Distance (XZ)</label>
+        <label><input type="checkbox" checked data-card="card-heatmap">  Chemin (XZ)</label>
+        <label><input type="checkbox" checked data-card="card-items">    Item flow</label>
+        <label><input type="checkbox" checked data-card="card-elevation"> Élévation</label>
+        <label><input type="checkbox" checked data-card="card-deaths">   Death log</label>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- ── Main ───────────────────────────────────────────────── -->
+  <main>
+
+    <div class="error-banner" id="error-banner"></div>
+
+    <!-- Progression (pace) -->
+    <div id="card-progression">
+      <h2>🧭 Progression <a href="/pace">Détail →</a></h2>
+      <div class="prog-bar-wrap">
+        <div class="prog-bar-fill" id="idx-prog-bar" style="width:0%"></div>
+      </div>
+      <div class="prog-stats">
+        <div class="prog-stat">
+          <div class="lbl">Progression</div>
+          <div class="val" style="color:var(--accent3)" id="idx-prog-pct">—</div>
+        </div>
+        <div class="prog-stat">
+          <div class="lbl">IGT total</div>
+          <div class="val" id="idx-prog-igt">—</div>
+        </div>
+        <div class="prog-stat">
+          <div class="lbl">RTA</div>
+          <div class="val" style="color:var(--subtext)" id="idx-prog-rta">—</div>
+        </div>
+        <div class="prog-stat">
+          <div class="lbl">Pace overall</div>
+          <div class="val" style="color:var(--gold)" id="idx-prog-pace">—</div>
+        </div>
+        <div class="prog-stat">
+          <div class="lbl">Dernier % complet</div>
+          <div class="val" id="idx-prog-seg">—</div>
+        </div>
+        <div class="prog-stat">
+          <div class="lbl">ETA fin</div>
+          <div class="val" style="color:var(--accent1)" id="idx-prog-eta">—</div>
+        </div>
+        <div class="prog-stat">
+          <div class="lbl">Delta vs run prec.</div>
+          <div class="val" id="idx-prog-vs">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HP -->
+    <div class="chart-card" id="card-hp">
+      <h2>❤ Health over time</h2>
+      <div class="plotly-chart" id="chart-hp"></div>
+    </div>
+
+    <!-- Speed -->
+    <div class="chart-card" id="card-speed">
+      <h2>💨 Horizontal speed</h2>
+      <div class="plotly-chart" id="chart-speed"></div>
+    </div>
+
+    <!-- Distance -->
+    <div class="chart-card" id="card-dist">
+      <h2>📏 Cumulative distance (XZ)</h2>
+      <div class="plotly-chart" id="chart-dist"></div>
+    </div>
+
+    <!-- Heatmap -->
+    <div class="chart-card" id="card-heatmap">
+      <h2>🗺 Chemin parcouru (XZ)</h2>
+      <div class="plotly-chart" id="chart-heatmap"></div>
+    </div>
+
+    <!-- Item flow -->
+    <div class="chart-card" id="card-items">
+      <h2>📦 Item flow (top 10)</h2>
+      <div class="plotly-chart" id="chart-items"></div>
+    </div>
+
+    <!-- Elevation -->
+    <div class="chart-card" id="card-elevation">
+      <h2>⛰ Élévation (coordonnée Y)</h2>
+      <div class="plotly-chart" id="chart-elevation"></div>
+    </div>
+
+    <!-- Death log -->
+    <div class="chart-card" id="card-deaths">
+      <h2>☠ Death log</h2>
+      <div id="death-log"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+// ================================================================
+// Config
+// ================================================================
+const REFRESH_MS   = 30_000;   // auto-refresh interval
+let _firstRealTs   = null;     // partagé entre loadSummary et loadProgression
+const IGT_PER_SEC  = 20;       // 20 ticks = 1 second IGT
+
+// ================================================================
+// Plotly shared layout base
+// ================================================================
+const LAYOUT_BASE = {
+  paper_bgcolor: "transparent",
+  plot_bgcolor:  "#16213e",
+  font:          { color: "#e0e0e0", size: 11 },
+  margin:        { t: 10, r: 20, b: 50, l: 60 },
+  xaxis: {
+    gridcolor:   "#2a2a4a",
+    linecolor:   "#2a2a4a",
+    tickcolor:   "#2a2a4a",
+    zerolinecolor: "#2a2a4a",
+  },
+  yaxis: {
+    gridcolor:   "#2a2a4a",
+    linecolor:   "#2a2a4a",
+    tickcolor:   "#2a2a4a",
+    zerolinecolor: "#2a2a4a",
+  },
+  legend: {
+    bgcolor:     "rgba(22,33,62,.8)",
+    bordercolor: "#2a2a4a",
+    borderwidth: 1,
+  },
+};
+const PLOTLY_CONFIG = { responsive: true, displaylogo: false,
+                        modeBarButtonsToRemove: ["lasso2d","select2d"] };
+
+// ================================================================
+// IGT helpers
+// ================================================================
+function hmsToTicks(h, m, s) {
+  return ((+h || 0) * 3600 + (+m || 0) * 60 + (+s || 0)) * IGT_PER_SEC;
+}
+
+function ticksToHMS(ticks) {
+  const s   = Math.floor(ticks / IGT_PER_SEC);
+  const h   = Math.floor(s / 3600);
+  const m   = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(sec).padStart(2,"0")}`;
+}
+
+// Build an X-axis tick array (ticks → "hh:mm:ss" labels)
+function igtAxis(data, key = "igt") {
+  return data.map(d => d[key]);
+}
+function igtLabels(data, key = "igt") {
+  return data.map(d => ticksToHMS(d[key]));
+}
+
+// ================================================================
+// Filter state
+// ================================================================
+let filterFromTicks = null;
+let filterToTicks   = null;
+
+function applyFilter() {
+  const fh = document.getElementById("from-h").value;
+  const fm = document.getElementById("from-m").value;
+  const fs = document.getElementById("from-s").value;
+  const th = document.getElementById("to-h").value;
+  const tm = document.getElementById("to-m").value;
+  const ts = document.getElementById("to-s").value;
+
+  filterFromTicks = (fh || fm || fs) ? hmsToTicks(fh, fm, fs) : null;
+  filterToTicks   = (th || tm || ts) ? hmsToTicks(th, tm, ts) : null;
+  loadAll();
+}
+
+function resetFilter() {
+  ["from-h","from-m","from-s","to-h","to-m","to-s"]
+    .forEach(id => document.getElementById(id).value = "");
+  filterFromTicks = null;
+  filterToTicks   = null;
+  loadAll();
+}
+
+function rangeParams() {
+  const p = new URLSearchParams();
+  if (filterFromTicks !== null) p.set("from_igt", filterFromTicks);
+  if (filterToTicks   !== null) p.set("to_igt",   filterToTicks);
+  return p.toString() ? "?" + p.toString() : "";
+}
+
+// ================================================================
+// Fetch helpers
+// ================================================================
+async function apiFetch(endpoint) {
+  const r = await fetch(endpoint);
+  if (!r.ok) throw new Error(`${endpoint} → HTTP ${r.status}`);
+  return r.json();
+}
+
+function showError(msg) {
+  const el = document.getElementById("error-banner");
+  el.textContent = "⚠ " + msg;
+  el.style.display = "block";
+  setTimeout(() => el.style.display = "none", 6000);
+}
+
+// ================================================================
+// Global helpers
+// ================================================================
+function fmtSecs(sec) {
+  if (sec == null) return "—";
+  const t = Math.round(sec);
+  const h = Math.floor(t / 3600);
+  const m = Math.floor((t % 3600) / 60);
+  const s = t % 60;
+  return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+}
+
+// ================================================================
+// Summary
+// ================================================================
+async function loadSummary() {
+  try {
+    const s = await apiFetch("/api/summary");
+
+    const igt = s.total_igt || 0;
+    document.getElementById("stat-igt").textContent    = ticksToHMS(igt);
+
+    const minX = s.min_x ?? 0;
+    const maxX = s.max_x ?? 0;
+    // net X displacement (most negative = farthest toward farlands)
+    document.getElementById("stat-x").textContent     = s.current_x != null ? `${Math.abs(Math.round(s.current_x)).toLocaleString()} blocks` : "—";
+    document.getElementById("stat-dist").textContent  = `${Math.round(s.total_distance ?? 0).toLocaleString()} bl`;
+    document.getElementById("stat-hp").textContent    = `${(s.total_hp_lost ?? 0).toFixed(1)}`;
+    document.getElementById("stat-deaths").textContent = s.death_count ?? 0;
+    document.getElementById("stat-saves").textContent   = (s.total_ticks ?? 0).toLocaleString();
+    document.getElementById("stat-boats").textContent   = s.boats_used ?? "—";
+    document.getElementById("stat-soups").textContent   = s.soups_used           ?? "—";
+    document.getElementById("stat-pork").textContent    = s.pork_eaten           ?? "—";
+    document.getElementById("stat-ct").textContent      = s.crafting_tables_used ?? "—";
+    document.getElementById("stat-axes").textContent    = s.axes_crafted         ?? "—";
+    document.getElementById("stat-shears").textContent  = s.shears_crafted       ?? "—";
+
+    // Rain / thunder: convert IGT ticks to hh:mm:ss
+    document.getElementById("stat-rain").textContent    = s.total_rain_episodes    ?? "—";
+    document.getElementById("stat-thunder").textContent = s.total_thunder_episodes ?? "—";
+    document.getElementById("stat-nights").textContent        = s.nights_slept ?? "—";
+    document.getElementById("stat-nights-walked").textContent = s.nights_walked ?? "—";
+    if (s.first_real_ts) {
+      _firstRealTs = s.first_real_ts;
+      document.getElementById("stat-rta").textContent = fmtSecs(Date.now() / 1000 - s.first_real_ts);
+    }
+    document.getElementById("stat-avgx-global").textContent =
+      s.avg_x_global != null ? `${s.avg_x_global.toFixed(3)} bl/s` : "—";
+    document.getElementById("stat-avgx-hour").textContent =
+      s.avg_x_last_hour != null ? `${s.avg_x_last_hour.toFixed(3)} bl/s` : "—";
+
+    document.getElementById("last-updated").textContent =
+      "Updated " + new Date().toLocaleTimeString();
+  } catch(e) { showError(e.message); }
+}
+
+// ================================================================
+// HP chart
+// ================================================================
+async function loadHP() {
+  try {
+    const { data, deaths } = await apiFetch("/api/hp" + rangeParams());
+    const x = igtAxis(data);
+    const lbl = igtLabels(data);
+
+    const traces = [
+      {
+        x, y: data.map(d => d.health),
+        type: "scatter", mode: "lines",
+        name: "HP",
+        line: { color: "#e94560", width: 1.5 },
+        fill: "tozeroy", fillcolor: "rgba(233,69,96,.15)",
+        hovertemplate: "%{text}<br>HP: %{y}<extra></extra>",
+        text: lbl,
+      },
+    ];
+
+    // Death vertical lines via shapes
+    const shapes = deaths.map(igt => ({
+      type: "line", x0: igt, x1: igt, y0: 0, y1: 20,
+      line: { color: "#e94560", width: 1, dash: "dot" },
+    }));
+    // Death annotations
+    const annotations = deaths.map(igt => ({
+      x: igt, y: 1, text: "☠",
+      showarrow: false, font: { size: 14, color: "#e94560" },
+    }));
+
+    const layout = {
+      ...LAYOUT_BASE,
+      yaxis: { ...LAYOUT_BASE.yaxis, range: [0, 22], title: "HP" },
+      xaxis: { ...LAYOUT_BASE.xaxis,
+                tickvals: _tickVals(x, 10),
+                ticktext: _tickVals(x, 10).map(ticksToHMS),
+                title: "IGT (hh:mm:ss)" },
+      shapes, annotations,
+    };
+
+    Plotly.react("chart-hp", traces, layout, PLOTLY_CONFIG);
+  } catch(e) { showError(e.message); }
+}
+
+// ================================================================
+// Speed chart
+// ================================================================
+async function loadSpeed() {
+  try {
+    const data = await apiFetch("/api/speed" + rangeParams());
+    const x   = igtAxis(data);
+    const lbl = igtLabels(data);
+
+    // Rolling average for X speed (same window size as speed_avg)
+    const WINDOW = 5;
+    const speedXRaw = data.map(d => d.speed_x);
+    const speedXAvg = speedXRaw.map((_, i) => {
+      const slice = speedXRaw.slice(Math.max(0, i - WINDOW + 1), i + 1);
+      return slice.reduce((a, b) => a + b, 0) / slice.length;
+    });
+
+    const traces = [
+      {
+        x, y: speedXAvg,
+        type: "scatter", mode: "lines", name: "X avg",
+        line: { color: "#f5c542", width: 2 },
+        hovertemplate: "%{text}<br>%{y:.2f} bl/s<extra>X avg</extra>",
+        text: lbl, visible: true,
+      },
+      {
+        x, y: speedXRaw,
+        type: "scatter", mode: "lines", name: "X raw",
+        line: { color: "#a8ff78", width: .8 }, opacity: .55,
+        hovertemplate: "%{text}<br>%{y:.2f} bl/s<extra>X raw</extra>",
+        text: lbl, visible: true,
+      },
+      {
+        x, y: data.map(d => d.speed_avg),
+        type: "scatter", mode: "lines", name: "XZ avg",
+        line: { color: "#e94560", width: 2 },
+        hovertemplate: "%{text}<br>%{y:.2f} bl/s<extra>XZ avg</extra>",
+        text: lbl, visible: true,
+      },
+      {
+        x, y: data.map(d => d.speed_horiz),
+        type: "scatter", mode: "lines", name: "XZ raw",
+        line: { color: "#53d8fb", width: .8 }, opacity: .55,
+        hovertemplate: "%{text}<br>%{y:.2f} bl/s<extra>XZ raw</extra>",
+        text: lbl, visible: true,
+      },
+    ];
+
+    const layout = {
+      ...LAYOUT_BASE,
+      yaxis: { ...LAYOUT_BASE.yaxis, title: "bl/s" },
+      xaxis: { ...LAYOUT_BASE.xaxis,
+                tickvals: _tickVals(x, 10),
+                ticktext: _tickVals(x, 10).map(ticksToHMS),
+                title: "IGT (hh:mm:ss)" },
+      legend: { ...LAYOUT_BASE.legend, itemclick: "toggle", itemdoubleclick: "toggleothers" },
+      shapes: [{
+        type: "line", xref: "paper", x0: 0, x1: 1,
+        yref: "y", y0: 4.317, y1: 4.317,
+        line: { color: "#f5c542", width: 1.2, dash: "dot" },
+      }],
+      annotations: [{
+        xref: "paper", x: 1, yref: "y", y: 4.317,
+        text: "Walk 4.317", showarrow: false,
+        font: { color: "#f5c542", size: 10 },
+        xanchor: "right", yanchor: "bottom",
+      }],
+    };
+    Plotly.react("chart-speed", traces, layout, PLOTLY_CONFIG);
+  } catch(e) { showError(e.message); }
+}
+
+// ================================================================
+// Distance chart (XZ total + X displacement, toggleable)
+// ================================================================
+async function loadDistance() {
+  try {
+    const data = await apiFetch("/api/distance" + rangeParams());
+    const x   = igtAxis(data);
+    const lbl = igtLabels(data);
+
+    const traces = [
+      {
+        x, y: data.map(d => d.dist_total),
+        type: "scatter", mode: "lines", name: "XZ distance",
+        line: { color: "#53d8fb", width: 1.5 },
+        fill: "tozeroy", fillcolor: "rgba(83,216,251,.12)",
+        hovertemplate: "%{text}<br>%{y:,.0f} bl<extra>XZ distance</extra>",
+        text: lbl, visible: true,
+      },
+      {
+        x, y: data.map(d => d.x_total),
+        type: "scatter", mode: "lines", name: "Distance -X",
+        line: { color: "#a8ff78", width: 1.5 },
+        fill: "tozeroy", fillcolor: "rgba(168,255,120,.08)",
+        hovertemplate: "%{text}<br>%{y:,.0f} bl<extra>Distance -X</extra>",
+        text: lbl, visible: true,
+      },
+    ];
+
+    const layout = {
+      ...LAYOUT_BASE,
+      yaxis: { ...LAYOUT_BASE.yaxis, title: "Blocks" },
+      xaxis: { ...LAYOUT_BASE.xaxis,
+                tickvals: _tickVals(x, 10),
+                ticktext: _tickVals(x, 10).map(ticksToHMS),
+                title: "IGT (hh:mm:ss)" },
+      legend: { ...LAYOUT_BASE.legend, itemclick: "toggle", itemdoubleclick: "toggleothers" },
+    };
+    Plotly.react("chart-dist", traces, layout, PLOTLY_CONFIG);
+  } catch(e) { showError(e.message); }
+}
+
+// loadX is now merged into loadDistance — kept as no-op for safety
+async function loadX() {}
+
+// ================================================================
+// Path trace (XZ)
+// ================================================================
+async function loadHeatmap() {
+  try {
+    const pts = await apiFetch("/api/heatmap" + rangeParams());
+    if (!pts.length) return;
+
+    const xs = pts.map(p => p.x);
+    const zs = pts.map(p => p.z);
+
+    const traces = [
+      {
+        x: xs, y: zs,
+        type: "scatter", mode: "lines",
+        name: "Chemin",
+        line: { color: "#53d8fb", width: 1, opacity: 0.7 },
+        hovertemplate: "X: %{x:.0f}<br>Z: %{y:.0f}<extra></extra>",
+      },
+      {
+        x: [xs[0]], y: [zs[0]],
+        type: "scatter", mode: "markers", name: "Départ",
+        marker: { color: "#a8ff78", size: 10, symbol: "triangle-up" },
+      },
+      {
+        x: [xs[xs.length-1]], y: [zs[zs.length-1]],
+        type: "scatter", mode: "markers", name: "Position actuelle",
+        marker: { color: "#e94560", size: 10, symbol: "circle" },
+      },
+    ];
+
+    const layout = {
+      ...LAYOUT_BASE,
+      yaxis: { ...LAYOUT_BASE.yaxis, title: "Z (blocks)", scaleanchor: "x", autorange: "reversed" },
+      xaxis: { ...LAYOUT_BASE.xaxis, title: "X (blocks)" },
+      margin: { ...LAYOUT_BASE.margin, t: 10 },
+      legend: { ...LAYOUT_BASE.legend, itemclick: "toggle", itemdoubleclick: "toggleothers" },
+    };
+    Plotly.react("chart-heatmap", traces, layout, PLOTLY_CONFIG);
+  } catch(e) { showError(e.message); }
+}
+
+// ================================================================
+// Item flow (gained only, sorted by gained desc)
+// ================================================================
+async function loadItems() {
+  try {
+    const data = await apiFetch("/api/item_flow?top=10");
+    // Sort by gained descending (API already returns by activity, re-sort to be safe)
+    const sorted = [...data].sort((a, b) => b.gained - a.gained);
+    const names  = sorted.map(d => d.item);
+    const gained = sorted.map(d => d.gained);
+
+    const traces = [{
+      x: names, y: gained,
+      type: "bar", name: "Gained",
+      marker: {
+        color: gained,
+        colorscale: [[0, "#1a6e2e"], [1, "#55ff55"]],
+        showscale: false,
+      },
+      hovertemplate: "%{x}<br>+%{y}<extra>gained</extra>",
+    }];
+
+    const layout = {
+      ...LAYOUT_BASE,
+      yaxis: { ...LAYOUT_BASE.yaxis, title: "Count" },
+      xaxis: { ...LAYOUT_BASE.xaxis, tickangle: -35 },
+    };
+    Plotly.react("chart-items", traces, layout, PLOTLY_CONFIG);
+  } catch(e) { showError(e.message); }
+}
+
+// ================================================================
+// Death log
+// ================================================================
+async function loadDeaths() {
+  try {
+    const deaths = await apiFetch("/api/deaths");
+    const el = document.getElementById("death-log");
+    if (!deaths.length) {
+      el.innerHTML = "<span style='color:var(--subtext)'>No deaths recorded.</span>";
+      return;
+    }
+    const rows = deaths.map(d => `
+      <tr>
+        <td>#${d.death_number}</td>
+        <td>${ticksToHMS(d.igt)}</td>
+        <td>${d.x != null ? Math.round(d.x).toLocaleString() : "?"}</td>
+        <td>${d.z != null ? Math.round(d.z).toLocaleString() : "?"}</td>
+      </tr>`).join("");
+    el.innerHTML = `
+      <table class="death-table">
+        <thead><tr><th>#</th><th>IGT</th><th>X</th><th>Z</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  } catch(e) { showError(e.message); }
+}
+
+// ================================================================
+// Chart toggle checkboxes
+// ================================================================
+document.querySelectorAll(".toggle-list input").forEach(cb => {
+  cb.addEventListener("change", () => {
+    const card = document.getElementById(cb.dataset.card);
+    if (card) card.classList.toggle("hidden", !cb.checked);
+  });
+});
+
+// ================================================================
+// Tick value helper for axis labels
+// ================================================================
+function _tickVals(arr, n) {
+  if (!arr.length) return [];
+  const step = Math.max(1, Math.floor(arr.length / n));
+  const vals = [];
+  for (let i = 0; i < arr.length; i += step) vals.push(arr[i]);
+  return vals;
+}
+
+// ================================================================
+// Last hour IGT filter
+// ================================================================
+async function lastHourFilter() {
+  // Fetch current max IGT from summary, then set window to last 72000 ticks
+  try {
+    const s = await apiFetch("/api/summary");
+    const maxIgt = s.total_igt || 0;
+    const fromIgt = Math.max(0, maxIgt - 72000);
+    // Convert to hh:mm:ss and fill fields
+    function fillHMS(prefix, ticks) {
+      const secs = Math.floor(ticks / 20);
+      document.getElementById(prefix+"-h").value = Math.floor(secs/3600);
+      document.getElementById(prefix+"-m").value = Math.floor((secs%3600)/60);
+      document.getElementById(prefix+"-s").value = secs%60;
+    }
+    fillHMS("from", fromIgt);
+    fillHMS("to",   maxIgt);
+    filterFromTicks = fromIgt;
+    filterToTicks   = maxIgt;
+    loadAll();
+  } catch(e) { showError(e.message); }
+}
+
+// ================================================================
+// Elevation chart
+// ================================================================
+async function loadElevation() {
+  try {
+    const data = await apiFetch("/api/elevation" + rangeParams());
+    if (!data.length) return;
+    const x   = igtAxis(data);
+    const lbl = igtLabels(data);
+
+    const traces = [{
+      x, y: data.map(d => d.elevation),
+      type: "scatter", mode: "lines", name: "Y",
+      line: { color: "#f5c542", width: 1.2 },
+      fill: "tozeroy", fillcolor: "rgba(245,197,66,.1)",
+      hovertemplate: "%{text}<br>Y: %{y:.1f}<extra></extra>",
+      text: lbl,
+    }];
+
+    const layout = {
+      ...LAYOUT_BASE,
+      yaxis: { ...LAYOUT_BASE.yaxis, title: "Y (blocks)", range: [40, 128] },
+      xaxis: { ...LAYOUT_BASE.xaxis,
+                tickvals: _tickVals(x, 10),
+                ticktext: _tickVals(x, 10).map(ticksToHMS),
+                title: "IGT (hh:mm:ss)" },
+    };
+    Plotly.react("chart-elevation", traces, layout, PLOTLY_CONFIG);
+  } catch(e) { showError(e.message); }
+}
+
+
+var PACE_HIST = {
+  0:0, 1:29385, 2:58206, 3:87505, 4:115440, 5:143875,
+  6:172011, 7:199574, 8:228040, 9:255789, 10:283182,
+  11:311122, 12:338800, 13:366413, 14:393842, 15:420519,
+  16:448159, 17:475206, 18:502837, 19:529896, 20:557138,
+  21:594513, 22:621325, 23:647870, 24:673329, 25:699321,
+  26:726235, 27:753321, 28:779614, 29:805683, 30:831880,
+  31:858754, 32:885811, 33:912456, 34:938539, 35:965711,
+  36:992490, 37:1018800, 38:1045392, 39:1071756, 40:1096964,
+  41:1123611, 42:1150531, 43:1176755, 44:1203371, 45:1230493,
+  46:1255647, 47:1282950, 48:1308660, 49:1335642, 50:1360686,
+  51:1386942, 52:1414246, 53:1440185, 54:1469823, 55:1496066,
+  56:1522350, 57:1548293, 58:1574622, 59:1600658, 60:1626791,
+  61:1653740, 62:1680811, 63:1708016, 64:1735325, 65:1762234,
+  66:1789745, 67:1815340, 68:1842934, 69:1869232, 70:1896380,
+  71:1923041, 72:1949125, 73:1975559, 74:2002569, 75:2029711,
+  76:2055883, 77:2082633, 78:2109497, 79:2136138, 80:2163813,
+  81:2189213, 82:2215539, 83:2241436, 84:2270696, 85:2298130,
+  86:2324642, 87:2351678, 88:2376963, 89:2404813, 90:2432187,
+  91:2458844, 92:2484633, 93:2511555, 94:2539299, 95:2565309,
+  96:2592381, 97:2619335, 98:2646314
+};
+
+function _fmtS(s) {
+  if (s == null) return '--';
+  var t = Math.round(Math.abs(s));
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  return pad(Math.floor(t/3600))+':'+pad(Math.floor((t%3600)/60))+':'+pad(t%60);
+}
+
+async function loadProgression() {
+  try {
+    var resp = await fetch('/api/pace');
+    var data = await resp.json();
+    if (!data || !data.length) return;
+
+    var last = data[data.length - 1];
+
+    document.getElementById('idx-prog-bar').style.width = (last.i / 1000) + '%';
+    document.getElementById('idx-prog-pct').textContent = last.pct.toFixed(3) + '%';
+    document.getElementById('idx-prog-igt').textContent = _fmtS(last.igt_total_s);
+
+    if (_firstRealTs) {
+      document.getElementById('idx-prog-rta').textContent = _fmtS(Date.now() / 1000 - _firstRealTs);
+    }
+    document.getElementById('idx-prog-pace').textContent = last.pace_overall.toFixed(4) + ' bl/s';
+    document.getElementById('idx-prog-eta').textContent = _fmtS(last.eta_ovr_s);
+
+    // Dernier % complet (durée du segment en cours)
+    var currentPctInt = Math.ceil(last.pct);
+    var lastGrp  = data.filter(function(d){ return Math.ceil(d.pct) === currentPctInt; });
+    var prevGrp  = data.filter(function(d){ return Math.ceil(d.pct) === currentPctInt - 1; });
+    var segEnd   = lastGrp.length ? lastGrp[lastGrp.length-1].igt_total_s : null;
+    var segStart = prevGrp.length ? prevGrp[prevGrp.length-1].igt_total_s : 0;
+    document.getElementById('idx-prog-seg').textContent = segEnd != null ? _fmtS(segEnd - segStart) : '--';
+
+    // Delta vs run précédente (interpolation)
+    var pctF = last.pct;
+    var lo = Math.floor(pctF), hi = Math.ceil(pctF);
+    var hLo = PACE_HIST[lo], hHi = PACE_HIST[hi];
+    var hIGT = (hLo != null && hHi != null && lo !== hi) ? hLo + (pctF - lo)*(hHi - hLo) : hLo;
+    if (hIGT != null) {
+      var diff = last.igt_total_s - hIGT;
+      var col  = diff <= 0 ? 'var(--accent4)' : 'var(--accent1)';
+      var sign = diff <= 0 ? '-' : '+';
+      document.getElementById('idx-prog-vs').innerHTML =
+        '<span style="color:' + col + '">' + sign + _fmtS(Math.abs(diff)) + '</span>';
+    }
+  } catch(e) { /* silencieux */ }
+}
+
+// ================================================================
+// Load all
+// ================================================================
+function loadAll() {
+  loadSummary();
+  loadProgression();
+  loadHP();
+  loadSpeed();
+  loadDistance();
+  loadX();
+  loadHeatmap();
+  loadElevation();
+  loadItems();
+  loadDeaths();
+}
+
+// Initial load + auto-refresh every 30s
+loadAll();
+setInterval(loadAll, REFRESH_MS);
+</script>
+</body>
+</html>

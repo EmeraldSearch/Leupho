@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Farlands — Pace</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#1a1a2e; --panel:#16213e; --border:#2a2a4a;
+      --accent1:#e94560; --accent3:#53d8fb; --accent4:#a8ff78;
+      --gold:#f5c542; --text:#e0e0e0; --subtext:#8888aa; --radius:8px;
+    }
+    html,body { background:var(--bg); color:var(--text);
+      font-family:'Segoe UI',system-ui,sans-serif; font-size:13px; }
+    nav { background:var(--panel); border-bottom:1px solid var(--border);
+      display:flex; align-items:center; gap:24px; padding:0 24px; height:56px; }
+    nav h1 { font-size:1.1rem; color:var(--accent3); font-weight:700; }
+    nav a { color:var(--subtext); text-decoration:none; font-size:.85rem;
+      padding:6px 12px; border-radius:5px; transition:background .15s; }
+    nav a:hover, nav a.active { background:var(--border); color:var(--text); }
+    .container { padding:20px; display:flex; flex-direction:column; gap:16px; }
+    .card { background:var(--panel); border:1px solid var(--border);
+      border-radius:var(--radius); padding:16px; }
+    .card h2 { font-size:.85rem; text-transform:uppercase; letter-spacing:.07em;
+      color:var(--subtext); margin-bottom:12px; }
+    .summary-row { display:flex; gap:10px; flex-wrap:wrap; }
+    .sum-card { background:var(--bg); border:1px solid var(--border);
+      border-radius:var(--radius); padding:10px 14px; min-width:130px; flex:1; }
+    .sum-card .lbl { font-size:.68rem; color:var(--subtext); margin-bottom:4px; }
+    .sum-card .val { font-size:.95rem; font-weight:700; }
+    .c3  { color:var(--accent3); }
+    .c4  { color:var(--accent4); }
+    .c1  { color:var(--accent1); }
+    .cg  { color:var(--gold); }
+    .progress-wrap { background:var(--bg); border-radius:4px;
+      overflow:hidden; height:12px; margin-bottom:12px; }
+    .progress-fill { height:100%;
+      background:linear-gradient(90deg, var(--accent3), var(--accent4));
+      transition:width .5s; }
+    .table-wrap { overflow-x:auto; max-height:520px; overflow-y:auto; }
+    table { width:100%; border-collapse:collapse; font-size:.78rem; }
+    thead th { text-align:left; padding:6px 8px; color:var(--subtext);
+      border-bottom:2px solid var(--border); white-space:nowrap;
+      position:sticky; top:0; background:var(--panel); z-index:1; }
+    tbody tr { border-bottom:1px solid var(--border); }
+    tbody tr:hover { background:rgba(255,255,255,.04); }
+    tbody tr.cur { background:rgba(83,216,251,.09) !important; font-weight:600; }
+    tbody td { padding:5px 8px; white-space:nowrap; }
+    .faster { color:var(--accent4); }
+    .slower { color:var(--accent1); }
+    .neu    { color:var(--subtext); }
+  </style>
+</head>
+<body>
+
+<nav>
+  <h1>&#9947; Farlands Tracker</h1>
+  <a href="/">Dashboard</a>
+  <a href="/pace" class="active">Pace</a>
+</nav>
+
+<div class="container">
+
+  <div class="card">
+    <h2>Progression</h2>
+    <div class="progress-wrap">
+      <div class="progress-fill" id="prog-bar" style="width:0%"></div>
+    </div>
+    <div class="summary-row">
+      <div class="sum-card">
+        <div class="lbl">Progression</div>
+        <div class="val c3" id="s-pct">&#8212;</div>
+      </div>
+      <div class="sum-card">
+        <div class="lbl">IGT total</div>
+        <div class="val" id="s-igt">&#8212;</div>
+      </div>
+      <div class="sum-card">
+        <div class="lbl">RTA</div>
+        <div class="val" style="color:#53a8d8" id="s-rta">&#8212;</div>
+      </div>
+      <div class="sum-card">
+        <div class="lbl">Pace overall</div>
+        <div class="val cg" id="s-pace">&#8212;</div>
+      </div>
+      <div class="sum-card">
+        <div class="lbl">Dernier % complet</div>
+        <div class="val" id="s-seg">&#8212;</div>
+      </div>
+      <div class="sum-card">
+        <div class="lbl">ETA fin (overall)</div>
+        <div class="val c1" id="s-eta">&#8212;</div>
+      </div>
+      <div class="sum-card">
+        <div class="lbl">Delta vs run prec.</div>
+        <div class="val" id="s-vs">&#8212;</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Tableau par % entier</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>%</th>
+            <th>Distance</th>
+            <th>IGT total</th>
+            <th>Segment</th>
+            <th>Pace overall</th>
+            <th>ETA (ovr.)</th>
+            <th>IGT prec.</th>
+            <th>Delta IGT</th>
+          </tr>
+        </thead>
+        <tbody id="pace-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+var HIST = {
+  0:0, 1:29385, 2:58206, 3:87505, 4:115440, 5:143875,
+  6:172011, 7:199574, 8:228040, 9:255789, 10:283182,
+  11:311122, 12:338800, 13:366413, 14:393842, 15:420519,
+  16:448159, 17:475206, 18:502837, 19:529896, 20:557138,
+  21:594513, 22:621325, 23:647870, 24:673329, 25:699321,
+  26:726235, 27:753321, 28:779614, 29:805683, 30:831880,
+  31:858754, 32:885811, 33:912456, 34:938539, 35:965711,
+  36:992490, 37:1018800, 38:1045392, 39:1071756, 40:1096964,
+  41:1123611, 42:1150531, 43:1176755, 44:1203371, 45:1230493,
+  46:1255647, 47:1282950, 48:1308660, 49:1335642, 50:1360686,
+  51:1386942, 52:1414246, 53:1440185, 54:1469823, 55:1496066,
+  56:1522350, 57:1548293, 58:1574622, 59:1600658, 60:1626791,
+  61:1653740, 62:1680811, 63:1708016, 64:1735325, 65:1762234,
+  66:1789745, 67:1815340, 68:1842934, 69:1869232, 70:1896380,
+  71:1923041, 72:1949125, 73:1975559, 74:2002569, 75:2029711,
+  76:2055883, 77:2082633, 78:2109497, 79:2136138, 80:2163813,
+  81:2189213, 82:2215539, 83:2241436, 84:2270696, 85:2298130,
+  86:2324642, 87:2351678, 88:2376963, 89:2404813, 90:2432187,
+  91:2458844, 92:2484633, 93:2511555, 94:2539299, 95:2565309,
+  96:2592381, 97:2619335, 98:2646314
+};
+
+function pad(n) { return String(n).padStart(2, '0'); }
+
+function fmtS(s) {
+  if (s == null) return '--';
+  var t = Math.round(Math.abs(s));
+  return pad(Math.floor(t / 3600)) + ':' + pad(Math.floor((t % 3600) / 60)) + ':' + pad(t % 60);
+}
+
+function fmtDeltaIGT(diff) {
+  if (diff == null) return '<span class="neu">--</span>';
+  var cls  = diff >= 0 ? 'faster' : 'slower';
+  var sign = diff >= 0 ? '-' : '+';
+  return '<span class="' + cls + '">' + sign + fmtS(Math.abs(diff)) + '</span>';
+}
+
+var segPaceCache = {};   // { pct_int: pace_bl_s } — segments terminés uniquement
+
+function renderPace(data) {
+  if (!data || !data.length) return;
+
+  var last = data[data.length - 1];
+
+  document.getElementById('prog-bar').style.width = (last.i / 1000) + '%';
+  document.getElementById('s-pct').textContent    = last.pct.toFixed(3) + '%';
+  document.getElementById('s-igt').textContent    = fmtS(last.igt_total_s);
+  document.getElementById('s-pace').textContent   = last.pace_overall.toFixed(4) + ' bl/s';
+  document.getElementById('s-eta').textContent    = fmtS(last.eta_ovr_s);
+
+  var lastPctInt = Math.ceil(last.pct);
+  var lastGrp    = data.filter(function(d) { return Math.ceil(d.pct) === lastPctInt; });
+  var prevGrp    = data.filter(function(d) { return Math.ceil(d.pct) === lastPctInt - 1; });
+  var segEnd     = lastGrp.length ? lastGrp[lastGrp.length - 1].igt_total_s : null;
+  var segStart   = prevGrp.length ? prevGrp[prevGrp.length - 1].igt_total_s : 0;
+  document.getElementById('s-seg').textContent = segEnd != null ? fmtS(segEnd - segStart) : '--';
+
+  var pctF  = last.pct;
+  var lo    = Math.floor(pctF);
+  var hi    = Math.ceil(pctF);
+  var hLo   = HIST[lo];
+  var hHi   = HIST[hi];
+  var hIGT  = (hLo != null && hHi != null && lo !== hi) ? hLo + (pctF - lo) * (hHi - hLo) : hLo;
+  if (hIGT != null) {
+    var diff  = last.igt_total_s - hIGT;
+    var col   = diff <= 0 ? 'var(--accent4)' : 'var(--accent1)';
+    var sign  = diff <= 0 ? '-' : '+';
+    document.getElementById('s-vs').innerHTML =
+      '<span style="color:' + col + '">' + sign + fmtS(Math.abs(diff)) + ' vs run prec.</span>';
+  }
+
+  var pctGroups = {};
+  data.forEach(function(d) {
+    var p = Math.ceil(d.pct);
+    if (!pctGroups[p]) pctGroups[p] = [];
+    pctGroups[p].push(d);
+  });
+
+  var currentPct = Math.ceil(last.pct);
+  var prevIGT    = 0;
+  var rows       = [];
+
+  Object.keys(pctGroups).map(Number).sort(function(a, b) { return a - b; }).forEach(function(p) {
+    if (p < 1) return;
+    var grp   = pctGroups[p];
+    var lastM = grp[grp.length - 1];
+    var segS  = lastM.igt_total_s - prevIGT;
+
+    var hIGTp     = HIST[p]     != null ? HIST[p]     : null;
+    var hIGTpPrev = HIST[p - 1] != null ? HIST[p - 1] : null;
+    var hSegS     = (hIGTp != null && hIGTpPrev != null) ? hIGTp - hIGTpPrev : null;
+    var dIGT      = hIGTp != null ? hIGTp - lastM.igt_total_s : null;
+
+    var paceSeg;
+    if (p !== currentPct) {
+      // Segment terminé : mettre en cache pour ne pas recalculer
+      if (segPaceCache[p] == null && segS > 0) {
+        segPaceCache[p] = 125508.21 / segS;
+      }
+      paceSeg = segPaceCache[p] != null ? segPaceCache[p].toFixed(4) : '--';
+    } else {
+      // Segment en cours : utiliser la distance réelle parcourue dans ce %
+      var distInSeg = last.distance - (p - 1) * 125508.21;
+      paceSeg = (segS > 0 && distInSeg > 0) ? (distInSeg / segS).toFixed(4) : '--';
+    }
+
+    rows.push(
+      '<tr class="' + (p === currentPct ? 'cur' : '') + '">' +
+      '<td><b>' + p + '%</b></td>' +
+      '<td>' + (p * 125508).toLocaleString() + ' bl</td>' +
+      '<td>' + fmtS(lastM.igt_total_s) + '</td>' +
+      '<td>' + fmtS(segS) + '</td>' +
+      '<td>' + paceSeg + '</td>' +
+      '<td>' + fmtS(lastM.eta_ovr_s) + '</td>' +
+      '<td class="neu">' + (hSegS != null ? fmtS(hSegS) : '--') + '</td>' +
+      '<td>' + fmtDeltaIGT(dIGT) + '</td>' +
+      '</tr>'
+    );
+    prevIGT = lastM.igt_total_s;
+  });
+
+  document.getElementById('pace-tbody').innerHTML = rows.join('');
+  var cur = document.querySelector('#pace-tbody .cur');
+  if (cur) cur.scrollIntoView({block: 'center', behavior: 'smooth'});
+}
+
+async function loadPace() {
+  try {
+    var resp = await fetch('/api/pace');
+    var data = await resp.json();
+    if (data.length) {
+      renderPace(data);
+      // RTA depuis first_real_ts
+      try {
+        var sum = await fetch('/api/summary').then(function(r){ return r.json(); });
+        if (sum.first_real_ts) {
+          document.getElementById('s-rta').textContent = fmtS(Date.now() / 1000 - sum.first_real_ts);
+        }
+      } catch(_) {}
+    } else {
+      document.getElementById('pace-tbody').innerHTML =
+        '<tr><td colspan="8" style="color:var(--subtext);padding:20px;text-align:center">' +
+        'Aucun millieme de % complete pour le moment.</td></tr>';
+    }
+  } catch (e) {
+    console.error('loadPace error:', e);
+  }
+}
+
+loadPace();
+setInterval(loadPace, 30000);
+</script>
+</body>
+</html>
