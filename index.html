@@ -253,46 +253,64 @@
 
 
     /* inventory */
-    #card-items h2 { margin-bottom: 10px; }
+    #card-items h2 { margin-bottom: 8px; }
+    .inv-wrapper {
+      background: #c6c6c6;
+      border: 3px solid;
+      border-color: #fff #555 #555 #fff;
+      padding: 7px;
+      display: inline-block;
+      width: 100%;
+      box-sizing: border-box;
+    }
     .inv-grid {
       display: grid;
-      grid-template-columns: repeat(9, 1fr);
-      gap: 3px;
+      grid-template-columns: repeat(9, 36px);
+      gap: 2px;
+      justify-content: center;
     }
     .inv-slot {
-      background: #0d1117;
-      border: 2px solid #555e6e;
-      border-radius: 3px;
-      aspect-ratio: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      width: 36px; height: 36px;
+      background: #8b8b8b;
+      border: 2px solid;
+      border-color: #373737 #fff #fff #373737;
       position: relative;
-      font-size: .6rem;
-      min-width: 0;
       cursor: default;
+      overflow: hidden;
+      flex-shrink: 0;
     }
-    .inv-slot.empty { border-color: #2a2a4a; opacity: .4; }
-    .inv-slot .inv-icon { font-size: 1.1rem; line-height: 1; }
-    .inv-slot .inv-count {
+    .inv-slot.empty { background: #8b8b8b; }
+    .inv-sprite {
       position: absolute;
-      bottom: 1px; right: 3px;
-      font-size: .62rem; font-weight: 700;
-      color: #fff; text-shadow: 1px 1px 0 #000;
-      line-height: 1;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 32px; height: 32px;
+      image-rendering: pixelated;
+      background-repeat: no-repeat;
     }
-    .inv-slot .inv-name {
+    .inv-count {
+      position: absolute;
+      bottom: 1px; right: 2px;
+      font-size: 11px; font-weight: 700;
+      color: #fff;
+      text-shadow: 1px 1px 0 #3f3f3f;
+      line-height: 1;
+      font-family: monospace;
+      pointer-events: none;
+    }
+    .inv-tooltip {
       display: none;
       position: absolute;
       bottom: calc(100% + 4px);
       left: 50%; transform: translateX(-50%);
-      background: #0d1117; border: 1px solid #555e6e;
-      border-radius: 4px; padding: 3px 6px;
-      white-space: nowrap; font-size: .72rem;
-      color: #e0e0e0; z-index: 10; pointer-events: none;
+      background: #100010; border: 1px solid #2d0065;
+      padding: 4px 8px;
+      white-space: nowrap; font-size: 12px;
+      color: #fff; z-index: 100;
+      pointer-events: none;
+      font-family: monospace;
     }
-    .inv-slot:hover .inv-name { display: block; }
+    .inv-slot:hover .inv-tooltip { display: block; }
     .inv-hotbar-sep {
       grid-column: 1 / -1;
       height: 4px;
@@ -606,7 +624,9 @@
     <!-- Inventaire -->
     <div class="chart-card" id="card-items">
       <h2>🎒 Inventaire</h2>
-      <div class="inv-grid" id="inv-grid"></div>
+      <div class="inv-wrapper">
+        <div class="inv-grid" id="inv-grid"></div>
+      </div>
     </div>
 
     <!-- Elevation -->
@@ -987,79 +1007,114 @@ async function loadX() {}
 // ================================================================
 // Item flow (gained only, sorted by gained desc)
 // ================================================================
-// Emojis par nom d'item (fallback 📦)
-const ITEM_EMOJI = {
-  "Stone": "🪨", "Grass": "🌿", "Dirt": "🟫", "Cobblestone": "🪨",
-  "Wooden Plank": "🪵", "Iron Ore": "⛏", "Wood": "🪵", "Leaves": "🍃",
-  "Glass": "🔷", "Lapis Lazuli Ore": "💎", "Wool": "🐑",
-  "Brown Mushroom": "🍄", "Red Mushroom": "🍄",
-  "Crafting Table": "🔨",
-  "Iron Shovel": "⛏", "Iron Pickaxe": "⛏", "Iron Axe": "🪓",
-  "Bow": "🏹", "Arrow": "➶",
-  "Coal": "🪨", "Diamond": "💎", "Iron Ingot": "🔩", "Gold Ingot": "🥇",
-  "Iron Sword": "⚔", "Wooden Sword": "⚔", "Stone Sword": "⚔",
-  "Diamond Sword": "⚔", "Golden Sword": "⚔",
-  "Wooden Shovel": "⛏", "Wooden Pickaxe": "⛏", "Wooden Axe": "🪓",
-  "Stone Shovel": "⛏", "Stone Pickaxe": "⛏", "Stone Axe": "🪓",
-  "Diamond Shovel": "⛏", "Diamond Pickaxe": "⛏", "Diamond Axe": "🪓",
-  "Stick": "🪵", "Bowl": "🥣", "Mushroom Soup": "🍲",
-  "Gunpowder": "💥", "String": "🧵", "Feather": "🪶",
-  "Wheat Seeds": "🌾", "Bread": "🍞", "Wheat": "🌾",
-  "Leather Helmet": "🪖", "Leather Chestplate": "🥋", "Leather Pants": "👖",
-  "Raw Porkchop": "🥩", "Bucket": "🪣", "Water Bucket": "💧",
-  "Boat": "⛵", "Sugar Canes": "🌿", "Bone": "🦴",
-  "Bed": "🛏", "Shears": "✂",
-  "Wooden Hoe": "🌱", "Stone Hoe": "🌱",
+const ITEM_SPRITES = {
+  "Stone":              {s:"terrain.png",x:16,y:0},
+  "Grass":              {s:"terrain.png",x:32,y:0},
+  "Dirt":               {s:"terrain.png",x:48,y:0},
+  "Cobblestone":        {s:"terrain.png",x:64,y:0},
+  "Wooden Plank":       {s:"terrain.png",x:80,y:0},
+  "Iron Ore":           {s:"terrain.png",x:240,y:0},
+  "Wood":               {s:"terrain.png",x:16,y:16},
+  "Leaves":             {s:"terrain.png",x:32,y:16},
+  "Glass":              {s:"terrain.png",x:64,y:16},
+  "Lapis Lazuli Ore":   {s:"terrain.png",x:80,y:16},
+  "Wool":               {s:"terrain.png",x:48,y:32},
+  "Brown Mushroom":     {s:"terrain.png",x:112,y:32},
+  "Red Mushroom":       {s:"terrain.png",x:128,y:32},
+  "Crafting Table":     {s:"terrain.png",x:160,y:48},
+  "Iron Shovel":        {s:"items.png",x:0,y:0},
+  "Iron Pickaxe":       {s:"items.png",x:16,y:0},
+  "Iron Axe":           {s:"items.png",x:32,y:0},
+  "Bow":                {s:"items.png",x:80,y:0},
+  "Arrow":              {s:"items.png",x:96,y:0},
+  "Coal":               {s:"items.png",x:112,y:0},
+  "Diamond":            {s:"items.png",x:128,y:0},
+  "Iron Ingot":         {s:"items.png",x:144,y:0},
+  "Gold Ingot":         {s:"items.png",x:160,y:0},
+  "Iron Sword":         {s:"items.png",x:176,y:0},
+  "Wooden Sword":       {s:"items.png",x:192,y:0},
+  "Wooden Shovel":      {s:"items.png",x:208,y:0},
+  "Wooden Pickaxe":     {s:"items.png",x:224,y:0},
+  "Wooden Axe":         {s:"items.png",x:240,y:0},
+  "Stone Sword":        {s:"items.png",x:0,y:16},
+  "Stone Shovel":       {s:"items.png",x:16,y:16},
+  "Stone Pickaxe":      {s:"items.png",x:32,y:16},
+  "Stone Axe":          {s:"items.png",x:48,y:16},
+  "Diamond Sword":      {s:"items.png",x:64,y:16},
+  "Diamond Shovel":     {s:"items.png",x:80,y:16},
+  "Diamond Pickaxe":    {s:"items.png",x:96,y:16},
+  "Diamond Axe":        {s:"items.png",x:112,y:16},
+  "Stick":              {s:"items.png",x:128,y:16},
+  "Bowl":               {s:"items.png",x:144,y:16},
+  "Mushroom Soup":      {s:"items.png",x:160,y:16},
+  "Golden Sword":       {s:"items.png",x:176,y:16},
+  "Gunpowder":          {s:"items.png",x:192,y:16},
+  "Wooden Hoe":         {s:"items.png",x:208,y:16},
+  "Stone Hoe":          {s:"items.png",x:224,y:16},
+  "String":             {s:"items.png",x:240,y:16},
+  "Feather":            {s:"items.png",x:0,y:32},
+  "Wheat Seeds":        {s:"items.png",x:32,y:32},
+  "Bread":              {s:"items.png",x:48,y:32},
+  "Leather Helmet":     {s:"items.png",x:64,y:32},
+  "Leather Chestplate": {s:"items.png",x:80,y:32},
+  "Leather Pants":      {s:"items.png",x:96,y:32},
+  "Wheat":              {s:"items.png",x:128,y:32},
+  "Raw Porkchop":       {s:"items.png",x:240,y:48},
+  "Bucket":             {s:"items.png",x:80,y:64},
+  "Water Bucket":       {s:"items.png",x:96,y:64},
+  "Boat":               {s:"items.png",x:208,y:64},
+  "Sugar Canes":        {s:"items.png",x:32,y:80},
+  "Bone":               {s:"items.png",x:0,y:96},
+  "Bed":                {s:"items.png",x:48,y:96},
+  "Shears":             {s:"items.png",x:112,y:96},
 };
 
 function renderInventory(invStr) {
-  // Parse "Name:count,Name:count,..."
   const items = {};
   if (invStr) {
     invStr.split(",").forEach(function(part) {
       const idx = part.lastIndexOf(":");
       if (idx < 0) return;
-      const name  = part.slice(0, idx);
+      const name  = part.slice(0, idx).trim();
       const count = parseInt(part.slice(idx + 1)) || 0;
       if (name && count > 0) items[name] = count;
     });
   }
 
-  const entries = Object.entries(items);
-  const grid    = document.getElementById("inv-grid");
+  const grid  = document.getElementById("inv-grid");
   if (!grid) return;
 
-  // 27 slots inventaire + séparateur + 9 slots hotbar = 36 slots
-  const TOTAL = 36;
-  const slots  = [];
-  entries.forEach(function([name, count], i) {
-    const emoji = ITEM_EMOJI[name] || "📦";
-    slots.push({ name, count, emoji });
-  });
-  // Remplir les slots vides
+  const entries = Object.entries(items);
+  const TOTAL   = 36;
+  const slots   = entries.slice(0, TOTAL);
   while (slots.length < TOTAL) slots.push(null);
 
   let html = "";
   slots.forEach(function(slot, i) {
-    // Séparateur entre inventaire (27) et hotbar (9)
     if (i === 27) html += '<div class="inv-hotbar-sep"></div>';
     if (!slot) {
       html += '<div class="inv-slot empty"></div>';
     } else {
+      const name  = slot[0];
+      const count = slot[1];
+      const sp    = ITEM_SPRITES[name];
+      let spriteStyle = "";
+      if (sp) {
+        spriteStyle = 'background-image:url(' + sp.s + ');' +
+          'background-position:-' + (sp.x * 2) + 'px -' + (sp.y * 2) + 'px;' +
+          'background-size:512px 512px;';
+      }
       html += '<div class="inv-slot">' +
-        '<span class="inv-icon">' + slot.emoji + '</span>' +
-        (slot.count > 1 ? '<span class="inv-count">' + slot.count + '</span>' : '') +
-        '<span class="inv-name">' + slot.name + (slot.count > 1 ? ' ×' + slot.count : '') + '</span>' +
+        '<div class="inv-sprite" style="' + spriteStyle + '"></div>' +
+        (count > 1 ? '<span class="inv-count">' + count + '</span>' : '') +
+        '<span class="inv-tooltip">' + name + (count > 1 ? ' x' + count : '') + '</span>' +
         '</div>';
     }
   });
   grid.innerHTML = html;
 }
 
-async function loadItems() {
-  // L'inventaire est lu depuis summary.json (champ inventory du dernier tick)
-  // loadSummary s'en charge — on expose renderInventory pour qu'il l'appelle
-}
+async function loadItems() {}
 
 // ================================================================
 // Death log
