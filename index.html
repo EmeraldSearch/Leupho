@@ -252,8 +252,51 @@
     }
 
 
-    /* item flow */
-    #card-items .plotly-chart { height: 320px; }
+    /* inventory */
+    #card-items h2 { margin-bottom: 10px; }
+    .inv-grid {
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 3px;
+    }
+    .inv-slot {
+      background: #0d1117;
+      border: 2px solid #555e6e;
+      border-radius: 3px;
+      aspect-ratio: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      font-size: .6rem;
+      min-width: 0;
+      cursor: default;
+    }
+    .inv-slot.empty { border-color: #2a2a4a; opacity: .4; }
+    .inv-slot .inv-icon { font-size: 1.1rem; line-height: 1; }
+    .inv-slot .inv-count {
+      position: absolute;
+      bottom: 1px; right: 3px;
+      font-size: .62rem; font-weight: 700;
+      color: #fff; text-shadow: 1px 1px 0 #000;
+      line-height: 1;
+    }
+    .inv-slot .inv-name {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 4px);
+      left: 50%; transform: translateX(-50%);
+      background: #0d1117; border: 1px solid #555e6e;
+      border-radius: 4px; padding: 3px 6px;
+      white-space: nowrap; font-size: .72rem;
+      color: #e0e0e0; z-index: 10; pointer-events: none;
+    }
+    .inv-slot:hover .inv-name { display: block; }
+    .inv-hotbar-sep {
+      grid-column: 1 / -1;
+      height: 4px;
+    }
 
     /* loading spinner */
     .spinner {
@@ -490,7 +533,7 @@
         <label><input type="checkbox" checked data-card="card-hp">       Health</label>
         <label><input type="checkbox" checked data-card="card-speed">    Speed</label>
         <label><input type="checkbox" checked data-card="card-dist">     Distance (XZ)</label>
-        <label><input type="checkbox" checked data-card="card-items">    Item flow</label>
+        <label><input type="checkbox" checked data-card="card-items">    Inventaire</label>
         <label><input type="checkbox" checked data-card="card-elevation"> Élévation</label>
         <label><input type="checkbox" checked data-card="card-deaths">   Death log</label>
       </div>
@@ -560,10 +603,10 @@
     </div>
 
 
-    <!-- Item flow -->
+    <!-- Inventaire -->
     <div class="chart-card" id="card-items">
-      <h2>📦 Item flow (top 10)</h2>
-      <div class="plotly-chart" id="chart-items"></div>
+      <h2>🎒 Inventaire</h2>
+      <div class="inv-grid" id="inv-grid"></div>
     </div>
 
     <!-- Elevation -->
@@ -696,7 +739,6 @@ const API_MAP = {
   "/api/speed":     "data/speed.json",
   "/api/distance":  "data/distance.json",
   "/api/elevation": "data/elevation.json",
-  "/api/item_flow": "data/item_flow.json",
   "/api/deaths":    "data/deaths.json",
 };
 
@@ -762,6 +804,7 @@ async function loadSummary() {
       _firstRealTs = s.first_real_ts;
       document.getElementById("stat-rta").textContent = fmtSecs(Date.now() / 1000 - s.first_real_ts);
     }
+    if (s.inventory != null) renderInventory(s.inventory);
     document.getElementById("stat-avgx-global").textContent =
       s.avg_x_global != null ? `${s.avg_x_global.toFixed(3)} bl/s` : "—";
     document.getElementById("stat-avgx-hour").textContent =
@@ -944,32 +987,78 @@ async function loadX() {}
 // ================================================================
 // Item flow (gained only, sorted by gained desc)
 // ================================================================
+// Emojis par nom d'item (fallback 📦)
+const ITEM_EMOJI = {
+  "Stone": "🪨", "Grass": "🌿", "Dirt": "🟫", "Cobblestone": "🪨",
+  "Wooden Plank": "🪵", "Iron Ore": "⛏", "Wood": "🪵", "Leaves": "🍃",
+  "Glass": "🔷", "Lapis Lazuli Ore": "💎", "Wool": "🐑",
+  "Brown Mushroom": "🍄", "Red Mushroom": "🍄",
+  "Crafting Table": "🔨",
+  "Iron Shovel": "⛏", "Iron Pickaxe": "⛏", "Iron Axe": "🪓",
+  "Bow": "🏹", "Arrow": "➶",
+  "Coal": "🪨", "Diamond": "💎", "Iron Ingot": "🔩", "Gold Ingot": "🥇",
+  "Iron Sword": "⚔", "Wooden Sword": "⚔", "Stone Sword": "⚔",
+  "Diamond Sword": "⚔", "Golden Sword": "⚔",
+  "Wooden Shovel": "⛏", "Wooden Pickaxe": "⛏", "Wooden Axe": "🪓",
+  "Stone Shovel": "⛏", "Stone Pickaxe": "⛏", "Stone Axe": "🪓",
+  "Diamond Shovel": "⛏", "Diamond Pickaxe": "⛏", "Diamond Axe": "🪓",
+  "Stick": "🪵", "Bowl": "🥣", "Mushroom Soup": "🍲",
+  "Gunpowder": "💥", "String": "🧵", "Feather": "🪶",
+  "Wheat Seeds": "🌾", "Bread": "🍞", "Wheat": "🌾",
+  "Leather Helmet": "🪖", "Leather Chestplate": "🥋", "Leather Pants": "👖",
+  "Raw Porkchop": "🥩", "Bucket": "🪣", "Water Bucket": "💧",
+  "Boat": "⛵", "Sugar Canes": "🌿", "Bone": "🦴",
+  "Bed": "🛏", "Shears": "✂",
+  "Wooden Hoe": "🌱", "Stone Hoe": "🌱",
+};
+
+function renderInventory(invStr) {
+  // Parse "Name:count,Name:count,..."
+  const items = {};
+  if (invStr) {
+    invStr.split(",").forEach(function(part) {
+      const idx = part.lastIndexOf(":");
+      if (idx < 0) return;
+      const name  = part.slice(0, idx);
+      const count = parseInt(part.slice(idx + 1)) || 0;
+      if (name && count > 0) items[name] = count;
+    });
+  }
+
+  const entries = Object.entries(items);
+  const grid    = document.getElementById("inv-grid");
+  if (!grid) return;
+
+  // 27 slots inventaire + séparateur + 9 slots hotbar = 36 slots
+  const TOTAL = 36;
+  const slots  = [];
+  entries.forEach(function([name, count], i) {
+    const emoji = ITEM_EMOJI[name] || "📦";
+    slots.push({ name, count, emoji });
+  });
+  // Remplir les slots vides
+  while (slots.length < TOTAL) slots.push(null);
+
+  let html = "";
+  slots.forEach(function(slot, i) {
+    // Séparateur entre inventaire (27) et hotbar (9)
+    if (i === 27) html += '<div class="inv-hotbar-sep"></div>';
+    if (!slot) {
+      html += '<div class="inv-slot empty"></div>';
+    } else {
+      html += '<div class="inv-slot">' +
+        '<span class="inv-icon">' + slot.emoji + '</span>' +
+        (slot.count > 1 ? '<span class="inv-count">' + slot.count + '</span>' : '') +
+        '<span class="inv-name">' + slot.name + (slot.count > 1 ? ' ×' + slot.count : '') + '</span>' +
+        '</div>';
+    }
+  });
+  grid.innerHTML = html;
+}
+
 async function loadItems() {
-  try {
-    const data = await apiFetch("/api/item_flow?top=10");
-    // Sort by gained descending (API already returns by activity, re-sort to be safe)
-    const sorted = [...data].sort((a, b) => b.gained - a.gained);
-    const names  = sorted.map(d => d.item);
-    const gained = sorted.map(d => d.gained);
-
-    const traces = [{
-      x: names, y: gained,
-      type: "bar", name: "Gained",
-      marker: {
-        color: gained,
-        colorscale: [[0, "#1a6e2e"], [1, "#55ff55"]],
-        showscale: false,
-      },
-      hovertemplate: "%{x}<br>+%{y}<extra>gained</extra>",
-    }];
-
-    const layout = {
-      ...LAYOUT_BASE,
-      yaxis: { ...LAYOUT_BASE.yaxis, title: "Count" },
-      xaxis: { ...LAYOUT_BASE.xaxis, tickangle: -35 },
-    };
-    Plotly.react("chart-items", traces, layout, PLOTLY_CONFIG);
-  } catch(e) { showError(e.message); }
+  // L'inventaire est lu depuis summary.json (champ inventory du dernier tick)
+  // loadSummary s'en charge — on expose renderInventory pour qu'il l'appelle
 }
 
 // ================================================================

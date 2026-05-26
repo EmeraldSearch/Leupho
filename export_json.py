@@ -81,7 +81,13 @@ def downsample(rows: list, max_pts: int, igt_key: str = "igt") -> list:
 
 def export_summary(db: Database) -> None:
     s = db.fetch_summary()
-    write_json("summary.json", dict(s))
+    d = dict(s)
+    # Ajouter l'inventaire du dernier tick
+    row = db.execute(
+        "SELECT inventory FROM ticks ORDER BY real_ts DESC LIMIT 1"
+    ).fetchone()
+    d["inventory"] = row["inventory"] if row else ""
+    write_json("summary.json", d)
 
 
 def export_hp(db: Database) -> None:
