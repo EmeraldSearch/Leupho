@@ -686,9 +686,24 @@ function rangeParams() {
 // ================================================================
 // Fetch helpers
 // ================================================================
+// Mapping API → JSON statique
+const API_MAP = {
+  "/api/summary":   "data/summary.json",
+  "/api/hp":        "data/hp.json",
+  "/api/speed":     "data/speed.json",
+  "/api/distance":  "data/distance.json",
+  "/api/heatmap":   "data/heatmap.json",
+  "/api/elevation": "data/elevation.json",
+  "/api/item_flow": "data/item_flow.json",
+  "/api/deaths":    "data/deaths.json",
+};
+
 async function apiFetch(endpoint) {
-  const r = await fetch(endpoint);
-  if (!r.ok) throw new Error(`${endpoint} → HTTP ${r.status}`);
+  // Retirer les query params (?from_igt=... etc.) pour le mapping
+  const base = endpoint.split("?")[0];
+  const url  = API_MAP[base] || endpoint;
+  const r    = await fetch(url + "?_=" + Date.now()); // cache-bust
+  if (!r.ok) throw new Error(`${url} → HTTP ${r.status}`);
   return r.json();
 }
 
@@ -1125,7 +1140,7 @@ function _fmtS(s) {
 
 async function loadProgression() {
   try {
-    var resp = await fetch('/api/pace');
+    var resp = await fetch('data/pace.json?_=' + Date.now());
     var data = await resp.json();
     if (!data || !data.length) return;
 

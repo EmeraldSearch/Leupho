@@ -85,7 +85,7 @@
         <div class="val cg" id="s-pace">&#8212;</div>
       </div>
       <div class="sum-card">
-        <div class="lbl">Dernier % complet</div>
+        <div class="lbl">Average % time</div>
         <div class="val" id="s-seg">&#8212;</div>
       </div>
       <div class="sum-card">
@@ -175,12 +175,6 @@ function renderPace(data) {
   document.getElementById('s-eta').textContent    = fmtS(last.eta_ovr_s);
 
   var lastPctInt = Math.ceil(last.pct);
-  var lastGrp    = data.filter(function(d) { return Math.ceil(d.pct) === lastPctInt; });
-  var prevGrp    = data.filter(function(d) { return Math.ceil(d.pct) === lastPctInt - 1; });
-  var segEnd     = lastGrp.length ? lastGrp[lastGrp.length - 1].igt_total_s : null;
-  var segStart   = prevGrp.length ? prevGrp[prevGrp.length - 1].igt_total_s : 0;
-  document.getElementById('s-seg').textContent = segEnd != null ? fmtS(segEnd - segStart) : '--';
-
   var pctF  = last.pct;
   var lo    = Math.floor(pctF);
   var hi    = Math.ceil(pctF);
@@ -201,6 +195,21 @@ function renderPace(data) {
     if (!pctGroups[p]) pctGroups[p] = [];
     pctGroups[p].push(d);
   });
+
+  // Moyenne des durées de % terminés (tous sauf le % en cours)
+  var completedPcts = Object.keys(pctGroups).map(Number).filter(function(p){ return p >= 1 && p !== currentPct; }).sort(function(a,b){ return a-b; });
+  var avgSegS = null;
+  if (completedPcts.length > 0) {
+    var prevIgtAvg = 0;
+    var totalSegS  = 0;
+    completedPcts.forEach(function(p) {
+      var lastM = pctGroups[p][pctGroups[p].length - 1];
+      totalSegS  += lastM.igt_total_s - prevIgtAvg;
+      prevIgtAvg  = lastM.igt_total_s;
+    });
+    avgSegS = totalSegS / completedPcts.length;
+  }
+  document.getElementById('s-seg').textContent = avgSegS != null ? fmtS(avgSegS) : '--';
 
   var currentPct = Math.ceil(last.pct);
   var prevIGT    = 0;
@@ -252,13 +261,13 @@ function renderPace(data) {
 
 async function loadPace() {
   try {
-    var resp = await fetch('/api/pace');
+    var resp = await fetch('data/pace.json?_=' + Date.now());
     var data = await resp.json();
     if (data.length) {
       renderPace(data);
       // RTA depuis first_real_ts
       try {
-        var sum = await fetch('/api/summary').then(function(r){ return r.json(); });
+        var sum = await fetch('data/summary.json?_=' + Date.now()).then(function(r){ return r.json(); });
         if (sum.first_real_ts) {
           document.getElementById('s-rta').textContent = fmtS(Date.now() / 1000 - sum.first_real_ts);
         }
