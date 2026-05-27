@@ -312,19 +312,21 @@ if __name__ == "__main__":
         _git_lock = threading.Lock()
         print(f"Summary every {INTERVAL_SUMMARY}s, charts every {INTERVAL_CHARTS}s. Ctrl+C to stop.")
 
-        def safe_push(fn, label):
+        def do_export(fn):
             db = Database(DB_PATH, readonly=True)
             try:
                 fn(db)
             finally:
                 db.close()
-            with _git_lock:
-                git_push(label=label)
 
         def loop_summary():
             while True:
                 try:
-                    safe_push(lambda db: (export_summary(db), export_pace(db)), "summary")
+                    # Export sans lock (rapide)
+                    do_export(lambda db: (export_summary(db), export_pace(db)))
+                    # Push avec lock (serialisé)
+                    with _git_lock:
+                        git_push(label="summary")
                 except Exception as e:
                     print(f"[{time.strftime('%H:%M:%S')}] Summary error: {e}")
                 time.sleep(INTERVAL_SUMMARY)
@@ -332,10 +334,14 @@ if __name__ == "__main__":
         def loop_charts():
             while True:
                 try:
-                    safe_push(lambda db: (
+                    # Export sans lock (peut prendre du temps)
+                    do_export(lambda db: (
                         export_hp(db), export_speed(db), export_distance(db),
                         export_elevation(db), export_item_flow(db), export_deaths(db)
-                    ), "charts")
+                    ))
+                    # Push avec lock (serialisé)
+                    with _git_lock:
+                        git_push(label="charts")
                 except Exception as e:
                     print(f"[{time.strftime('%H:%M:%S')}] Charts error: {e}")
                 time.sleep(INTERVAL_CHARTS)
