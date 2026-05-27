@@ -655,7 +655,7 @@ const API_MAP = {
 async function apiFetch(endpoint) {
   if (_useFlask === null) {
     try {
-      const probe = await fetch("/api/summary", { method: "HEAD" });
+      const probe = await fetch("/api/summary");
       _useFlask = probe.ok;
     } catch(_) { _useFlask = false; }
   }
