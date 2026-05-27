@@ -423,7 +423,7 @@
   <header>
     <h1>⛏ Farlands Tracker</h1>
     <span class="subtitle">Beta 1.7.3 · Walking to the Farlands</span>
-    <a href="/pace" style="margin-left:12px;color:var(--accent3);text-decoration:none;font-size:.85rem;padding:5px 10px;border:1px solid var(--border);border-radius:5px">📊 Pace</a>
+    <a href="graph.html" style="margin-left:12px;color:var(--accent3);text-decoration:none;font-size:.85rem;padding:5px 10px;border:1px solid var(--border);border-radius:5px">📈 Graphs</a><a href="pace.html" style="margin-left:6px;color:var(--accent3);text-decoration:none;font-size:.85rem;padding:5px 10px;border:1px solid var(--border);border-radius:5px">📊 Pace</a>
     <div class="live-dot" title="Data refreshes every 30s"></div>
     <span id="last-updated"></span>
   </header>
@@ -539,47 +539,6 @@
       </div>
     </div>
 
-    <!-- Time filter -->
-    <div class="sidebar-section">
-      <h3>Time window (IGT)</h3>
-      <div class="filter-group">
-        <label>From</label>
-        <div class="filter-row">
-          <input type="number" id="from-h" placeholder="h" min="0"/>
-          <span>h</span>
-          <input type="number" id="from-m" placeholder="mm" min="0" max="59"/>
-          <span>m</span>
-          <input type="number" id="from-s" placeholder="ss" min="0" max="59"/>
-          <span>s</span>
-        </div>
-        <label>To (leave empty = end)</label>
-        <div class="filter-row">
-          <input type="number" id="to-h" placeholder="h" min="0"/>
-          <span>h</span>
-          <input type="number" id="to-m" placeholder="mm" min="0" max="59"/>
-          <span>m</span>
-          <input type="number" id="to-s" placeholder="ss" min="0" max="59"/>
-          <span>s</span>
-        </div>
-        <button class="btn btn-primary" onclick="applyFilter()">Apply</button>
-        <button class="btn btn-ghost"   onclick="resetFilter()">Reset</button>
-        <button class="btn btn-ghost"   onclick="lastHourFilter()" style="color:var(--accent3);border-color:var(--accent3)">Dernière heure IGT</button>
-      </div>
-    </div>
-
-    <!-- Chart toggles -->
-    <div class="sidebar-section">
-      <h3>Charts</h3>
-      <div class="toggle-list">
-        <label><input type="checkbox" checked data-card="card-hp">       Health</label>
-        <label><input type="checkbox" checked data-card="card-speed">    Speed</label>
-        <label><input type="checkbox" checked data-card="card-dist">     Distance (XZ)</label>
-        <label><input type="checkbox" checked data-card="card-items">    Inventaire</label>
-        <label><input type="checkbox" checked data-card="card-elevation"> Élévation</label>
-        <label><input type="checkbox" checked data-card="card-heatmap">   Chemin (XZ)</label>
-        <label><input type="checkbox" checked data-card="card-deaths">   Death log</label>
-      </div>
-    </div>
 
   </aside>
 
@@ -590,7 +549,7 @@
 
     <!-- Progression (pace) -->
     <div id="card-progression">
-      <h2>🧭 Progression <a href="/pace">Détail →</a></h2>
+      <h2>🧭 Progression <a href="pace.html">Détail →</a></h2>
       <div class="prog-bar-wrap">
         <div class="prog-bar-fill" id="idx-prog-bar" style="width:0%"></div>
       </div>
@@ -626,90 +585,18 @@
       </div>
     </div>
 
-    <!-- HP -->
-    <div class="chart-card" id="card-hp">
-      <h2>❤ Health over time</h2>
-      <div class="plotly-chart" id="chart-hp"></div>
-    </div>
-
-    <!-- Speed -->
-    <div class="chart-card" id="card-speed">
-      <h2>💨 Horizontal speed</h2>
-      <div class="plotly-chart" id="chart-speed"></div>
-    </div>
-
-    <!-- Distance -->
-    <div class="chart-card" id="card-dist">
-      <h2>📏 Cumulative distance (XZ)</h2>
-      <div class="plotly-chart" id="chart-dist"></div>
-    </div>
-
-
-    <!-- Heatmap -->
-    <div class="chart-card" id="card-heatmap">
-      <h2>🗺 Chemin parcouru (XZ)</h2>
-      <div class="plotly-chart" id="chart-heatmap"></div>
-    </div>
-
-    <!-- Inventaire -->
-    <div class="chart-card" id="card-items">
-      <h2>🎒 Inventaire</h2>
-      <div class="inv-wrapper">
-        <div class="inv-grid" id="inv-grid"></div>
-      </div>
-    </div>
-
-    <!-- Elevation -->
-    <div class="chart-card" id="card-elevation">
-      <h2>⛰ Élévation (coordonnée Y)</h2>
-      <div class="plotly-chart" id="chart-elevation"></div>
-    </div>
-
-    <!-- Death log -->
-    <div class="chart-card" id="card-deaths">
-      <h2>☠ Death log</h2>
-      <div id="death-log"></div>
-    </div>
 
   </main>
 </div>
 
 <script>
+
 // ================================================================
 // Config
 // ================================================================
 const REFRESH_MS   = 30_000;   // auto-refresh interval
 let _firstRealTs   = null;     // partagé entre loadSummary et loadProgression
 const IGT_PER_SEC  = 20;       // 20 ticks = 1 second IGT
-
-// ================================================================
-// Plotly shared layout base
-// ================================================================
-const LAYOUT_BASE = {
-  paper_bgcolor: "transparent",
-  plot_bgcolor:  "#16213e",
-  font:          { color: "#e0e0e0", size: 11 },
-  margin:        { t: 10, r: 20, b: 50, l: 60 },
-  xaxis: {
-    gridcolor:   "#2a2a4a",
-    linecolor:   "#2a2a4a",
-    tickcolor:   "#2a2a4a",
-    zerolinecolor: "#2a2a4a",
-  },
-  yaxis: {
-    gridcolor:   "#2a2a4a",
-    linecolor:   "#2a2a4a",
-    tickcolor:   "#2a2a4a",
-    zerolinecolor: "#2a2a4a",
-  },
-  legend: {
-    bgcolor:     "rgba(22,33,62,.8)",
-    bordercolor: "#2a2a4a",
-    borderwidth: 1,
-  },
-};
-const PLOTLY_CONFIG = { responsive: true, displaylogo: false,
-                        modeBarButtonsToRemove: ["lasso2d","select2d"] };
 
 // ================================================================
 // IGT helpers
@@ -732,51 +619,6 @@ function igtAxis(data, key = "igt") {
 }
 function igtLabels(data, key = "igt") {
   return data.map(d => ticksToHMS(d[key]));
-}
-
-// ================================================================
-// Filter state
-// ================================================================
-let filterFromTicks = null;
-let filterToTicks   = null;
-
-function applyFilter() {
-  const fh = document.getElementById("from-h").value;
-  const fm = document.getElementById("from-m").value;
-  const fs = document.getElementById("from-s").value;
-  const th = document.getElementById("to-h").value;
-  const tm = document.getElementById("to-m").value;
-  const ts = document.getElementById("to-s").value;
-
-  filterFromTicks = (fh || fm || fs) ? hmsToTicks(fh, fm, fs) : null;
-  filterToTicks   = (th || tm || ts) ? hmsToTicks(th, tm, ts) : null;
-  loadAll();
-}
-
-function resetFilter() {
-  ["from-h","from-m","from-s","to-h","to-m","to-s"]
-    .forEach(id => document.getElementById(id).value = "");
-  filterFromTicks = null;
-  filterToTicks   = null;
-  loadAll();
-}
-
-function rangeParams() {
-  const p = new URLSearchParams();
-  if (filterFromTicks !== null) p.set("from_igt", filterFromTicks);
-  if (filterToTicks   !== null) p.set("to_igt",   filterToTicks);
-  return p.toString() ? "?" + p.toString() : "";
-}
-
-// Filtre côté client sur le champ igt (ou world_time selon les données)
-function filterByIgt(rows, igtKey = "igt") {
-  if (filterFromTicks === null && filterToTicks === null) return rows;
-  return rows.filter(r => {
-    const v = r[igtKey];
-    if (filterFromTicks !== null && v < filterFromTicks) return false;
-    if (filterToTicks   !== null && v > filterToTicks)   return false;
-    return true;
-  });
 }
 
 // ================================================================
@@ -872,433 +714,6 @@ async function loadSummary() {
       "Updated " + new Date().toLocaleTimeString();
   } catch(e) { showError(e.message); }
 }
-
-// ================================================================
-// HP chart
-// ================================================================
-async function loadHP() {
-  try {
-    let { data, deaths } = await apiFetch("/api/hp" + rangeParams());
-    data = filterByIgt(data);
-    deaths = deaths.filter(d => (!filterFromTicks || d >= filterFromTicks) && (!filterToTicks || d <= filterToTicks));
-    const x = igtAxis(data);
-    const lbl = igtLabels(data);
-
-    const traces = [
-      {
-        x, y: data.map(d => d.health),
-        type: "scatter", mode: "lines",
-        name: "HP",
-        line: { color: "#e94560", width: 1.5 },
-        fill: "tozeroy", fillcolor: "rgba(233,69,96,.15)",
-        hovertemplate: "%{text}<br>HP: %{y}<extra></extra>",
-        text: lbl,
-      },
-    ];
-
-    // Death vertical lines via shapes
-    const shapes = deaths.map(igt => ({
-      type: "line", x0: igt, x1: igt, y0: 0, y1: 20,
-      line: { color: "#e94560", width: 1, dash: "dot" },
-    }));
-    // Death annotations
-    const annotations = deaths.map(igt => ({
-      x: igt, y: 1, text: "☠",
-      showarrow: false, font: { size: 14, color: "#e94560" },
-    }));
-
-    const layout = {
-      ...LAYOUT_BASE,
-      yaxis: { ...LAYOUT_BASE.yaxis, range: [0, 22], title: "HP" },
-      xaxis: { ...LAYOUT_BASE.xaxis,
-                tickvals: _tickVals(x, 10),
-                ticktext: _tickVals(x, 10).map(ticksToHMS),
-                title: "IGT (hh:mm:ss)" },
-      shapes, annotations,
-    };
-
-    Plotly.react("chart-hp", traces, layout, PLOTLY_CONFIG);
-  } catch(e) { showError(e.message); }
-}
-
-// ================================================================
-// Speed chart
-// ================================================================
-async function loadSpeed() {
-  try {
-    let data = await apiFetch("/api/speed" + rangeParams());
-    data = filterByIgt(data);
-    const x   = igtAxis(data);
-    const lbl = igtLabels(data);
-
-    // Rolling average for X speed (same window size as speed_avg)
-    const WINDOW = 5;
-    const speedXRaw = data.map(d => d.speed_x);
-    const speedXAvg = speedXRaw.map((_, i) => {
-      const slice = speedXRaw.slice(Math.max(0, i - WINDOW + 1), i + 1);
-      return slice.reduce((a, b) => a + b, 0) / slice.length;
-    });
-
-    const traces = [
-      {
-        x, y: speedXAvg,
-        type: "scatter", mode: "lines", name: "X avg",
-        line: { color: "#f5c542", width: 2 },
-        hovertemplate: "%{text}<br>%{y:.2f} bl/s<extra>X avg</extra>",
-        text: lbl, visible: true,
-      },
-      {
-        x, y: speedXRaw,
-        type: "scatter", mode: "lines", name: "X raw",
-        line: { color: "#a8ff78", width: .8 }, opacity: .55,
-        hovertemplate: "%{text}<br>%{y:.2f} bl/s<extra>X raw</extra>",
-        text: lbl, visible: true,
-      },
-      {
-        x, y: data.map(d => d.speed_avg),
-        type: "scatter", mode: "lines", name: "XZ avg",
-        line: { color: "#e94560", width: 2 },
-        hovertemplate: "%{text}<br>%{y:.2f} bl/s<extra>XZ avg</extra>",
-        text: lbl, visible: true,
-      },
-      {
-        x, y: data.map(d => d.speed_horiz),
-        type: "scatter", mode: "lines", name: "XZ raw",
-        line: { color: "#53d8fb", width: .8 }, opacity: .55,
-        hovertemplate: "%{text}<br>%{y:.2f} bl/s<extra>XZ raw</extra>",
-        text: lbl, visible: true,
-      },
-    ];
-
-    const layout = {
-      ...LAYOUT_BASE,
-      yaxis: { ...LAYOUT_BASE.yaxis, title: "bl/s" },
-      xaxis: { ...LAYOUT_BASE.xaxis,
-                tickvals: _tickVals(x, 10),
-                ticktext: _tickVals(x, 10).map(ticksToHMS),
-                title: "IGT (hh:mm:ss)" },
-      legend: { ...LAYOUT_BASE.legend, itemclick: "toggle", itemdoubleclick: "toggleothers" },
-      shapes: [{
-        type: "line", xref: "paper", x0: 0, x1: 1,
-        yref: "y", y0: 4.317, y1: 4.317,
-        line: { color: "#f5c542", width: 1.2, dash: "dot" },
-      }],
-      annotations: [{
-        xref: "paper", x: 1, yref: "y", y: 4.317,
-        text: "Walk 4.317", showarrow: false,
-        font: { color: "#f5c542", size: 10 },
-        xanchor: "right", yanchor: "bottom",
-      }],
-    };
-    Plotly.react("chart-speed", traces, layout, PLOTLY_CONFIG);
-  } catch(e) { showError(e.message); }
-}
-
-// ================================================================
-// Distance chart (XZ total + X displacement, toggleable)
-// ================================================================
-async function loadDistance() {
-  try {
-    let data = await apiFetch("/api/distance" + rangeParams());
-    data = filterByIgt(data);
-    const x   = igtAxis(data);
-    const lbl = igtLabels(data);
-
-    const traces = [
-      {
-        x, y: data.map(d => d.dist_total),
-        type: "scatter", mode: "lines", name: "XZ distance",
-        line: { color: "#53d8fb", width: 1.5 },
-        fill: "tozeroy", fillcolor: "rgba(83,216,251,.12)",
-        hovertemplate: "%{text}<br>%{y:,.0f} bl<extra>XZ distance</extra>",
-        text: lbl, visible: true,
-      },
-      {
-        x, y: data.map(d => d.x_total),
-        type: "scatter", mode: "lines", name: "Distance -X",
-        line: { color: "#a8ff78", width: 1.5 },
-        fill: "tozeroy", fillcolor: "rgba(168,255,120,.08)",
-        hovertemplate: "%{text}<br>%{y:,.0f} bl<extra>Distance -X</extra>",
-        text: lbl, visible: true,
-      },
-    ];
-
-    const layout = {
-      ...LAYOUT_BASE,
-      yaxis: { ...LAYOUT_BASE.yaxis, title: "Blocks" },
-      xaxis: { ...LAYOUT_BASE.xaxis,
-                tickvals: _tickVals(x, 10),
-                ticktext: _tickVals(x, 10).map(ticksToHMS),
-                title: "IGT (hh:mm:ss)" },
-      legend: { ...LAYOUT_BASE.legend, itemclick: "toggle", itemdoubleclick: "toggleothers" },
-    };
-    Plotly.react("chart-dist", traces, layout, PLOTLY_CONFIG);
-  } catch(e) { showError(e.message); }
-}
-
-// loadX is now merged into loadDistance — kept as no-op for safety
-async function loadX() {}
-
-// ================================================================
-// Path trace (XZ)
-// ================================================================
-// ================================================================
-// Item flow (gained only, sorted by gained desc)
-// ================================================================
-const ITEM_SPRITES = {
-  "Stone":              {s:"terrain.png",x:16,y:0},
-  "Grass":              {s:"terrain.png",x:32,y:0},
-  "Dirt":               {s:"terrain.png",x:48,y:0},
-  "Cobblestone":        {s:"terrain.png",x:64,y:0},
-  "Wooden Plank":       {s:"terrain.png",x:80,y:0},
-  "Iron Ore":           {s:"terrain.png",x:240,y:0},
-  "Wood":               {s:"terrain.png",x:16,y:16},
-  "Leaves":             {s:"terrain.png",x:32,y:16},
-  "Glass":              {s:"terrain.png",x:64,y:16},
-  "Lapis Lazuli Ore":   {s:"terrain.png",x:80,y:16},
-  "Wool":               {s:"terrain.png",x:48,y:32},
-  "Brown Mushroom":     {s:"terrain.png",x:112,y:32},
-  "Red Mushroom":       {s:"terrain.png",x:128,y:32},
-  "Crafting Table":     {s:"terrain.png",x:160,y:48},
-  "Iron Shovel":        {s:"items.png",x:0,y:0},
-  "Iron Pickaxe":       {s:"items.png",x:16,y:0},
-  "Iron Axe":           {s:"items.png",x:32,y:0},
-  "Bow":                {s:"items.png",x:80,y:0},
-  "Arrow":              {s:"items.png",x:96,y:0},
-  "Coal":               {s:"items.png",x:112,y:0},
-  "Diamond":            {s:"items.png",x:128,y:0},
-  "Iron Ingot":         {s:"items.png",x:144,y:0},
-  "Gold Ingot":         {s:"items.png",x:160,y:0},
-  "Iron Sword":         {s:"items.png",x:176,y:0},
-  "Wooden Sword":       {s:"items.png",x:192,y:0},
-  "Wooden Shovel":      {s:"items.png",x:208,y:0},
-  "Wooden Pickaxe":     {s:"items.png",x:224,y:0},
-  "Wooden Axe":         {s:"items.png",x:240,y:0},
-  "Stone Sword":        {s:"items.png",x:0,y:16},
-  "Stone Shovel":       {s:"items.png",x:16,y:16},
-  "Stone Pickaxe":      {s:"items.png",x:32,y:16},
-  "Stone Axe":          {s:"items.png",x:48,y:16},
-  "Diamond Sword":      {s:"items.png",x:64,y:16},
-  "Diamond Shovel":     {s:"items.png",x:80,y:16},
-  "Diamond Pickaxe":    {s:"items.png",x:96,y:16},
-  "Diamond Axe":        {s:"items.png",x:112,y:16},
-  "Stick":              {s:"items.png",x:128,y:16},
-  "Bowl":               {s:"items.png",x:144,y:16},
-  "Mushroom Soup":      {s:"items.png",x:160,y:16},
-  "Golden Sword":       {s:"items.png",x:176,y:16},
-  "Gunpowder":          {s:"items.png",x:192,y:16},
-  "Wooden Hoe":         {s:"items.png",x:208,y:16},
-  "Stone Hoe":          {s:"items.png",x:224,y:16},
-  "String":             {s:"items.png",x:240,y:16},
-  "Feather":            {s:"items.png",x:0,y:32},
-  "Wheat Seeds":        {s:"items.png",x:32,y:32},
-  "Bread":              {s:"items.png",x:48,y:32},
-  "Leather Helmet":     {s:"items.png",x:64,y:32},
-  "Leather Chestplate": {s:"items.png",x:80,y:32},
-  "Leather Pants":      {s:"items.png",x:96,y:32},
-  "Wheat":              {s:"items.png",x:128,y:32},
-  "Raw Porkchop":       {s:"items.png",x:240,y:48},
-  "Bucket":             {s:"items.png",x:80,y:64},
-  "Water Bucket":       {s:"items.png",x:96,y:64},
-  "Boat":               {s:"items.png",x:208,y:64},
-  "Sugar Canes":        {s:"items.png",x:32,y:80},
-  "Bone":               {s:"items.png",x:0,y:96},
-  "Bed":                {s:"items.png",x:48,y:96},
-  "Shears":             {s:"items.png",x:112,y:96},
-};
-
-function renderInventory(invStr) {
-  const items = {};
-  if (invStr) {
-    invStr.split(",").forEach(function(part) {
-      const idx = part.lastIndexOf(":");
-      if (idx < 0) return;
-      const name  = part.slice(0, idx).trim();
-      const count = parseInt(part.slice(idx + 1)) || 0;
-      if (name && count > 0) items[name] = count;
-    });
-  }
-
-  const grid  = document.getElementById("inv-grid");
-  if (!grid) return;
-
-  const entries = Object.entries(items);
-  const TOTAL   = 36;
-  const slots   = entries.slice(0, TOTAL);
-  while (slots.length < TOTAL) slots.push(null);
-
-  let html = "";
-  slots.forEach(function(slot, i) {
-    if (i === 27) html += '<div class="inv-hotbar-sep"></div>';
-    if (!slot) {
-      html += '<div class="inv-slot empty"></div>';
-    } else {
-      const name  = slot[0];
-      const count = slot[1];
-      const sp    = ITEM_SPRITES[name];
-      let spriteStyle = "";
-      if (sp) {
-        spriteStyle = 'background-image:url(' + sp.s + ');' +
-          'background-position:-' + (sp.x * 2) + 'px -' + (sp.y * 2) + 'px;' +
-          'background-size:512px 512px;';
-      }
-      html += '<div class="inv-slot">' +
-        '<div class="inv-sprite" style="' + spriteStyle + '"></div>' +
-        (count > 1 ? '<span class="inv-count">' + count + '</span>' : '') +
-        '<span class="inv-tooltip">' + name + (count > 1 ? ' x' + count : '') + '</span>' +
-        '</div>';
-    }
-  });
-  grid.innerHTML = html;
-}
-
-async function loadHeatmap() {
-  try {
-    let pts = await apiFetch("/api/heatmap" + rangeParams());
-    if (!pts.length) return;
-
-    const xs = pts.map(p => p.x);
-    const zs = pts.map(p => p.z);
-
-    const tracePath = {
-      x: xs, y: zs,
-      type: "scatter", mode: "lines",
-      name: "Chemin",
-      line: { color: "#53d8fb", width: 1 },
-      hovertemplate: "X: %{x:.0f}<br>Z: %{y:.0f}<extra>Chemin</extra>",
-    };
-
-    const traceStart = {
-      x: [xs[0]], y: [zs[0]],
-      type: "scatter", mode: "markers",
-      name: "Départ",
-      marker: { color: "#a8ff78", size: 10, symbol: "triangle-up" },
-      hovertemplate: "Départ<br>X: %{x:.0f}<br>Z: %{y:.0f}<extra></extra>",
-    };
-
-    const traceCurrent = {
-      x: [xs[xs.length - 1]], y: [zs[zs.length - 1]],
-      type: "scatter", mode: "markers",
-      name: "Position actuelle",
-      marker: { color: "#e94560", size: 10, symbol: "circle" },
-      hovertemplate: "Position actuelle<br>X: %{x:.0f}<br>Z: %{y:.0f}<extra></extra>",
-    };
-
-    const layout = {
-      ...LAYOUT_BASE,
-      xaxis: { ...LAYOUT_BASE.xaxis, title: "X (blocks)" },
-      yaxis: { ...LAYOUT_BASE.yaxis, title: "Z (blocks)", scaleanchor: "x", scaleratio: 1, autorange: "reversed" },
-    };
-
-    Plotly.react("chart-heatmap", [tracePath, traceStart, traceCurrent], layout, PLOTLY_CONFIG);
-  } catch(e) { showError(e.message); }
-}
-
-async function loadItems() {}
-
-// ================================================================
-// Death log
-// ================================================================
-async function loadDeaths() {
-  try {
-    const deaths = await apiFetch("/api/deaths");
-    const el = document.getElementById("death-log");
-    if (!deaths.length) {
-      el.innerHTML = "<span style='color:var(--subtext)'>No deaths recorded.</span>";
-      return;
-    }
-    const rows = deaths.map(d => `
-      <tr>
-        <td>#${d.death_number}</td>
-        <td>${ticksToHMS(d.igt)}</td>
-        <td>${d.x != null ? Math.round(d.x).toLocaleString() : "?"}</td>
-        <td>${d.z != null ? Math.round(d.z).toLocaleString() : "?"}</td>
-      </tr>`).join("");
-    el.innerHTML = `
-      <table class="death-table">
-        <thead><tr><th>#</th><th>IGT</th><th>X</th><th>Z</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>`;
-  } catch(e) { showError(e.message); }
-}
-
-// ================================================================
-// Chart toggle checkboxes
-// ================================================================
-document.querySelectorAll(".toggle-list input").forEach(cb => {
-  cb.addEventListener("change", () => {
-    const card = document.getElementById(cb.dataset.card);
-    if (card) card.classList.toggle("hidden", !cb.checked);
-  });
-});
-
-// ================================================================
-// Tick value helper for axis labels
-// ================================================================
-function _tickVals(arr, n) {
-  if (!arr.length) return [];
-  const step = Math.max(1, Math.floor(arr.length / n));
-  const vals = [];
-  for (let i = 0; i < arr.length; i += step) vals.push(arr[i]);
-  return vals;
-}
-
-// ================================================================
-// Last hour IGT filter
-// ================================================================
-async function lastHourFilter() {
-  // Fetch current max IGT from summary, then set window to last 72000 ticks
-  try {
-    const s = await apiFetch("/api/summary");
-    const maxIgt = s.total_igt || 0;
-    const fromIgt = Math.max(0, maxIgt - 72000);
-    // Convert to hh:mm:ss and fill fields
-    function fillHMS(prefix, ticks) {
-      const secs = Math.floor(ticks / 20);
-      document.getElementById(prefix+"-h").value = Math.floor(secs/3600);
-      document.getElementById(prefix+"-m").value = Math.floor((secs%3600)/60);
-      document.getElementById(prefix+"-s").value = secs%60;
-    }
-    fillHMS("from", fromIgt);
-    fillHMS("to",   maxIgt);
-    filterFromTicks = fromIgt;
-    filterToTicks   = maxIgt;
-    loadAll();
-  } catch(e) { showError(e.message); }
-}
-
-// ================================================================
-// Elevation chart
-// ================================================================
-async function loadElevation() {
-  try {
-    let data = await apiFetch("/api/elevation" + rangeParams());
-    data = filterByIgt(data);
-    if (!data.length) return;
-    const x   = igtAxis(data);
-    const lbl = igtLabels(data);
-
-    const traces = [{
-      x, y: data.map(d => d.elevation),
-      type: "scatter", mode: "lines", name: "Y",
-      line: { color: "#f5c542", width: 1.2 },
-      fill: "tozeroy", fillcolor: "rgba(245,197,66,.1)",
-      hovertemplate: "%{text}<br>Y: %{y:.1f}<extra></extra>",
-      text: lbl,
-    }];
-
-    const layout = {
-      ...LAYOUT_BASE,
-      yaxis: { ...LAYOUT_BASE.yaxis, title: "Y (blocks)", range: [40, 128] },
-      xaxis: { ...LAYOUT_BASE.xaxis,
-                tickvals: _tickVals(x, 10),
-                ticktext: _tickVals(x, 10).map(ticksToHMS),
-                title: "IGT (hh:mm:ss)" },
-    };
-    Plotly.react("chart-elevation", traces, layout, PLOTLY_CONFIG);
-  } catch(e) { showError(e.message); }
-}
-
 
 var PACE_HIST = {
   0:0, 1:29385, 2:58206, 3:87505, 4:115440, 5:143875,
@@ -1397,23 +812,11 @@ async function loadProgression() {
   } catch(e) { /* silencieux */ }
 }
 
-// ================================================================
-// Load all
-// ================================================================
 function loadAll() {
   loadSummary();
   loadProgression();
-  loadHP();
-  loadSpeed();
-  loadDistance();
-  loadX();
-  loadElevation();
-  loadHeatmap();
-  loadItems();
-  loadDeaths();
 }
 
-// Initial load + auto-refresh every 30s
 loadAll();
 setInterval(loadAll, REFRESH_MS);
 </script>
