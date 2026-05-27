@@ -508,8 +508,9 @@
     <!-- Inventaire -->
     <div class="chart-card" id="card-items">
       <h2>🎒 Inventaire</h2>
-      <div class="inv-wrapper">
-        <div class="inv-grid" id="inv-grid"></div>
+      <div style="display:flex; align-items:center; gap:12px; background:#c6c6c6; border:3px solid; border-color:#fff #555 #555 #fff; padding:7px; box-sizing:border-box;">
+        <canvas id="skin-canvas" width="76" height="142" style="image-rendering:pixelated; flex-shrink:0;"></canvas>
+        <div class="inv-grid" id="inv-grid" style="flex:1"></div>
       </div>
     </div>
 
@@ -687,44 +688,40 @@ function fmtSecs(sec) {
 // ================================================================
 // Summary
 // ================================================================
+function _set(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
 async function loadSummary() {
   try {
     const s = await apiFetch("/api/summary");
 
-    const igt = s.total_igt || 0;
-    document.getElementById("stat-igt").textContent    = ticksToHMS(igt);
+    _set("stat-igt",           ticksToHMS(s.total_igt || 0));
+    _set("stat-x",             s.current_x != null ? `${Math.abs(Math.round(s.current_x)).toLocaleString()} blocks` : "—");
+    _set("stat-dist",          `${Math.round(s.total_distance ?? 0).toLocaleString()} bl`);
+    _set("stat-hp",            `${(s.total_hp_lost ?? 0).toFixed(1)}`);
+    _set("stat-deaths",        s.death_count ?? 0);
+    _set("stat-saves",         (s.total_ticks ?? 0).toLocaleString());
+    _set("stat-boats",         s.boats_used ?? "—");
+    _set("stat-soups",         s.soups_used ?? "—");
+    _set("stat-pork",          s.pork_eaten ?? "—");
+    _set("stat-ct",            s.crafting_tables_used ?? "—");
+    _set("stat-axes",          s.axes_crafted ?? "—");
+    _set("stat-shears",        s.shears_crafted ?? "—");
+    _set("stat-rain",          s.total_rain_episodes ?? "—");
+    _set("stat-thunder",       s.total_thunder_episodes ?? "—");
+    _set("stat-nights",        s.nights_slept ?? "—");
+    _set("stat-nights-walked", s.nights_walked ?? "—");
+    _set("stat-avgx-global",   s.avg_x_global != null ? `${s.avg_x_global.toFixed(3)} bl/s` : "—");
+    _set("stat-avgx-hour",     s.avg_x_last_hour != null ? `${s.avg_x_last_hour.toFixed(3)} bl/s` : "—");
 
-    const minX = s.min_x ?? 0;
-    const maxX = s.max_x ?? 0;
-    // net X displacement (most negative = farthest toward farlands)
-    document.getElementById("stat-x").textContent     = s.current_x != null ? `${Math.abs(Math.round(s.current_x)).toLocaleString()} blocks` : "—";
-    document.getElementById("stat-dist").textContent  = `${Math.round(s.total_distance ?? 0).toLocaleString()} bl`;
-    document.getElementById("stat-hp").textContent    = `${(s.total_hp_lost ?? 0).toFixed(1)}`;
-    document.getElementById("stat-deaths").textContent = s.death_count ?? 0;
-    document.getElementById("stat-saves").textContent   = (s.total_ticks ?? 0).toLocaleString();
-    document.getElementById("stat-boats").textContent   = s.boats_used ?? "—";
-    document.getElementById("stat-soups").textContent   = s.soups_used           ?? "—";
-    document.getElementById("stat-pork").textContent    = s.pork_eaten           ?? "—";
-    document.getElementById("stat-ct").textContent      = s.crafting_tables_used ?? "—";
-    document.getElementById("stat-axes").textContent    = s.axes_crafted         ?? "—";
-    document.getElementById("stat-shears").textContent  = s.shears_crafted       ?? "—";
-
-    // Rain / thunder: convert IGT ticks to hh:mm:ss
-    document.getElementById("stat-rain").textContent    = s.total_rain_episodes    ?? "—";
-    document.getElementById("stat-thunder").textContent = s.total_thunder_episodes ?? "—";
-    document.getElementById("stat-nights").textContent        = s.nights_slept ?? "—";
-    document.getElementById("stat-nights-walked").textContent = s.nights_walked ?? "—";
     if (s.first_real_ts) {
       _firstRealTs = s.first_real_ts;
-      document.getElementById("stat-rta").textContent = fmtSecs(Date.now() / 1000 - s.first_real_ts);
+      _set("stat-rta", fmtSecs(Date.now() / 1000 - s.first_real_ts));
     }
     if (s.inventory != null) renderInventory(s.inventory);
-    document.getElementById("stat-avgx-global").textContent =
-      s.avg_x_global != null ? `${s.avg_x_global.toFixed(3)} bl/s` : "—";
-    document.getElementById("stat-avgx-hour").textContent =
-      s.avg_x_last_hour != null ? `${s.avg_x_last_hour.toFixed(3)} bl/s` : "—";
-
-    // last-updated handled by updateLastUpdated()
+    drawSkin(_useFlask ? '/skin.png' : 'skin.png');
   } catch(e) { showError(e.message); }
 }
 
@@ -900,111 +897,116 @@ async function loadX() {}
 // ================================================================
 // Item flow (gained only, sorted by gained desc)
 // ================================================================
-const ITEM_SPRITES = {
-  "Stone":              {s:"terrain.png",x:16,y:0},
-  "Grass":              {s:"terrain.png",x:32,y:0},
-  "Dirt":               {s:"terrain.png",x:48,y:0},
-  "Cobblestone":        {s:"terrain.png",x:64,y:0},
-  "Wooden Plank":       {s:"terrain.png",x:80,y:0},
-  "Iron Ore":           {s:"terrain.png",x:240,y:0},
-  "Wood":               {s:"terrain.png",x:16,y:16},
-  "Leaves":             {s:"terrain.png",x:32,y:16},
-  "Glass":              {s:"terrain.png",x:64,y:16},
-  "Lapis Lazuli Ore":   {s:"terrain.png",x:80,y:16},
-  "Wool":               {s:"terrain.png",x:48,y:32},
-  "Brown Mushroom":     {s:"terrain.png",x:112,y:32},
-  "Red Mushroom":       {s:"terrain.png",x:128,y:32},
-  "Crafting Table":     {s:"terrain.png",x:160,y:48},
-  "Iron Shovel":        {s:"items.png",x:0,y:0},
-  "Iron Pickaxe":       {s:"items.png",x:16,y:0},
-  "Iron Axe":           {s:"items.png",x:32,y:0},
-  "Bow":                {s:"items.png",x:80,y:0},
-  "Arrow":              {s:"items.png",x:96,y:0},
-  "Coal":               {s:"items.png",x:112,y:0},
-  "Diamond":            {s:"items.png",x:128,y:0},
-  "Iron Ingot":         {s:"items.png",x:144,y:0},
-  "Gold Ingot":         {s:"items.png",x:160,y:0},
-  "Iron Sword":         {s:"items.png",x:176,y:0},
-  "Wooden Sword":       {s:"items.png",x:192,y:0},
-  "Wooden Shovel":      {s:"items.png",x:208,y:0},
-  "Wooden Pickaxe":     {s:"items.png",x:224,y:0},
-  "Wooden Axe":         {s:"items.png",x:240,y:0},
-  "Stone Sword":        {s:"items.png",x:0,y:16},
-  "Stone Shovel":       {s:"items.png",x:16,y:16},
-  "Stone Pickaxe":      {s:"items.png",x:32,y:16},
-  "Stone Axe":          {s:"items.png",x:48,y:16},
-  "Diamond Sword":      {s:"items.png",x:64,y:16},
-  "Diamond Shovel":     {s:"items.png",x:80,y:16},
-  "Diamond Pickaxe":    {s:"items.png",x:96,y:16},
-  "Diamond Axe":        {s:"items.png",x:112,y:16},
-  "Stick":              {s:"items.png",x:128,y:16},
-  "Bowl":               {s:"items.png",x:144,y:16},
-  "Mushroom Soup":      {s:"items.png",x:160,y:16},
-  "Golden Sword":       {s:"items.png",x:176,y:16},
-  "Gunpowder":          {s:"items.png",x:192,y:16},
-  "Wooden Hoe":         {s:"items.png",x:208,y:16},
-  "Stone Hoe":          {s:"items.png",x:224,y:16},
-  "String":             {s:"items.png",x:240,y:16},
-  "Feather":            {s:"items.png",x:0,y:32},
-  "Wheat Seeds":        {s:"items.png",x:32,y:32},
-  "Bread":              {s:"items.png",x:48,y:32},
-  "Leather Helmet":     {s:"items.png",x:64,y:32},
-  "Leather Chestplate": {s:"items.png",x:80,y:32},
-  "Leather Pants":      {s:"items.png",x:96,y:32},
-  "Wheat":              {s:"items.png",x:128,y:32},
-  "Raw Porkchop":       {s:"items.png",x:240,y:48},
-  "Bucket":             {s:"items.png",x:80,y:64},
-  "Water Bucket":       {s:"items.png",x:96,y:64},
-  "Boat":               {s:"items.png",x:208,y:64},
-  "Sugar Canes":        {s:"items.png",x:32,y:80},
-  "Bone":               {s:"items.png",x:0,y:96},
-  "Bed":                {s:"items.png",x:48,y:96},
-  "Shears":             {s:"items.png",x:112,y:96},
-};
+let ITEM_SPRITES = {};
+(async function loadSprites() {
+  try {
+    const url = _useFlask === false ? 'inventory_sprites.json?_=' + Date.now() : 'inventory_sprites.json';
+    const r = await fetch(url);
+    const data = await r.json();
+    Object.keys(data).forEach(function(name) {
+      ITEM_SPRITES[name] = { s: "inventory_sprites.png", x: data[name].x, y: data[name].y };
+    });
+  } catch(e) { console.warn("inventory_sprites.json introuvable:", e); }
+})();
+
+
+function drawSkin(url) {
+  const canvas = document.getElementById('skin-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function() {
+    const S = 8; // scale factor (each pixel → S px)
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    function drawPart(sx, sy, sw, sh, dx, dy, flipX) {
+      if (flipX) {
+        ctx.save();
+        ctx.translate(dx * S + sw * S, 0);
+        ctx.scale(-1, 1);
+        ctx.drawImage(img, sx, sy, sw, sh, 0, dy * S, sw * S, sh * S);
+        ctx.restore();
+      } else {
+        ctx.drawImage(img, sx, sy, sw, sh, dx * S, dy * S, sw * S, sh * S);
+      }
+    }
+
+    // canvas = 76x142 = 9.5 * 8 x 17.75 * 8
+    // Centré sur x = 0.75 col
+    var ox = 0.75; // offset X en blocs de S
+
+    // Tête (8x8) → centré
+    drawPart(8, 8, 8, 8, ox + 1, 0);
+    // Overlay tête (chapeau)
+    drawPart(40, 8, 8, 8, ox + 1, 0);
+
+    // Corps (8x12)
+    drawPart(20, 20, 8, 12, ox + 1, 8);
+
+    // Bras droit (4x12) — à gauche du corps
+    drawPart(44, 20, 4, 12, ox - 3, 8);
+    // Bras gauche (4x12) — miroir du droit, à droite du corps
+    drawPart(44, 20, 4, 12, ox + 9, 8, true);
+
+    // Jambe droite (4x12)
+    drawPart(4, 20, 4, 12, ox + 1, 20);
+    // Jambe gauche (4x12) — miroir
+    drawPart(4, 20, 4, 12, ox + 5, 20, true);
+  };
+  img.src = url;
+}
 
 function renderInventory(invStr) {
-  const items = {};
+  // Format: "slot:Name:count,slot:Name:count,..."
+  // Slots 0-8 = hotbar, 9-35 = inventaire principal
+  const slots = new Array(36).fill(null);
+
   if (invStr) {
     invStr.split(",").forEach(function(part) {
-      const idx = part.lastIndexOf(":");
-      if (idx < 0) return;
-      const name  = part.slice(0, idx).trim();
-      const count = parseInt(part.slice(idx + 1)) || 0;
-      if (name && count > 0) items[name] = count;
+      const bits = part.split(":");
+      if (bits.length < 3) return;
+      const slot  = parseInt(bits[0]);
+      const count = parseInt(bits[bits.length - 1]) || 0;
+      const name  = bits.slice(1, -1).join(":");
+      if (slot >= 0 && slot < 36 && name && count > 0) {
+        slots[slot] = { name, count };
+      }
     });
   }
 
-  const grid  = document.getElementById("inv-grid");
+  const grid = document.getElementById("inv-grid");
   if (!grid) return;
 
-  const entries = Object.entries(items);
-  const TOTAL   = 36;
-  const slots   = entries.slice(0, TOTAL);
-  while (slots.length < TOTAL) slots.push(null);
-
+  // Afficher : inventaire principal (slots 9-35) puis hotbar (slots 0-8)
   let html = "";
-  slots.forEach(function(slot, i) {
-    if (i === 27) html += '<div class="inv-hotbar-sep"></div>';
-    if (!slot) {
-      html += '<div class="inv-slot empty"></div>';
-    } else {
-      const name  = slot[0];
-      const count = slot[1];
-      const sp    = ITEM_SPRITES[name];
-      let spriteStyle = "";
-      if (sp) {
-        spriteStyle = 'background-image:url(' + sp.s + ');' +
-          'background-position:-' + (sp.x * 2) + 'px -' + (sp.y * 2) + 'px;' +
-          'background-size:512px 512px;';
-      }
-      html += '<div class="inv-slot">' +
-        '<div class="inv-sprite" style="' + spriteStyle + '"></div>' +
-        (count > 1 ? '<span class="inv-count">' + count + '</span>' : '') +
-        '<span class="inv-tooltip">' + name + (count > 1 ? ' x' + count : '') + '</span>' +
-        '</div>';
-    }
-  });
+  for (var i = 9; i < 36; i++) {
+    if (i === 9) {} // début inventaire
+    html += renderSlot(slots[i]);
+  }
+  html += '<div class="inv-hotbar-sep"></div>';
+  for (var i = 0; i < 9; i++) {
+    html += renderSlot(slots[i]);
+  }
   grid.innerHTML = html;
+}
+
+function renderSlot(slot) {
+  if (!slot) return '<div class="inv-slot empty"></div>';
+  const sp = ITEM_SPRITES[slot.name];
+  let spriteStyle = "";
+  if (sp) {
+    spriteStyle = 'background-image:url(' + sp.s + ');' +
+      'background-position:-' + sp.x + 'px -' + sp.y + 'px;' +
+      'background-size:auto;';
+  }
+  return '<div class="inv-slot">' +
+    '<div class="inv-sprite" style="' + spriteStyle + '"></div>' +
+    (slot.count > 1 ? '<span class="inv-count">' + slot.count + '</span>' : '') +
+    '<span class="inv-tooltip">' + slot.name + (slot.count > 1 ? ' x' + slot.count : '') + '</span>' +
+    '</div>';
 }
 
 async function loadHeatmap() {
@@ -1256,6 +1258,7 @@ async function loadProgression() {
 // Load all
 // ================================================================
 function loadAll() {
+  loadSummary();
   loadHP();
   loadSpeed();
   loadDistance();
@@ -1264,6 +1267,7 @@ function loadAll() {
   loadHeatmap();
   loadItems();
   loadDeaths();
+  updateLastUpdated();
 }
 
 function updateLastUpdated() {
@@ -1276,7 +1280,7 @@ loadAll();
 setInterval(loadAll, REFRESH_MS);
 
 
-function updateLastUpdated() {
+function _unused() {
   const el = document.getElementById("last-updated");
   if (el) el.textContent = "Updated " + new Date().toLocaleTimeString();
 }
