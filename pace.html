@@ -259,15 +259,27 @@ function renderPace(data) {
   if (cur) cur.scrollIntoView({block: 'center', behavior: 'smooth'});
 }
 
+// Détection Flask vs JSON statique
+var _useFlask = null;
+async function _detect() {
+  if (_useFlask !== null) return;
+  try {
+    var p = await fetch('/api/summary', { method: 'HEAD' });
+    _useFlask = p.ok;
+  } catch(_) { _useFlask = false; }
+}
+
 async function loadPace() {
   try {
-    var resp = await fetch('data/pace.json?_=' + Date.now());
+    await _detect();
+    var paceUrl    = _useFlask ? '/api/pace'    : 'data/pace.json?_='    + Date.now();
+    var summaryUrl = _useFlask ? '/api/summary' : 'data/summary.json?_=' + Date.now();
+    var resp = await fetch(paceUrl);
     var data = await resp.json();
     if (data.length) {
       renderPace(data);
-      // RTA depuis first_real_ts
       try {
-        var sum = await fetch('data/summary.json?_=' + Date.now()).then(function(r){ return r.json(); });
+        var sum = await fetch(summaryUrl).then(function(r){ return r.json(); });
         if (sum.first_real_ts) {
           document.getElementById('s-rta').textContent = fmtS(Date.now() / 1000 - sum.first_real_ts);
         }

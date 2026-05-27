@@ -752,7 +752,9 @@ function filterByIgt(rows, igtKey = "igt") {
 // ================================================================
 // Fetch helpers
 // ================================================================
-// Mapping API → JSON statique
+// Mode local (Flask) ou statique (GitHub Pages) — détecté automatiquement
+let _useFlask = null;
+
 const API_MAP = {
   "/api/summary":   "data/summary.json",
   "/api/hp":        "data/hp.json",
@@ -763,10 +765,15 @@ const API_MAP = {
 };
 
 async function apiFetch(endpoint) {
-  // Retirer les query params (?from_igt=... etc.) pour le mapping
+  if (_useFlask === null) {
+    try {
+      const probe = await fetch("/api/summary", { method: "HEAD" });
+      _useFlask = probe.ok;
+    } catch(_) { _useFlask = false; }
+  }
   const base = endpoint.split("?")[0];
-  const url  = API_MAP[base] || endpoint;
-  const r    = await fetch(url + "?_=" + Date.now()); // cache-bust
+  const url  = _useFlask ? endpoint : (API_MAP[base] || endpoint) + "?_=" + Date.now();
+  const r    = await fetch(url);
   if (!r.ok) throw new Error(`${url} → HTTP ${r.status}`);
   return r.json();
 }
@@ -1252,7 +1259,7 @@ function _fmtS(s) {
 
 async function loadProgression() {
   try {
-    var resp = await fetch('data/pace.json?_=' + Date.now());
+    var resp = await fetch(_useFlask ? '/api/pace' : 'data/pace.json?_=' + Date.now());
     var data = await resp.json();
     if (!data || !data.length) return;
 
