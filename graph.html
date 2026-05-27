@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Farlands Tracker — Graphs</title>
   <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.27.0/plotly.min.js"></script>
+  <script src="https://unpkg.com/skinview3d@2.1.0/bundles/skinview3d.bundle.js"></script>
   <style>
     /* ── Reset & base ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -509,7 +510,7 @@
     <div class="chart-card" id="card-items">
       <h2>🎒 Inventaire</h2>
       <div style="display:flex; align-items:center; gap:12px; background:#c6c6c6; border:3px solid; border-color:#fff #555 #555 #fff; padding:7px; box-sizing:border-box;">
-        <canvas id="skin-canvas" width="76" height="142" style="image-rendering:pixelated; flex-shrink:0;"></canvas>
+        <canvas id="skin-canvas" style="width:80px; height:160px; flex-shrink:0; background:transparent;"></canvas>
         <div class="inv-grid" id="inv-grid" style="flex:1"></div>
       </div>
     </div>
@@ -910,53 +911,28 @@ let ITEM_SPRITES = {};
 })();
 
 
+
+
+var _skinViewer = null;
 function drawSkin(url) {
-  const canvas = document.getElementById('skin-canvas');
+  if (typeof skinview3d === 'undefined') return;
+  var canvas = document.getElementById('skin-canvas');
   if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = false;
-
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = function() {
-    const S = 8; // scale factor (each pixel → S px)
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    function drawPart(sx, sy, sw, sh, dx, dy, flipX) {
-      if (flipX) {
-        ctx.save();
-        ctx.translate(dx * S + sw * S, 0);
-        ctx.scale(-1, 1);
-        ctx.drawImage(img, sx, sy, sw, sh, 0, dy * S, sw * S, sh * S);
-        ctx.restore();
-      } else {
-        ctx.drawImage(img, sx, sy, sw, sh, dx * S, dy * S, sw * S, sh * S);
-      }
-    }
-
-    // canvas = 76x142 = 9.5 * 8 x 17.75 * 8
-    // Centré sur x = 0.75 col
-    var ox = 0.75; // offset X en blocs de S
-
-    // Tête (8x8) → centré
-    drawPart(8, 8, 8, 8, ox + 1, 0);
-    // Overlay tête (chapeau)
-    drawPart(40, 8, 8, 8, ox + 1, 0);
-
-    // Corps (8x12)
-    drawPart(20, 20, 8, 12, ox + 1, 8);
-
-    // Bras droit (4x12) — à gauche du corps
-    drawPart(44, 20, 4, 12, ox - 3, 8);
-    // Bras gauche (4x12) — miroir du droit, à droite du corps
-    drawPart(44, 20, 4, 12, ox + 9, 8, true);
-
-    // Jambe droite (4x12)
-    drawPart(4, 20, 4, 12, ox + 1, 20);
-    // Jambe gauche (4x12) — miroir
-    drawPart(4, 20, 4, 12, ox + 5, 20, true);
-  };
-  img.src = url;
+  if (_skinViewer) {
+    _skinViewer.loadSkin(url);
+    return;
+  }
+  _skinViewer = new skinview3d.SkinViewer({
+    canvas: canvas,
+    width: 80,
+    height: 160,
+    skin: url,
+  });
+  _skinViewer.controls.enabled = true;
+  _skinViewer.playerObject.rotation.y = 0.4;
+  _skinViewer.playerObject.rotation.x = 0.05;
+  _skinViewer.renderer.setClearColor(0x000000, 0);
+  _skinViewer.animation = null;
 }
 
 function renderInventory(invStr) {
