@@ -436,9 +436,19 @@
       <h3>Run summary</h3>
       <div class="stat-grid">
         <!-- Row 1: Distance -X alone (gold, full width, centred) -->
-        <div class="stat-card" style="grid-column:span 2; text-align:center">
+        <div class="stat-card" style="grid-column:span 2; text-align:center; position:relative; overflow:visible">
           <div class="label">Distance -X</div>
           <div class="value gold" id="stat-x" style="font-size:1.35rem">—</div>
+          <div id="stat-splash-pct" style="
+            display:none;
+            position:absolute; top:-8px; right:-6px;
+            color:#ffff55; font-weight:700; font-size:.78rem;
+            transform:rotate(15deg); transform-origin:center;
+            text-shadow:2px 2px 0 #3f3f00;
+            font-family:monospace;
+            pointer-events:none;
+            white-space:nowrap;
+          ">0.000%</div>
         </div>
         <!-- Row 2: IGT + RTA -->
         <div class="stat-card">
@@ -591,7 +601,7 @@
           <div class="val" style="color:var(--gold)" id="idx-prog-pace">—</div>
         </div>
         <div class="prog-stat">
-          <div class="lbl">Dernier % complet</div>
+          <div class="lbl">Average % time</div>
           <div class="val" id="idx-prog-seg">—</div>
         </div>
         <div class="prog-stat">
@@ -1166,7 +1176,7 @@ async function loadHeatmap() {
     const layout = {
       ...LAYOUT_BASE,
       xaxis: { ...LAYOUT_BASE.xaxis, title: "X (blocks)" },
-      yaxis: { ...LAYOUT_BASE.yaxis, title: "Z (blocks)", scaleanchor: "x", scaleratio: 1 },
+      yaxis: { ...LAYOUT_BASE.yaxis, title: "Z (blocks)", scaleanchor: "x", scaleratio: 1, autorange: "reversed" },
     };
 
     Plotly.react("chart-heatmap", [tracePath, traceStart, traceCurrent], layout, PLOTLY_CONFIG);
@@ -1319,6 +1329,11 @@ async function loadProgression() {
 
     document.getElementById('idx-prog-bar').style.width = (last.i / 1000) + '%';
     document.getElementById('idx-prog-pct').textContent = last.pct.toFixed(3) + '%';
+    var splashEl = document.getElementById('stat-splash-pct');
+    if (splashEl) {
+      splashEl.textContent = last.pct.toFixed(3) + '%';
+      splashEl.style.display = 'block';
+    }
     document.getElementById('idx-prog-igt').textContent = _fmtS(last.igt_total_s);
 
     if (_firstRealTs) {
@@ -1327,13 +1342,27 @@ async function loadProgression() {
     document.getElementById('idx-prog-pace').textContent = last.pace_overall.toFixed(4) + ' bl/s';
     document.getElementById('idx-prog-eta').textContent = _fmtS(last.eta_ovr_s);
 
-    // Dernier % complet (durée du segment en cours)
-    var currentPctInt = Math.ceil(last.pct);
-    var lastGrp  = data.filter(function(d){ return Math.ceil(d.pct) === currentPctInt; });
-    var prevGrp  = data.filter(function(d){ return Math.ceil(d.pct) === currentPctInt - 1; });
-    var segEnd   = lastGrp.length ? lastGrp[lastGrp.length-1].igt_total_s : null;
-    var segStart = prevGrp.length ? prevGrp[prevGrp.length-1].igt_total_s : 0;
-    document.getElementById('idx-prog-seg').textContent = segEnd != null ? _fmtS(segEnd - segStart) : '--';
+    // Average % time : moyenne des % terminés (ceux dont le suivant existe)
+    var pctGroups = {};
+    data.forEach(function(d) {
+      var p = Math.ceil(d.pct);
+      if (!pctGroups[p]) pctGroups[p] = [];
+      pctGroups[p].push(d);
+    });
+    var completedPcts = Object.keys(pctGroups).map(Number)
+      .filter(function(p){ return p >= 1 && pctGroups[p + 1] != null; })
+      .sort(function(a,b){ return a - b; });
+    var avgSegS = null;
+    if (completedPcts.length > 0) {
+      var prevIgtAvg = 0, totalSegS = 0;
+      completedPcts.forEach(function(p) {
+        var lastM = pctGroups[p][pctGroups[p].length - 1];
+        totalSegS  += lastM.igt_total_s - prevIgtAvg;
+        prevIgtAvg  = lastM.igt_total_s;
+      });
+      avgSegS = totalSegS / completedPcts.length;
+    }
+    document.getElementById('idx-prog-seg').textContent = avgSegS != null ? _fmtS(avgSegS) : '--';
 
     // Delta vs run précédente (interpolation)
     var pctF = last.pct;

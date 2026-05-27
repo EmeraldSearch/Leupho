@@ -248,7 +248,7 @@ function renderPace(data) {
       '<td>' + paceSeg + '</td>' +
       '<td>' + fmtS(lastM.eta_ovr_s) + '</td>' +
       '<td class="neu">' + (hSegS != null ? fmtS(hSegS) : '--') + '</td>' +
-      '<td>' + fmtDeltaIGT(dIGT) + '</td>' +
+      '<td>' + (p !== currentPct ? fmtDeltaIGT(dIGT) : '<span class="neu">—</span>') + '</td>' +
       '</tr>'
     );
     prevIGT = lastM.igt_total_s;
