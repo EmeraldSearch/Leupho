@@ -22,7 +22,7 @@ BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 DB_PATH   = os.path.join(BASE_DIR, "tracker.db")
 DATA_DIR  = os.path.join(BASE_DIR, "data")
 INTERVAL_SUMMARY = 10   # secondes — summary.json (Run Summary)
-INTERVAL_CHARTS  = 30   # secondes — graphes
+INTERVAL_CHARTS  = 300  # secondes — graphes
 
 FARLANDS    = 12_550_821.0
 MILLI_SIZE  = 125.508_21
@@ -309,12 +309,22 @@ if __name__ == "__main__":
 
     if args.watch:
         import threading
+        _git_lock = threading.Lock()
         print(f"Summary every {INTERVAL_SUMMARY}s, charts every {INTERVAL_CHARTS}s. Ctrl+C to stop.")
+
+        def safe_push(fn, label):
+            db = Database(DB_PATH, readonly=True)
+            try:
+                fn(db)
+            finally:
+                db.close()
+            with _git_lock:
+                git_push(label=label)
 
         def loop_summary():
             while True:
                 try:
-                    export_summary_only()
+                    safe_push(lambda db: (export_summary(db), export_pace(db)), "summary")
                 except Exception as e:
                     print(f"[{time.strftime('%H:%M:%S')}] Summary error: {e}")
                 time.sleep(INTERVAL_SUMMARY)
@@ -322,7 +332,10 @@ if __name__ == "__main__":
         def loop_charts():
             while True:
                 try:
-                    export_charts()
+                    safe_push(lambda db: (
+                        export_hp(db), export_speed(db), export_distance(db),
+                        export_elevation(db), export_item_flow(db), export_deaths(db)
+                    ), "charts")
                 except Exception as e:
                     print(f"[{time.strftime('%H:%M:%S')}] Charts error: {e}")
                 time.sleep(INTERVAL_CHARTS)
