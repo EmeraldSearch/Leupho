@@ -240,6 +240,12 @@ def git_push() -> None:
 # Export all
 # ==============================================================
 
+def export_heatmap(db: Database) -> None:
+    rows = db.fetch_positions(None, None)
+    rows = downsample(rows, 10000)
+    write_json("heatmap.json", [{"x": r["x"], "z": r["z"]} for r in rows])
+
+
 def export_all() -> None:
     db = Database(DB_PATH, readonly=True)
     try:
@@ -247,6 +253,7 @@ def export_all() -> None:
         export_hp(db)
         export_speed(db)
         export_distance(db)
+        export_heatmap(db)
         export_elevation(db)
         export_item_flow(db)
         export_deaths(db)

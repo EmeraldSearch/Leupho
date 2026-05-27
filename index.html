@@ -252,6 +252,8 @@
     }
 
 
+    /* heatmap */
+    #card-heatmap .plotly-chart { height: 420px; }
     /* inventory */
     #card-items h2 { margin-bottom: 8px; }
     .inv-wrapper {
@@ -553,6 +555,7 @@
         <label><input type="checkbox" checked data-card="card-dist">     Distance (XZ)</label>
         <label><input type="checkbox" checked data-card="card-items">    Inventaire</label>
         <label><input type="checkbox" checked data-card="card-elevation"> Élévation</label>
+        <label><input type="checkbox" checked data-card="card-heatmap">   Chemin (XZ)</label>
         <label><input type="checkbox" checked data-card="card-deaths">   Death log</label>
       </div>
     </div>
@@ -620,6 +623,12 @@
       <div class="plotly-chart" id="chart-dist"></div>
     </div>
 
+
+    <!-- Heatmap -->
+    <div class="chart-card" id="card-heatmap">
+      <h2>🗺 Chemin parcouru (XZ)</h2>
+      <div class="plotly-chart" id="chart-heatmap"></div>
+    </div>
 
     <!-- Inventaire -->
     <div class="chart-card" id="card-items">
@@ -762,6 +771,7 @@ const API_MAP = {
   "/api/distance":  "data/distance.json",
   "/api/elevation": "data/elevation.json",
   "/api/deaths":    "data/deaths.json",
+  "/api/heatmap":   "data/heatmap.json",
 };
 
 async function apiFetch(endpoint) {
@@ -1121,6 +1131,25 @@ function renderInventory(invStr) {
   grid.innerHTML = html;
 }
 
+async function loadHeatmap() {
+  try {
+    let pts = await apiFetch("/api/heatmap" + rangeParams());
+    if (!pts.length) return;
+    const traces = [{
+      x: pts.map(p => p.x), y: pts.map(p => p.z),
+      type: "scatter", mode: "markers",
+      marker: { color: "var(--accent3)", size: 2, opacity: 0.5 },
+      hovertemplate: "X: %{x:.0f}<br>Z: %{y:.0f}<extra></extra>",
+    }];
+    const layout = {
+      ...LAYOUT_BASE,
+      xaxis: { ...LAYOUT_BASE.xaxis, title: "X" },
+      yaxis: { ...LAYOUT_BASE.yaxis, title: "Z", scaleanchor: "x" },
+    };
+    Plotly.react("chart-heatmap", traces, layout, PLOTLY_CONFIG);
+  } catch(e) { showError(e.message); }
+}
+
 async function loadItems() {}
 
 // ================================================================
@@ -1309,6 +1338,7 @@ function loadAll() {
   loadDistance();
   loadX();
   loadElevation();
+  loadHeatmap();
   loadItems();
   loadDeaths();
 }
