@@ -238,6 +238,11 @@ def git_push(label: str = "all") -> None:
                 ["git", "-C", BASE_DIR, "commit", "-m", f"data: auto-update ({label})"],
                 check=True, capture_output=True
             )
+            # Rebase sur le remote avant de pusher pour éviter les conflits
+            subprocess.run(
+                ["git", "-C", BASE_DIR, "pull", "--rebase", "--autostash"],
+                check=True, capture_output=True
+            )
             subprocess.run(
                 ["git", "-C", BASE_DIR, "push"],
                 check=True, capture_output=True
