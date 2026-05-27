@@ -1135,18 +1135,41 @@ async function loadHeatmap() {
   try {
     let pts = await apiFetch("/api/heatmap" + rangeParams());
     if (!pts.length) return;
-    const traces = [{
-      x: pts.map(p => p.x), y: pts.map(p => p.z),
+
+    const xs = pts.map(p => p.x);
+    const zs = pts.map(p => p.z);
+
+    const tracePath = {
+      x: xs, y: zs,
+      type: "scatter", mode: "lines",
+      name: "Chemin",
+      line: { color: "#53d8fb", width: 1 },
+      hovertemplate: "X: %{x:.0f}<br>Z: %{y:.0f}<extra>Chemin</extra>",
+    };
+
+    const traceStart = {
+      x: [xs[0]], y: [zs[0]],
       type: "scatter", mode: "markers",
-      marker: { color: "var(--accent3)", size: 2, opacity: 0.5 },
-      hovertemplate: "X: %{x:.0f}<br>Z: %{y:.0f}<extra></extra>",
-    }];
+      name: "Départ",
+      marker: { color: "#a8ff78", size: 10, symbol: "triangle-up" },
+      hovertemplate: "Départ<br>X: %{x:.0f}<br>Z: %{y:.0f}<extra></extra>",
+    };
+
+    const traceCurrent = {
+      x: [xs[xs.length - 1]], y: [zs[zs.length - 1]],
+      type: "scatter", mode: "markers",
+      name: "Position actuelle",
+      marker: { color: "#e94560", size: 10, symbol: "circle" },
+      hovertemplate: "Position actuelle<br>X: %{x:.0f}<br>Z: %{y:.0f}<extra></extra>",
+    };
+
     const layout = {
       ...LAYOUT_BASE,
-      xaxis: { ...LAYOUT_BASE.xaxis, title: "X" },
-      yaxis: { ...LAYOUT_BASE.yaxis, title: "Z", scaleanchor: "x" },
+      xaxis: { ...LAYOUT_BASE.xaxis, title: "X (blocks)" },
+      yaxis: { ...LAYOUT_BASE.yaxis, title: "Z (blocks)", scaleanchor: "x", scaleratio: 1 },
     };
-    Plotly.react("chart-heatmap", traces, layout, PLOTLY_CONFIG);
+
+    Plotly.react("chart-heatmap", [tracePath, traceStart, traceCurrent], layout, PLOTLY_CONFIG);
   } catch(e) { showError(e.message); }
 }
 
