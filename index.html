@@ -704,7 +704,6 @@ async function loadSummary() {
       _firstRealTs = s.first_real_ts;
       document.getElementById("stat-rta").textContent = fmtSecs(Date.now() / 1000 - s.first_real_ts);
     }
-    if (s.inventory != null) renderInventory(s.inventory);
     document.getElementById("stat-avgx-global").textContent =
       s.avg_x_global != null ? `${s.avg_x_global.toFixed(3)} bl/s` : "—";
     document.getElementById("stat-avgx-hour").textContent =
