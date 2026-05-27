@@ -21,7 +21,7 @@ from db import Database
 BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
 DB_PATH   = os.path.join(BASE_DIR, "tracker.db")
 DATA_DIR  = os.path.join(BASE_DIR, "data")
-INTERVAL  = 30   # secondes
+INTERVAL  = 300   # secondes
 
 FARLANDS    = 12_550_821.0
 MILLI_SIZE  = 125.508_21
