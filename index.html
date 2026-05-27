@@ -439,16 +439,27 @@
         <div class="stat-card" style="grid-column:span 2; text-align:center; position:relative; overflow:visible">
           <div class="label">Distance -X</div>
           <div class="value gold" id="stat-x" style="font-size:1.35rem">—</div>
-          <div id="stat-splash-pct" style="
-            display:none;
-            position:absolute; top:-8px; right:-6px;
-            color:#ffff55; font-weight:700; font-size:.78rem;
-            transform:rotate(15deg); transform-origin:center;
-            text-shadow:2px 2px 0 #3f3f00;
-            font-family:monospace;
-            pointer-events:none;
-            white-space:nowrap;
-          ">0.000%</div>
+          <style>
+            @keyframes splash-bounce {
+              0%,100% { transform: rotate(15deg) scale(1);   }
+              50%      { transform: rotate(15deg) scale(1.15); }
+            }
+            #stat-splash-pct {
+              display: none;
+              position: absolute;
+              top: -10px; right: -8px;
+              color: #ffff55;
+              font-weight: 700;
+              font-size: 1rem;
+              font-family: monospace;
+              white-space: nowrap;
+              pointer-events: none;
+              text-shadow: 2px 2px 0 #7a7000, -1px -1px 0 #7a7000;
+              animation: splash-bounce 0.8s ease-in-out infinite;
+              transform-origin: center;
+            }
+          </style>
+          <div id="stat-splash-pct">0.000%</div>
         </div>
         <!-- Row 2: IGT + RTA -->
         <div class="stat-card">
@@ -1321,6 +1332,13 @@ function _fmtS(s) {
 
 async function loadProgression() {
   try {
+    // S'assurer que _useFlask est détecté avant de fetcher
+    if (_useFlask === null) {
+      try {
+        var probe = await fetch('/api/summary', { method: 'HEAD' });
+        _useFlask = probe.ok;
+      } catch(_) { _useFlask = false; }
+    }
     var resp = await fetch(_useFlask ? '/api/pace' : 'data/pace.json?_=' + Date.now());
     var data = await resp.json();
     if (!data || !data.length) return;
