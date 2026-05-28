@@ -246,6 +246,16 @@ def export_heatmap(db: Database) -> None:
     write_json("heatmap.json", [{"x": r["x"], "z": r["z"]} for r in rows])
 
 
+def export_weather(db: Database) -> None:
+    rows = db.execute(
+        "SELECT type, igt, x FROM weather_episodes ORDER BY igt ASC"
+    ).fetchall()
+    write_json("weather.json", [
+        {"type": r["type"], "igt": r["igt"], "x": r["x"]}
+        for r in rows
+    ])
+
+
 def export_all() -> None:
     db = Database(DB_PATH, readonly=True)
     try:
@@ -257,6 +267,7 @@ def export_all() -> None:
         export_elevation(db)
         export_item_flow(db)
         export_deaths(db)
+        export_weather(db)
         export_pace(db)
     finally:
         db.close()
