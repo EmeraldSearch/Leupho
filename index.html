@@ -690,12 +690,20 @@
       var twitchScript = document.createElement('script');
       twitchScript.src = 'https://embed.twitch.tv/embed/v1.js';
       twitchScript.onload = function() {
+        var container = document.getElementById('twitch-embed');
+        var w = container.offsetWidth;
+        var h = Math.round(w * 9 / 16);
         new Twitch.Embed("twitch-embed", {
           width: "100%",
-          height: 400,
+          height: h,
           channel: "Leupho",
           theme: "dark",
           autoplay: false,
+        });
+        // Recalculer si la fenêtre est redimensionnée
+        window.addEventListener('resize', function() {
+          var iframe = container.querySelector('iframe');
+          if (iframe) iframe.style.height = Math.round(container.offsetWidth * 9 / 16) + 'px';
         });
       };
       document.head.appendChild(twitchScript);
