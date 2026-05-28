@@ -419,61 +419,6 @@
 
 
     /* ── Progression block ───────────────────────────────────── */
-    #card-progression {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-    }
-    #card-progression h2 {
-      font-size: .88rem;
-      font-weight: 600;
-      color: var(--subtext);
-      text-transform: uppercase;
-      letter-spacing: .07em;
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    #card-progression h2 a {
-      font-size: .72rem;
-      color: var(--accent3);
-      text-decoration: none;
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      padding: 2px 7px;
-      font-weight: 400;
-      letter-spacing: 0;
-      text-transform: none;
-    }
-    .prog-bar-wrap {
-      background: var(--bg);
-      border-radius: 4px;
-      overflow: hidden;
-      height: 10px;
-      margin-bottom: 12px;
-    }
-    .prog-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, var(--accent3), var(--accent4));
-      transition: width .5s;
-    }
-    .prog-stats {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .prog-stat {
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 8px 12px;
-      flex: 1;
-      min-width: 100px;
-    }
-    .prog-stat .lbl { font-size: .67rem; color: var(--subtext); margin-bottom: 3px; }
-    .prog-stat .val { font-size: .9rem; font-weight: 700; }
 
     /* death table */
     .death-table {
@@ -643,44 +588,6 @@
   <main>
 
     <div class="error-banner" id="error-banner"></div>
-
-    <!-- Progression (pace) -->
-    <div id="card-progression">
-      <h2>🧭 Progression <a href="pace.html">Détail →</a></h2>
-      <div class="prog-bar-wrap">
-        <div class="prog-bar-fill" id="idx-prog-bar" style="width:0%"></div>
-      </div>
-      <div class="prog-stats">
-        <div class="prog-stat">
-          <div class="lbl">Progression</div>
-          <div class="val" style="color:var(--accent3)" id="idx-prog-pct">—</div>
-        </div>
-        <div class="prog-stat">
-          <div class="lbl">IGT total</div>
-          <div class="val" id="idx-prog-igt">—</div>
-        </div>
-        <div class="prog-stat">
-          <div class="lbl">RTA</div>
-          <div class="val" style="color:var(--subtext)" id="idx-prog-rta">—</div>
-        </div>
-        <div class="prog-stat">
-          <div class="lbl">Pace overall</div>
-          <div class="val" style="color:var(--gold)" id="idx-prog-pace">—</div>
-        </div>
-        <div class="prog-stat">
-          <div class="lbl">Average % time</div>
-          <div class="val" id="idx-prog-seg">—</div>
-        </div>
-        <div class="prog-stat">
-          <div class="lbl">ETA fin</div>
-          <div class="val" style="color:var(--accent1)" id="idx-prog-eta">—</div>
-        </div>
-        <div class="prog-stat">
-          <div class="lbl">Delta vs run prec.</div>
-          <div class="val" id="idx-prog-vs">—</div>
-        </div>
-      </div>
-    </div>
 
     <!-- Twitch Player -->
     <div style="background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;">
@@ -868,67 +775,18 @@ function _fmtS(s) {
 
 async function loadProgression() {
   try {
-    // S'assurer que _useFlask est détecté avant de fetcher
     if (_useFlask === null) {
-      try {
-        var probe = await fetch('/api/summary', { method: 'HEAD' });
-        _useFlask = probe.ok;
-      } catch(_) { _useFlask = false; }
+      try { var probe = await fetch('/api/summary'); _useFlask = probe.ok; }
+      catch(_) { _useFlask = false; }
     }
     var resp = await fetch(_useFlask ? '/api/pace' : 'data/pace.json?_=' + Date.now());
     var data = await resp.json();
     if (!data || !data.length) return;
-
     var last = data[data.length - 1];
-
-    document.getElementById('idx-prog-bar').style.width = (last.i / 1000) + '%';
-    document.getElementById('idx-prog-pct').textContent = last.pct.toFixed(3) + '%';
     var splashEl = document.getElementById('stat-splash-pct');
     if (splashEl) {
       splashEl.textContent = last.pct.toFixed(3) + '%';
       splashEl.style.display = 'block';
-    }
-    document.getElementById('idx-prog-igt').textContent = _fmtS(last.igt_total_s);
-
-    if (_firstRealTs) {
-      document.getElementById('idx-prog-rta').textContent = _fmtS(Date.now() / 1000 - _firstRealTs);
-    }
-    document.getElementById('idx-prog-pace').textContent = last.pace_overall.toFixed(4) + ' bl/s';
-    document.getElementById('idx-prog-eta').textContent = _fmtS(last.eta_ovr_s);
-
-    // Average % time : moyenne des % terminés (ceux dont le suivant existe)
-    var pctGroups = {};
-    data.forEach(function(d) {
-      var p = Math.ceil(d.pct);
-      if (!pctGroups[p]) pctGroups[p] = [];
-      pctGroups[p].push(d);
-    });
-    var completedPcts = Object.keys(pctGroups).map(Number)
-      .filter(function(p){ return p >= 1 && pctGroups[p + 1] != null; })
-      .sort(function(a,b){ return a - b; });
-    var avgSegS = null;
-    if (completedPcts.length > 0) {
-      var prevIgtAvg = 0, totalSegS = 0;
-      completedPcts.forEach(function(p) {
-        var lastM = pctGroups[p][pctGroups[p].length - 1];
-        totalSegS  += lastM.igt_total_s - prevIgtAvg;
-        prevIgtAvg  = lastM.igt_total_s;
-      });
-      avgSegS = totalSegS / completedPcts.length;
-    }
-    document.getElementById('idx-prog-seg').textContent = avgSegS != null ? _fmtS(avgSegS) : '--';
-
-    // Delta vs run précédente (interpolation)
-    var pctF = last.pct;
-    var lo = Math.floor(pctF), hi = Math.ceil(pctF);
-    var hLo = PACE_HIST[lo], hHi = PACE_HIST[hi];
-    var hIGT = (hLo != null && hHi != null && lo !== hi) ? hLo + (pctF - lo)*(hHi - hLo) : hLo;
-    if (hIGT != null) {
-      var diff = last.igt_total_s - hIGT;
-      var col  = diff <= 0 ? 'var(--accent4)' : 'var(--accent1)';
-      var sign = diff <= 0 ? '-' : '+';
-      document.getElementById('idx-prog-vs').innerHTML =
-        '<span style="color:' + col + '">' + sign + _fmtS(Math.abs(diff)) + '</span>';
     }
   } catch(e) { /* silencieux */ }
 }
