@@ -605,17 +605,15 @@
     <div class="error-banner" id="error-banner"></div>
 
     <!-- Twitch Player -->
-    <div style="max-width:900px; margin:0 auto;">
-      <div style="background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;">
-        <div id="twitch-embed"></div>
-      </div>
+    <div id="twitch-wrapper" style="width:100%; max-width:900px; margin:0 auto; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;">
+      <div id="twitch-embed"></div>
     </div>
     <script>
       var twitchScript = document.createElement('script');
       twitchScript.src = 'https://embed.twitch.tv/embed/v1.js';
       twitchScript.onload = function() {
-        var container = document.getElementById('twitch-embed');
-        var w = container.offsetWidth;
+        var wrapper = document.getElementById('twitch-wrapper');
+        var w = Math.min(wrapper.offsetWidth, 900);
         var h = Math.round(w * 9 / 16);
         new Twitch.Embed("twitch-embed", {
           width: "100%",
@@ -624,10 +622,12 @@
           theme: "dark",
           autoplay: false,
         });
-        // Recalculer si la fenêtre est redimensionnée
         window.addEventListener('resize', function() {
-          var iframe = container.querySelector('iframe');
-          if (iframe) iframe.style.height = Math.round(container.offsetWidth * 9 / 16) + 'px';
+          var iframe = wrapper.querySelector('iframe');
+          if (iframe) {
+            var nw = Math.min(wrapper.offsetWidth, 900);
+            iframe.style.height = Math.round(nw * 9 / 16) + 'px';
+          }
         });
       };
       document.head.appendChild(twitchScript);
