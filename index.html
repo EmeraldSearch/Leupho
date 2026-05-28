@@ -537,8 +537,7 @@
     <a href="graph.html" class="mc-nav-btn">Graphs</a>
     <a href="pace.html" class="mc-nav-btn">Pace</a>
     <a href="faq.html" class="mc-nav-btn">FAQ</a>
-  </div><div class="live-dot" title="Data refreshes every 30s"></div>
-    <span id="last-updated"></span>
+  </div>
   </header>
 
   <!-- ── Sidebar ────────────────────────────────────────────── -->
@@ -828,8 +827,7 @@ async function loadSummary() {
     document.getElementById("stat-avgx-hour").textContent =
       s.avg_x_last_hour != null ? `${s.avg_x_last_hour.toFixed(3)} bl/s` : "—";
 
-    document.getElementById("last-updated").textContent =
-      "Updated " + new Date().toLocaleTimeString();
+    // last-updated removed
   } catch(e) { showError(e.message); }
 }
 
