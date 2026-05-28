@@ -614,7 +614,7 @@
       twitchScript.onload = function() {
         var wrapper = document.getElementById('twitch-wrapper');
         var w = Math.min(wrapper.offsetWidth, 1350);
-        var h = Math.round(w * 9 / 16);
+        var h = Math.round((w - 300) * 9 / 16);
         new Twitch.Embed("twitch-embed", {
           width: "100%",
           height: h,
@@ -626,7 +626,7 @@
           var iframe = wrapper.querySelector('iframe');
           if (iframe) {
             var nw = Math.min(wrapper.offsetWidth, 1350);
-            iframe.style.height = Math.round(nw * 9 / 16) + 'px';
+            iframe.style.height = Math.round((nw - 300) * 9 / 16) + 'px';
           }
         });
       };
