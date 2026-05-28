@@ -4,198 +4,221 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Farlands — FAQ</title>
-  <style>
-    @font-face { font-family: "Minecraft"; src: url("MinecraftRegular-Bmg3.otf") format("opentype"); }
-
+  <link rel="icon" type="image/gif" href="kazuwalk.gif?v=2"/>
+    <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:      #1a1a2e;
-      --panel:   #16213e;
-      --border:  #2a2a4a;
-      --accent1: #e94560;
-      --accent3: #53d8fb;
-      --accent4: #a8ff78;
-      --gold:    #f5c542;
-      --text:    #e0e0e0;
-      --subtext: #8888aa;
-      --radius:  8px;
+      --bg:#1a1a2e; --panel:#16213e; --border:#2a2a4a;
+      --accent1:#e94560; --accent3:#53d8fb; --accent4:#a8ff78;
+      --gold:#f5c542; --text:#e0e0e0; --subtext:#8888aa; --radius:8px;
     }
+    html, body { min-height:100%; background:var(--bg); color:var(--text); font-family:'Segoe UI',system-ui,sans-serif; font-size:14px; }
 
-    html, body {
-      min-height: 100%;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Segoe UI', system-ui, sans-serif;
-      font-size: 14px;
-    }
-
-    /* ── Nav ── */
     nav {
-      background: var(--panel);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 0 20px;
-      height: 52px;
-      flex-wrap: wrap;
+      background:var(--panel); border-bottom:1px solid var(--border);
+      display:flex; align-items:center; flex-wrap:wrap;
+      gap:5px; padding:8px 16px; min-height:52px;
     }
-    nav h1 {
-      font-family: "Minecraft", monospace;
-      font-size: .85rem;
-      color: var(--accent3);
-      margin-right: 8px;
-    }
+    nav h1 { font-family:"Minecraft",monospace; font-size:.85rem; color:var(--accent3); margin-right:8px; display:flex; align-items:center; }
     .nav-btn {
-      font-family: "Minecraft", monospace;
-      font-size: .55rem;
-      padding: 5px 10px;
-      background: #555;
-      border-top: 2px solid #aaa;
-      border-left: 2px solid #aaa;
-      border-right: 2px solid #222;
-      border-bottom: 2px solid #222;
-      color: #fff;
-      text-decoration: none;
-      text-shadow: 1px 1px 0 #1a1a1a;
-      cursor: pointer;
-      white-space: nowrap;
+      font-family:"Minecraft",monospace; font-size:.7rem; padding:7px 14px;
+      background:#555; border-top:2px solid #aaa; border-left:2px solid #aaa;
+      border-right:2px solid #222; border-bottom:2px solid #222;
+      color:#fff; text-decoration:none; text-shadow:1px 1px 0 #1a1a1a;
+      cursor:pointer; white-space:nowrap; flex-shrink:0;
     }
-    .nav-btn:hover { filter: brightness(1.3); }
-    .nav-btn.active {
-      border-top-color: #222;
-      border-left-color: #222;
-      border-right-color: #aaa;
-      border-bottom-color: #aaa;
-      filter: brightness(0.85);
+    .nav-btn:hover { filter:brightness(1.3); }
+    .nav-btn.active { border-top-color:#222; border-left-color:#222; border-right-color:#aaa; border-bottom-color:#aaa; filter:brightness(0.85); }
+    .lang-btn {
+      font-family:"Minecraft",monospace; font-size:.65rem; padding:5px 10px;
+      border:2px solid var(--border); border-radius:4px; cursor:pointer;
+      text-decoration:none; white-space:nowrap;
+      background:var(--bg); color:var(--subtext); transition:all .15s;
     }
+    .lang-btn:hover, .lang-btn.active { background:var(--accent3); color:#000; border-color:var(--accent3); }
+    @media (max-width:480px) { nav h1 { font-size:.6rem; } .nav-btn { font-size:.45rem; padding:4px 8px; } }
 
-    /* ── Layout ── */
-    .container {
-      max-width: 860px;
-      margin: 0 auto;
-      padding: 28px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
-
-    /* ── Section ── */
-    .faq-section {
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-    }
-    .faq-section h2 {
-      font-family: "Minecraft", monospace;
-      font-size: .72rem;
-      color: var(--accent3);
-      padding: 12px 16px;
-      border-bottom: 1px solid var(--border);
-      letter-spacing: .05em;
-    }
-    .faq-body {
-      padding: 16px;
-      line-height: 1.7;
-      color: var(--text);
-      font-size: .88rem;
-    }
-    .faq-body p { margin-bottom: 10px; }
-    .faq-body p:last-child { margin-bottom: 0; }
-    .faq-body ul {
-      margin: 8px 0 10px 20px;
-    }
-    .faq-body ul li { margin-bottom: 5px; }
-    .faq-body strong { color: var(--gold); }
-    .faq-body em { color: var(--accent4); font-style: normal; }
-    .faq-body a { color: var(--accent3); }
-
-    /* ── Divider ── */
-    .faq-divider {
-      height: 1px;
-      background: var(--border);
-      margin: 4px 0;
-    }
+    .container { max-width:860px; margin:0 auto; padding:28px 20px; display:flex; flex-direction:column; gap:20px; }
+    .faq-section { background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; }
+    .faq-section h2 { font-family:"Minecraft",monospace; font-size:.72rem; color:var(--accent3); padding:12px 16px; border-bottom:1px solid var(--border); letter-spacing:.05em; }
+    .faq-body { padding:16px; line-height:1.8; color:var(--text); font-size:.88rem; }
+    .faq-body p { margin-bottom:10px; }
+    .faq-body p:last-child { margin-bottom:0; }
+    .faq-body ul { margin:8px 0 10px 20px; }
+    .faq-body ul li { margin-bottom:5px; }
+    .faq-body strong { color:var(--gold); }
+    .faq-body em { color:var(--accent4); font-style:normal; }
+    .faq-body a { color:var(--accent3); }
+    .faq-divider { height:1px; background:var(--border); margin:12px 0; }
+    .faq-q { color:var(--gold); font-weight:700; margin-bottom:6px; }
   </style>
 </head>
 <body>
-
 <nav>
-  <h1>⛏ Farlands Tracker</h1>
+  <h1><img src="kazuwalk.gif?v=2" style="height:4em;vertical-align:middle;image-rendering:pixelated;margin-right:8px;">Farlands Tracker</h1>
   <a href="index.html" class="nav-btn">Dashboard</a>
   <a href="graph.html" class="nav-btn">Graphs</a>
   <a href="pace.html" class="nav-btn">Pace</a>
   <a href="faq.html" class="nav-btn active">FAQ</a>
+  <div style="margin-left:auto;display:flex;gap:5px;">
+    <span class="lang-btn active" id="btn-fr" onclick="setLang('fr')">FR</span>
+    <span class="lang-btn" id="btn-en" onclick="setLang('en')">EN</span>
+  </div>
 </nav>
 
 <div class="container">
 
-  <!-- ══ À propos de la run ══════════════════════════════════════════ -->
+  <!-- À propos -->
   <div class="faq-section">
-    <h2>À propos de la run</h2>
+    <h2 class="t" data-fr="À propos de la run" data-en="About the run"></h2>
     <div class="faq-body">
-      <p>
-        Cette run consiste à marcher jusqu'aux <strong>Far Lands</strong> dans
-        <em>Minecraft Beta 1.7.3</em>, la dernière version avant leur suppression.
-        Les Far Lands se trouvent à <strong>12 550 821 blocs</strong> en X négatif.
+      <p class="t"
+        data-fr="Cette run consiste à marcher jusqu'aux <strong>Far Lands</strong> dans <em>Minecraft Beta 1.7.3</em>, la dernière version avant leur suppression. Les Far Lands se trouvent à <strong>12 550 821 blocs</strong> de l'origine."
+        data-en="This run consists of walking to the <strong>Far Lands</strong> in <em>Minecraft Beta 1.7.3</em>, the last version before their removal. The Far Lands are located <strong>12,550,821 blocks</strong> from the origin.">
       </p>
-      <p>
-        La run se fait à pied, sans aucune aide externe, en survie normale.
+      <p class="t"
+        data-fr="La run se fait à pied, en survie. Une quinzaine de personnes ont réalisé la marche une fois.<br>Une liste de toutes les personnes marchant aux Far Lands est disponible <a href='https://farlands.cc/'>ici</a>."
+        data-en="The run is done on foot, in survival mode. Around fifteen people have completed the walk once.<br>A list of everyone walking to the Far Lands is available <a href='https://farlands.cc/'>here</a>.">
       </p>
     </div>
   </div>
 
-  <!-- ══ Règles ══════════════════════════════════════════════════════ -->
+  <!-- Règles -->
   <div class="faq-section">
-    <h2>Règles</h2>
+    <h2 class="t" data-fr="Règles" data-en="Rules"></h2>
     <div class="faq-body">
       <ul>
-        <li>Survie normale, difficulté normale</li>
-        <li>Pas de triche, pas de commandes</li>
-        <li>Les morts sont autorisées</li>
-        <li>Le sommeil est autorisé pour passer les nuits</li>
+        <li class="t" data-fr="Survie normale, difficulté au choix, easy ici" data-en="Normal survival, difficulty of choice, easy here"></li>
+        <li class="t" data-fr="Marche uniquement dans l'Overworld, pas de Nether" data-en="Walking only in the Overworld, no Nether"></li>
+        <li class="t" data-fr="Pas de triche, pas de commandes" data-en="No cheating, no commands"></li>
+        <li class="t" data-fr="Bugs de la b1.7.3 autorisés (boat boosting, inventory walking…)" data-en="Beta 1.7.3 bugs allowed (boat boosting, inventory walking…)"></li>
+        <li class="t" data-fr="Les morts sont autorisées" data-en="Deaths are allowed"></li>
+        <li class="t" data-fr="Backups autorisées dans la limite du raisonnable" data-en="Backups allowed within reason"></li>
       </ul>
     </div>
   </div>
 
-  <!-- ══ FAQ ═════════════════════════════════════════════════════════ -->
+  <!-- FAQ -->
   <div class="faq-section">
-    <h2>Questions fréquentes</h2>
+    <h2 class="t" data-fr="Questions fréquentes" data-en="Frequently Asked Questions"></h2>
     <div class="faq-body">
-      <p><strong>Combien de temps ça prendra ?</strong></p>
-      <p>
-        À une pace d'environ 5 bl/s en moyenne, la run prend environ
-        700 heures de jeu. Voir la page <a href="pace.html">Pace</a> pour l'ETA estimé.
+
+      <p class="faq-q t" data-fr="Combien de temps ça prendra ?" data-en="How long will it take?"></p>
+      <p class="t"
+        data-fr="Le meilleur temps actuel est de 749 heures de jeu par <a href='https://www.speedrun.com/mchv/runs/yd42g9qy'>moi-même</a>, le but est de passer sous la barre du mois de jeu, 720 heures.<br>Et pourquoi pas la barre des 700 heures de jeu si j'arrive à tenir la cadence...<br>Voir la page <a href='pace.html'>Pace</a> pour l'ETA estimé."
+        data-en="The current best time is 749 in-game hours by <a href='https://www.speedrun.com/mchv/runs/yd42g9qy'>myself</a>. The goal is to go under a month of gameplay, 720 hours.<br>Maybe even under 700 hours if I can keep the pace...<br>See the <a href='pace.html'>Pace</a> page for the estimated ETA.">
       </p>
+
       <div class="faq-divider"></div>
-      <p><strong>Pourquoi Beta 1.7.3 ?</strong></p>
-      <p>
-        C'est la dernière version de Minecraft à contenir les Far Lands dans leur
-        forme originale. Ils ont été supprimés en Beta 1.8.
+      <p class="faq-q t" data-fr="Oui, mais combien de temps ça prendra en VRAI ?" data-en="Yes, but how long will it REALLY take?"></p>
+      <p class="t"
+        data-fr="Ma première run était une run &quot;chill&quot; dans le sens où je ne visais qu'un bon temps en heures de jeu, ce qui fait que j'ai mis un peu plus de 5 mois à finir.<br>Ici, l'objectif serait de finir en moins de 1000 heures en temps réel, soit un peu plus de 40 jours. Et pourquoi pas moins de 40 jours…"
+        data-en="My first run was a &quot;chill&quot; run where I only aimed for a good in-game time, which meant it took me just over 5 months to finish.<br>Here, the goal would be to finish in under 1000 real-time hours, just over 40 days. Maybe even under 40 days…">
       </p>
+
       <div class="faq-divider"></div>
-      <p><strong>Comment fonctionne le tracker ?</strong></p>
-      <p>
-        Un script Python lit le fichier <em>level.dat</em> à chaque autosave
-        (toutes les 2 secondes) et enregistre la position, la santé, l'inventaire
-        et d'autres statistiques dans une base de données SQLite.
+      <p class="faq-q t" data-fr="Pourquoi Beta 1.7.3 ?" data-en="Why Beta 1.7.3?"></p>
+      <p class="t"
+        data-fr="C'est la dernière version de Minecraft à contenir les Far Lands dans leur forme originale. Ils ont été supprimés en Beta 1.8.<br>La version est très ancienne, si ancienne que même le sprint n'existait pas ! Les options de mouvement sont limitées, mais il y a beaucoup de micro-optimisations possibles…"
+        data-en="It's the last version of Minecraft to contain the Far Lands in their original form. They were removed in Beta 1.8.<br>The version is very old, so old that even sprinting didn't exist! Movement options are limited, but there are many possible micro-optimizations…">
       </p>
+
+      <div class="faq-divider"></div>
+      <p class="faq-q t" data-fr="Le jeu lag ?" data-en="Is the game lagging?"></p>
+      <p class="t"
+        data-fr="On dirait, mais non !<br>Le calcul des coordonnées visuelles des blocs dans les vieilles versions de Minecraft devient de moins en moins précis au fur et à mesure que l'on s'éloigne de l'origine, ce qui crée le &quot;saccadement&quot; que l'on peut voir.<br>Cette imprécision double à chaque puissance de deux (les ordinateurs, le binaire, vous savez) passée dans une coordonnée, et s'observent particulièrement à 1 048 576, 2 097 152, 4 194 304 et 8 388 608."
+        data-en="It looks like it, but no!<br>The visual coordinate calculation for blocks in old Minecraft versions becomes less and less precise the further you get from the origin, creating the &quot;jitter&quot; you can see.<br>This imprecision doubles at every power of two passed in a coordinate, most notably at 1,048,576 — 2,097,152 — 4,194,304 and 8,388,608.">
+      </p>
+
+      <div class="faq-divider"></div>
+      <p class="faq-q t" data-fr="Pourquoi tu t'infliges ça ?" data-en="Why put yourself through this?"></p>
+      <p class="t"
+        data-fr="J'aime vraiment cette run !<br>Je me rajoute le défi de le faire en un seul énorme &quot;marathon&quot; pour ne pas avoir de regrets derrière et me dire que j'aurais pu faire &quot;plus vite&quot;."
+        data-en="I genuinely love this run!<br>I'm adding the challenge of doing it in one huge &quot;marathon&quot; so I have no regrets and can't tell myself I could have gone &quot;faster&quot;.">
+      </p>
+
+      <div class="faq-divider"></div>
+      <p class="faq-q t" data-fr="Mais ton job ?" data-en="But what about your job?"></p>
+      <p class="t"
+        data-fr="Je ne travaille pas cet été, j'en profite… Qui sait quand j'aurai de nouveau la possibilité d'être un degen."
+        data-en="I'm not working this summer, making the most of it… Who knows when I'll get the chance to be a degen again.">
+      </p>
+
+      <div class="faq-divider"></div>
+      <p class="faq-q t" data-fr="Jouer en Peaceful te ferait gagner du temps non ?" data-en="Wouldn't playing on Peaceful save you time?"></p>
+      <p class="t"
+        data-fr="Oui, mais je considère que la gestion de la vie et des risques de la nuit font partie intégrante de la run.<br>Libre à vous de jouer en Peaceful si vous faites votre aventure !"
+        data-en="Yes, but I consider managing health and night risks to be an integral part of the run.<br>Feel free to play on Peaceful if you're doing your own adventure!">
+      </p>
+
+      <div class="faq-divider"></div>
+      <p class="faq-q t" data-fr="Pourquoi tu rentres et sors de ton bateau en boucle ?" data-en="Why do you keep getting in and out of your boat?"></p>
+      <p class="t"
+        data-fr="Pour aller plus vite !<br>La vitesse de base du bateau est de 6.2 bl/s, mais en sortant et rentrant dans le bateau en boucle, on &quot;tombe&quot; derrière celui-ci et le boost en continu avec la collision du joueur.<br>Maintenir le clic permet donc de booster le bateau à 7.9 bl/s en ligne droite, ce qui est un gain non négligeable."
+        data-en="To go faster!<br>The base boat speed is 6.2 bl/s, but by repeatedly getting in and out, you &quot;fall&quot; behind the boat and continuously boost it with player collision.<br>Holding click boosts the boat to 7.9 bl/s in a straight line, which is a significant gain.">
+      </p>
+
+      <div class="faq-divider"></div>
+      <p class="faq-q t" data-fr="Tu spam très vite quand même…" data-en="You click really fast though…"></p>
+      <p class="t"
+        data-fr="Il y a une différence entre juste maintenir clic droit et spam clic droit.<br>Ce dernier est encore mieux, car cela permet au bateau d'atteindre la vitesse de 7.9 dans les deux directions X et Z en même temps, et donc de ne pas perdre de temps en allant sur le côté pour chercher d'autres zones d'eau."
+        data-en="There's a difference between just holding right-click and spam clicking.<br>The latter is even better, as it allows the boat to reach 7.9 bl/s in both X and Z directions simultaneously, saving time when navigating sideways to find water.">
+      </p>
+
+      <div class="faq-divider"></div>
+      <p class="faq-q t" data-fr="Tu fais du bateau sous la glace ?" data-en="Do you boat under ice?"></p>
+      <p class="t"
+        data-fr="Oui, dans cette version le bateau flotte même s'il est placé dans l'eau, et se retrouve donc bloqué contre la paroi de la glace. La tête de notre personnage est donc dans la glace, qui est un bloc transparent, et dans lequel on peut donc respirer."
+        data-en="Yes, in this version the boat floats even when placed in water under ice, getting pressed against the ceiling. The player's head ends up inside the ice, which is a transparent block you can breathe in.">
+      </p>
+
+      <div class="faq-divider"></div>
+      <p class="faq-q t" data-fr="Tu peux ouvrir ton inventaire et marcher ?" data-en="Can you open your inventory and walk?"></p>
+      <p class="t"
+        data-fr="Oui, dans cette version ouvrir l'inventaire et appuyer sur une touche de mouvement en même temps permet de faire les deux actions en même temps."
+        data-en="Yes, in this version opening the inventory and pressing a movement key at the same time allows you to do both simultaneously.">
+      </p>
+
+      <div class="faq-divider"></div>
+      <p class="faq-q t" data-fr="Pourquoi tu sautes sur la glace mais pas ailleurs ?" data-en="Why do you jump on ice but not elsewhere?"></p>
+      <p class="t"
+        data-fr="Sauter sur la glace est un peu plus rapide que juste marcher, contrairement à n'importe quelle autre surface où sauter est plus lent que marcher.<br>Il n'y a pas de sprint dans cette version donc pas de bunny hop."
+        data-en="Jumping on ice is slightly faster than just walking, unlike any other surface where jumping is slower.<br>There's no sprint in this version, so no bunny hopping either.">
+      </p>
+
     </div>
   </div>
 
-  <!-- ══ Infos techniques ════════════════════════════════════════════ -->
+  <!-- Infos techniques -->
   <div class="faq-section">
-    <h2>Infos techniques</h2>
+    <h2 class="t" data-fr="Infos techniques" data-en="Technical Info"></h2>
     <div class="faq-body">
-      <p>
-        Le tracker est open source. Il tourne en local sur le PC de stream
-        et publie les données toutes les 5 minutes sur GitHub Pages.
+      <p class="faq-q t" data-fr="Comment fonctionne le tracker ?" data-en="How does the tracker work?"></p>
+      <p class="t"
+        data-fr="Un script Python lit le fichier <em>level.dat</em> à chaque autosave (toutes les 2 secondes) et enregistre la position, la santé, l'inventaire et d'autres statistiques dans une base de données SQLite."
+        data-en="A Python script reads the <em>level.dat</em> file on every autosave (every 2 seconds) and records position, health, inventory and other statistics in a SQLite database.">
+      </p>
+      <p class="t"
+        data-fr="Le tracker est open source. Il tourne en local sur mon PC et publie les données toutes les 5 minutes sur GitHub Pages.<br>J'essaye d'en faire un utilisable par tout le monde mais je ne promets rien !"
+        data-en="The tracker is open source. It runs locally on my PC and publishes data every 5 minutes to GitHub Pages.<br>I'm trying to make it usable by everyone but no promises!">
       </p>
     </div>
   </div>
 
 </div>
+
+<script>
+function setLang(lang) {
+  document.querySelectorAll('.t').forEach(function(el) {
+    var val = el.getAttribute('data-' + lang);
+    if (val !== null) el.innerHTML = val;
+  });
+  document.getElementById('btn-fr').classList.toggle('active', lang === 'fr');
+  document.getElementById('btn-en').classList.toggle('active', lang === 'en');
+  localStorage.setItem('faq-lang', lang);
+}
+var saved = localStorage.getItem('faq-lang') || 'fr';
+setLang(saved);
+</script>
 </body>
 </html>
