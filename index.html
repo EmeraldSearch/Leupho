@@ -605,8 +605,10 @@
     <div class="error-banner" id="error-banner"></div>
 
     <!-- Twitch Player -->
-    <div style="background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;">
-      <div id="twitch-embed"></div>
+    <div style="max-width:900px; margin:0 auto;">
+      <div style="background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;">
+        <div id="twitch-embed"></div>
+      </div>
     </div>
     <script>
       var twitchScript = document.createElement('script');
