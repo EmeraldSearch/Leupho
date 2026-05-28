@@ -13,7 +13,7 @@
       --gold:#f5c542; --text:#e0e0e0; --subtext:#8888aa; --radius:8px;
     }
     html,body { background:var(--bg); color:var(--text);
-      font-family:'Segoe UI',system-ui,sans-serif; font-size:13px; }
+      font-family:'Segoe UI',system-ui,sans-serif; font-size:14px; }
 
     .container { padding:20px; display:flex; flex-direction:column; gap:16px; }
     .card { background:var(--panel); border:1px solid var(--border);
@@ -55,13 +55,15 @@
       flex-wrap: wrap;
       gap: 5px;
       padding: 8px 16px;
-      min-height: 52px;
+      min-height: 68px;
     }
     nav h1 {
       font-family: "Minecraft", monospace;
       font-size: .85rem;
       color: var(--accent3);
       margin-right: 8px;
+      display: flex;
+      align-items: center;
     }
     .nav-btn {
       font-family: "Minecraft", monospace;
@@ -91,15 +93,13 @@
       nav h1 { font-size: .6rem; }
       .nav-btn { font-size: .45rem; padding: 4px 8px; }
     }
-    @media (max-width: 480px) {
-    }
 
   </style>
 </head>
 <body>
 
 <nav>
-  <h1><img src="kazuwalk.gif?v=2" style="height:4em;vertical-align:middle;image-rendering:pixelated;margin-right:8px;">Farlands Tracker</h1>
+  <h1><img src="kazuwalk.gif?v=2" style="height:52px;vertical-align:middle;image-rendering:pixelated;margin-right:8px;">Farlands Tracker</h1>
   <a href="index.html" class="nav-btn">Dashboard</a>
   <a href="graph.html" class="nav-btn">Graphs</a>
   <a href="pace.html" class="nav-btn active">Pace</a>
