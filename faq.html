@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Farlands — FAQ</title>
+  <style>
+    @font-face { font-family: "Minecraft"; src: url("MinecraftRegular-Bmg3.otf") format("opentype"); }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #1a1a2e;
+      --panel:   #16213e;
+      --border:  #2a2a4a;
+      --accent1: #e94560;
+      --accent3: #53d8fb;
+      --accent4: #a8ff78;
+      --gold:    #f5c542;
+      --text:    #e0e0e0;
+      --subtext: #8888aa;
+      --radius:  8px;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      font-size: 14px;
+    }
+
+    /* ── Nav ── */
+    nav {
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 20px;
+      height: 52px;
+      flex-wrap: wrap;
+    }
+    nav h1 {
+      font-family: "Minecraft", monospace;
+      font-size: .85rem;
+      color: var(--accent3);
+      margin-right: 8px;
+    }
+    .nav-btn {
+      font-family: "Minecraft", monospace;
+      font-size: .55rem;
+      padding: 5px 10px;
+      background: #555;
+      border-top: 2px solid #aaa;
+      border-left: 2px solid #aaa;
+      border-right: 2px solid #222;
+      border-bottom: 2px solid #222;
+      color: #fff;
+      text-decoration: none;
+      text-shadow: 1px 1px 0 #1a1a1a;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .nav-btn:hover { filter: brightness(1.3); }
+    .nav-btn.active {
+      border-top-color: #222;
+      border-left-color: #222;
+      border-right-color: #aaa;
+      border-bottom-color: #aaa;
+      filter: brightness(0.85);
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 28px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* ── Section ── */
+    .faq-section {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .faq-section h2 {
+      font-family: "Minecraft", monospace;
+      font-size: .72rem;
+      color: var(--accent3);
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      letter-spacing: .05em;
+    }
+    .faq-body {
+      padding: 16px;
+      line-height: 1.7;
+      color: var(--text);
+      font-size: .88rem;
+    }
+    .faq-body p { margin-bottom: 10px; }
+    .faq-body p:last-child { margin-bottom: 0; }
+    .faq-body ul {
+      margin: 8px 0 10px 20px;
+    }
+    .faq-body ul li { margin-bottom: 5px; }
+    .faq-body strong { color: var(--gold); }
+    .faq-body em { color: var(--accent4); font-style: normal; }
+    .faq-body a { color: var(--accent3); }
+
+    /* ── Divider ── */
+    .faq-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 4px 0;
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <h1>⛏ Farlands Tracker</h1>
+  <a href="index.html" class="nav-btn">Dashboard</a>
+  <a href="graph.html" class="nav-btn">Graphs</a>
+  <a href="pace.html" class="nav-btn">Pace</a>
+  <a href="faq.html" class="nav-btn active">FAQ</a>
+</nav>
+
+<div class="container">
+
+  <!-- ══ À propos de la run ══════════════════════════════════════════ -->
+  <div class="faq-section">
+    <h2>À propos de la run</h2>
+    <div class="faq-body">
+      <p>
+        Cette run consiste à marcher jusqu'aux <strong>Far Lands</strong> dans
+        <em>Minecraft Beta 1.7.3</em>, la dernière version avant leur suppression.
+        Les Far Lands se trouvent à <strong>12 550 821 blocs</strong> en X négatif.
+      </p>
+      <p>
+        La run se fait à pied, sans aucune aide externe, en survie normale.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══ Règles ══════════════════════════════════════════════════════ -->
+  <div class="faq-section">
+    <h2>Règles</h2>
+    <div class="faq-body">
+      <ul>
+        <li>Survie normale, difficulté normale</li>
+        <li>Pas de triche, pas de commandes</li>
+        <li>Les morts sont autorisées</li>
+        <li>Le sommeil est autorisé pour passer les nuits</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══ FAQ ═════════════════════════════════════════════════════════ -->
+  <div class="faq-section">
+    <h2>Questions fréquentes</h2>
+    <div class="faq-body">
+      <p><strong>Combien de temps ça prendra ?</strong></p>
+      <p>
+        À une pace d'environ 5 bl/s en moyenne, la run prend environ
+        700 heures de jeu. Voir la page <a href="pace.html">Pace</a> pour l'ETA estimé.
+      </p>
+      <div class="faq-divider"></div>
+      <p><strong>Pourquoi Beta 1.7.3 ?</strong></p>
+      <p>
+        C'est la dernière version de Minecraft à contenir les Far Lands dans leur
+        forme originale. Ils ont été supprimés en Beta 1.8.
+      </p>
+      <div class="faq-divider"></div>
+      <p><strong>Comment fonctionne le tracker ?</strong></p>
+      <p>
+        Un script Python lit le fichier <em>level.dat</em> à chaque autosave
+        (toutes les 2 secondes) et enregistre la position, la santé, l'inventaire
+        et d'autres statistiques dans une base de données SQLite.
+      </p>
+    </div>
+  </div>
+
+  <!-- ══ Infos techniques ════════════════════════════════════════════ -->
+  <div class="faq-section">
+    <h2>Infos techniques</h2>
+    <div class="faq-body">
+      <p>
+        Le tracker est open source. Il tourne en local sur le PC de stream
+        et publie les données toutes les 5 minutes sur GitHub Pages.
+      </p>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
