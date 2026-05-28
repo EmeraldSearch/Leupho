@@ -605,7 +605,7 @@
     <div class="error-banner" id="error-banner"></div>
 
     <!-- Twitch Player -->
-    <div id="twitch-wrapper" style="width:100%; max-width:900px; margin:0 auto; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;">
+    <div id="twitch-wrapper" style="width:100%; max-width:1350px; margin:0 auto; background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;">
       <div id="twitch-embed"></div>
     </div>
     <script>
@@ -613,7 +613,7 @@
       twitchScript.src = 'https://embed.twitch.tv/embed/v1.js';
       twitchScript.onload = function() {
         var wrapper = document.getElementById('twitch-wrapper');
-        var w = Math.min(wrapper.offsetWidth, 900);
+        var w = Math.min(wrapper.offsetWidth, 1350);
         var h = Math.round(w * 9 / 16);
         new Twitch.Embed("twitch-embed", {
           width: "100%",
@@ -625,7 +625,7 @@
         window.addEventListener('resize', function() {
           var iframe = wrapper.querySelector('iframe');
           if (iframe) {
-            var nw = Math.min(wrapper.offsetWidth, 900);
+            var nw = Math.min(wrapper.offsetWidth, 1350);
             iframe.style.height = Math.round(nw * 9 / 16) + 'px';
           }
         });
