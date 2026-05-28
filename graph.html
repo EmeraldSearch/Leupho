@@ -532,6 +532,7 @@
         <label><input type="checkbox" checked data-card="card-elevation"> Élévation</label>
         <label><input type="checkbox" checked data-card="card-heatmap">   Chemin (XZ)</label>
         <label><input type="checkbox" checked data-card="card-deaths">   Death log</label>
+        <label><input type="checkbox" checked data-card="card-weather">  Weather log</label>
       </div>
     </div>
 
@@ -541,6 +542,11 @@
   <!-- ── Main ───────────────────────────────────────────────── -->
   <main>
     <div class="error-banner" id="error-banner"></div>
+
+    <div id="mobile-warning" style="display:none; background:#2a1a0a; border:1px solid var(--gold); border-radius:var(--radius); padding:12px 16px; font-size:.8rem; color:var(--gold); margin-bottom:8px;">
+      ⚠ Cette page est optimisée pour PC — certains graphiques peuvent être difficiles à lire sur mobile.
+    </div>
+    <script>if (window.innerWidth <= 640) document.getElementById('mobile-warning').style.display = 'block';</script>
 
     <!-- HP -->
     <div class="chart-card" id="card-hp">
@@ -586,6 +592,12 @@
     <div class="chart-card" id="card-deaths">
       <h2>☠ Death log</h2>
       <div id="death-log"></div>
+    </div>
+
+    <!-- Weather log -->
+    <div class="chart-card" id="card-weather">
+      <h2>🌦 Weather log</h2>
+      <div id="weather-log"></div>
     </div>
 
 
@@ -711,6 +723,7 @@ const API_MAP = {
   "/api/distance":  "data/distance.json",
   "/api/elevation": "data/elevation.json",
   "/api/deaths":    "data/deaths.json",
+  "/api/weather":   "data/weather.json",
   "/api/heatmap":   "data/heatmap.json",
 };
 
@@ -1292,6 +1305,28 @@ async function loadProgression() {
 // ================================================================
 // Load all
 // ================================================================
+async function loadWeather() {
+  try {
+    const rows = await apiFetch("/api/weather");
+    const el = document.getElementById("weather-log");
+    if (!el) return;
+    if (!rows || !rows.length) {
+      el.innerHTML = '<p style="color:var(--subtext);padding:8px">Aucun épisode météo enregistré.</p>';
+      return;
+    }
+    el.innerHTML = rows.map(r => {
+      const icon  = r.type === 'thunder' ? '⛈' : '🌧';
+      const color = r.type === 'thunder' ? 'var(--gold)' : 'var(--accent3)';
+      return '<div style="display:flex;gap:10px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">' +
+        '<span style="font-size:1.1rem">' + icon + '</span>' +
+        '<span style="color:' + color + ';font-weight:600;min-width:70px">' + (r.type === 'thunder' ? 'Thunder' : 'Rain') + '</span>' +
+        '<span style="color:var(--subtext);font-size:.8rem">IGT ' + ticksToHMS(r.igt) + '</span>' +
+        (r.x != null ? '<span style="color:var(--subtext);font-size:.8rem;margin-left:auto">X: ' + Math.round(r.x).toLocaleString() + '</span>' : '') +
+        '</div>';
+    }).join('');
+  } catch(e) { showError(e.message); }
+}
+
 function loadAll() {
   loadSummary();
   loadHP();
@@ -1302,6 +1337,7 @@ function loadAll() {
   loadHeatmap();
   loadItems();
   loadDeaths();
+  loadWeather();
   updateLastUpdated();
 }
 
