@@ -682,6 +682,24 @@
       </div>
     </div>
 
+    <!-- Twitch Player -->
+    <div style="background:var(--panel); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;">
+      <div id="twitch-embed"></div>
+    </div>
+    <script>
+      var twitchScript = document.createElement('script');
+      twitchScript.src = 'https://embed.twitch.tv/embed/v1.js';
+      twitchScript.onload = function() {
+        new Twitch.Embed("twitch-embed", {
+          width: "100%",
+          height: 400,
+          channel: "Leupho",
+          theme: "dark",
+          autoplay: false,
+        });
+      };
+      document.head.appendChild(twitchScript);
+    </script>
 
   </main>
 </div>
