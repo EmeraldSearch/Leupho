@@ -47,7 +47,7 @@
     .layout {
       display: grid;
       grid-template-columns: 260px 1fr;
-      grid-template-rows: 56px 1fr;
+      grid-template-rows: auto 1fr;
       grid-template-areas:
         "header header"
         "sidebar main";
@@ -91,8 +91,9 @@
       font-size: .75rem;
     }
 
-    /* ── Nav Minecraft ──────────────────────────────────────── */
-    .mc-nav {
+        /* ── Nav ── */
+    nav {
+      grid-area: header;
       background: var(--panel);
       border-bottom: 1px solid var(--border);
       display: flex;
@@ -102,35 +103,13 @@
       padding: 8px 16px;
       min-height: 52px;
     }
-    .mc-nav h1 {
+    nav h1 {
       font-family: "Minecraft", monospace;
-      font-size: .75rem;
+      font-size: .85rem;
       color: var(--accent3);
       margin-right: 8px;
-      white-space: nowrap;
-      flex-shrink: 0;
     }
-    .mc-nav-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
-      flex: 1;
-    }
-    .mc-nav .live-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--accent4);
-      box-shadow: 0 0 6px var(--accent4);
-      margin-left: auto;
-      flex-shrink: 0;
-      animation: pulse 2s infinite;
-    }
-    .mc-nav #last-updated {
-      color: var(--subtext);
-      font-size: .7rem;
-      flex-shrink: 0;
-    }
-    .mc-nav-btn {
+    .nav-btn {
       font-family: "Minecraft", monospace;
       font-size: .7rem;
       padding: 7px 14px;
@@ -146,8 +125,8 @@
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .mc-nav-btn:hover { filter: brightness(1.3); }
-    .mc-nav-btn.active {
+    .nav-btn:hover { filter: brightness(1.3); }
+    .nav-btn.active {
       border-top-color: #222;
       border-left-color: #222;
       border-right-color: #aaa;
@@ -155,8 +134,10 @@
       filter: brightness(0.85);
     }
     @media (max-width: 480px) {
-      .mc-nav h1 { font-size: .6rem; }
-      .mc-nav-btn { font-size: .45rem; padding: 4px 8px; }
+      nav h1 { font-size: .6rem; }
+      .nav-btn { font-size: .45rem; padding: 4px 8px; }
+    }
+    @media (max-width: 480px) {
     }
     /* ── Sidebar ──────────────────────────────────────────────── */
     aside {
@@ -487,15 +468,13 @@
 <div class="layout">
 
   <!-- ── Header ─────────────────────────────────────────────── -->
-  <header class="mc-nav">
-    <h1>⛏ Farlands Tracker</h1>
-    <div class="mc-nav-links">
-    <a href="index.html" class="mc-nav-btn">Dashboard</a>
-    <a href="graph.html" class="mc-nav-btn active">Graphs</a>
-    <a href="pace.html" class="mc-nav-btn">Pace</a>
-    <a href="faq.html" class="mc-nav-btn">FAQ</a>
-  </div>
-  </header>
+  <nav>
+  <h1>⛏ Farlands Tracker</h1>
+  <a href="index.html" class="nav-btn">Dashboard</a>
+  <a href="graph.html" class="nav-btn active">Graphs</a>
+  <a href="pace.html" class="nav-btn">Pace</a>
+  <a href="faq.html" class="nav-btn">FAQ</a>
+</nav>
 
   <!-- ── Sidebar ────────────────────────────────────────────── -->
   <aside>
