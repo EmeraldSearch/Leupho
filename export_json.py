@@ -91,24 +91,20 @@ def export_summary(db: Database) -> None:
 
 
 def export_hp(db: Database) -> None:
-    first = db.execute("SELECT MIN(real_ts) AS t FROM ticks").fetchone()
-    t0 = float(first["t"] or 0)
     rows = db.execute(
-        "SELECT igt, real_ts, CAST(health AS REAL) AS health FROM ticks ORDER BY real_ts"
+        "SELECT igt, CAST(health AS REAL) AS health FROM ticks ORDER BY real_ts"
     ).fetchall()
     rows   = downsample(rows, 10000)
     deaths = [r["igt"] for r in rows if float(r["health"]) <= 0]
     write_json("hp.json", {
-        "data":   [{"igt": r["igt"], "rts": round(float(r["real_ts"]) - t0, 1), "health": float(r["health"])} for r in rows],
+        "data":   [{"igt": r["igt"], "health": float(r["health"])} for r in rows],
         "deaths": deaths,
     })
 
 
 def export_speed(db: Database) -> None:
-    first = db.execute("SELECT MIN(real_ts) AS t FROM ticks").fetchone()
-    t0 = float(first["t"] or 0)
     rows = db.execute(
-        """SELECT s.world_time, t.igt, t.real_ts, s.speed_horiz, s.speed_avg, s.speed_x
+        """SELECT s.world_time, t.igt, s.speed_horiz, s.speed_avg, s.speed_x
            FROM speed s JOIN ticks t ON s.world_time = t.world_time
            ORDER BY t.igt"""
     ).fetchall()
@@ -116,7 +112,6 @@ def export_speed(db: Database) -> None:
     write_json("speed.json", [
         {
             "igt":         r["igt"],
-            "rts":         round(float(r["real_ts"]) - t0, 1),
             "speed_horiz": r["speed_horiz"],
             "speed_avg":   r["speed_avg"],
             "speed_x":     -float(r["speed_x"]) if r["speed_x"] is not None else 0.0,
@@ -126,10 +121,8 @@ def export_speed(db: Database) -> None:
 
 
 def export_distance(db: Database) -> None:
-    first = db.execute("SELECT MIN(real_ts) AS t FROM ticks").fetchone()
-    t0 = float(first["t"] or 0)
     rows = db.execute(
-        """SELECT igt, real_ts,
+        """SELECT igt,
                   CAST(dist_total AS REAL) AS dist_total,
                   CAST(x_total    AS REAL) AS x_total
            FROM ticks ORDER BY real_ts"""
@@ -142,7 +135,6 @@ def export_distance(db: Database) -> None:
     write_json("distance.json", [
         {
             "igt":        r["igt"],
-            "rts":        round(float(r["real_ts"]) - t0, 1),
             "dist_total": float(r["dist_total"] or 0),
             "x_total":    x_start - float(r["x_total"] or 0),
         }
@@ -157,15 +149,13 @@ def export_heatmap(db: Database) -> None:
 
 
 def export_elevation(db: Database) -> None:
-    first = db.execute("SELECT MIN(real_ts) AS t FROM ticks").fetchone()
-    t0 = float(first["t"] or 0)
     rows = db.execute(
-        "SELECT igt, real_ts, CAST(elevation AS REAL) AS elevation "
+        "SELECT igt, CAST(elevation AS REAL) AS elevation "
         "FROM ticks WHERE elevation IS NOT NULL ORDER BY real_ts"
     ).fetchall()
     rows = downsample(rows, 10000)
     write_json("elevation.json", [
-        {"igt": r["igt"], "rts": round(float(r["real_ts"]) - t0, 1), "elevation": float(r["elevation"])} for r in rows
+        {"igt": r["igt"], "elevation": float(r["elevation"])} for r in rows
     ])
 
 

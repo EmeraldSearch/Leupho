@@ -611,23 +611,34 @@
       var twitchScript = document.createElement('script');
       twitchScript.src = 'https://embed.twitch.tv/embed/v1.js';
       twitchScript.onload = function() {
-        var wrapper = document.getElementById('twitch-wrapper');
-        var w = Math.min(wrapper.offsetWidth, 1350);
-        var h = Math.round((w - 300) * 9 / 16);
-        new Twitch.Embed("twitch-embed", {
-          width: "100%",
-          height: h,
-          channel: "Leupho",
-          theme: "dark",
-          autoplay: false,
-        });
-        window.addEventListener('resize', function() {
-          var iframe = wrapper.querySelector('iframe');
-          if (iframe) {
-            var nw = Math.min(wrapper.offsetWidth, 1350);
-            iframe.style.height = Math.round((nw - 300) * 9 / 16) + 'px';
-          }
-        });
+        function initTwitch() {
+          var wrapper = document.getElementById('twitch-wrapper');
+          var w = wrapper.offsetWidth;
+          // Sur mobile (<640px) pas de chat latéral donc ratio 16/9 pur
+          // Sur desktop on retire ~300px pour le chat
+          var isMobile = window.innerWidth <= 640;
+          var h = isMobile ? Math.round(w * 9 / 16) : Math.round((Math.min(w, 1350) - 300) * 9 / 16);
+          new Twitch.Embed("twitch-embed", {
+            width: "100%",
+            height: h,
+            channel: "Leupho",
+            theme: "dark",
+            autoplay: false,
+          });
+          window.addEventListener('resize', function() {
+            var iframe = wrapper.querySelector('iframe');
+            if (!iframe) return;
+            var nw = wrapper.offsetWidth;
+            var mob = window.innerWidth <= 640;
+            iframe.style.height = (mob ? Math.round(nw * 9/16) : Math.round((Math.min(nw,1350)-300)*9/16)) + 'px';
+          });
+        }
+        // Attendre que le layout mobile soit rendu avant de calculer
+        if (document.readyState === 'complete') {
+          initTwitch();
+        } else {
+          window.addEventListener('load', initTwitch);
+        }
       };
       document.head.appendChild(twitchScript);
     </script>
