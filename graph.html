@@ -522,6 +522,21 @@
       </div>
     </div>
 
+    <!-- Axe X toggle -->
+    <div class="sidebar-section">
+      <h3>Axe X</h3>
+      <div style="display:flex;gap:6px;">
+        <button id="btn-igt" onclick="setXAxis('igt')"
+          style="flex:1;padding:7px;background:#555;border-top:2px solid #222;border-left:2px solid #222;border-right:2px solid #aaa;border-bottom:2px solid #aaa;color:var(--accent4);font-family:monospace;font-size:.65rem;cursor:pointer;">
+          IGT
+        </button>
+        <button id="btn-rta" onclick="setXAxis('rta')"
+          style="flex:1;padding:7px;background:#555;border-top:2px solid #aaa;border-left:2px solid #aaa;border-right:2px solid #222;border-bottom:2px solid #222;color:var(--subtext);font-family:monospace;font-size:.65rem;cursor:pointer;">
+          RTA
+        </button>
+      </div>
+    </div>
+
     <!-- Chart toggles -->
     <div class="sidebar-section">
       <h3>Charts</h3>
@@ -610,7 +625,25 @@
 // ================================================================
 // Config
 // ================================================================
-const REFRESH_MS   = 30_000;   // auto-refresh interval
+const REFRESH_MS   = 30_000;
+let _xAxisMode = 'igt';
+
+function setXAxis(mode) {
+  _xAxisMode = mode;
+  const active = 'border-top-color:#222;border-left-color:#222;border-right-color:#aaa;border-bottom-color:#aaa;';
+  const inactive = 'border-top-color:#aaa;border-left-color:#aaa;border-right-color:#222;border-bottom-color:#222;';
+  document.getElementById('btn-igt').style.cssText += mode === 'igt' ? ';border-top-color:#222;border-left-color:#222;border-right-color:#aaa;border-bottom-color:#aaa;color:var(--accent4)' : ';border-top-color:#aaa;border-left-color:#aaa;border-right-color:#222;border-bottom-color:#222;color:var(--subtext)';
+  document.getElementById('btn-rta').style.cssText += mode === 'rta' ? ';border-top-color:#222;border-left-color:#222;border-right-color:#aaa;border-bottom-color:#aaa;color:var(--accent3)' : ';border-top-color:#aaa;border-left-color:#aaa;border-right-color:#222;border-bottom-color:#222;color:var(--subtext)';
+  loadAll();
+}
+
+function xAxis(rows) {
+  return rows.map(r => _xAxisMode === 'rta' ? (r.rts != null ? r.rts : r.igt / 20) : r.igt);
+}
+function xTitle() { return _xAxisMode === 'rta' ? 'RTA (hh:mm:ss)' : 'IGT (hh:mm:ss)'; }
+function xTickLabels(x) {
+  return x.map(v => ticksToHMS(_xAxisMode === 'rta' ? Math.round(v * 20) : v));
+}   // auto-refresh interval
 let _firstRealTs   = null;     // partagé entre loadSummary et loadProgression
 const IGT_PER_SEC  = 20;       // 20 ticks = 1 second IGT
 
@@ -809,8 +842,8 @@ async function loadHP() {
     let { data, deaths } = await apiFetch("/api/hp" + rangeParams());
     data = filterByIgt(data);
     deaths = deaths.filter(d => (!filterFromTicks || d >= filterFromTicks) && (!filterToTicks || d <= filterToTicks));
-    const x = igtAxis(data);
-    const lbl = igtLabels(data);
+    const x = xAxis(data);
+    const lbl = x.map(v => ticksToHMS(_xAxisMode === "rta" ? Math.round(v*20) : v));
 
     const traces = [
       {
@@ -840,8 +873,8 @@ async function loadHP() {
       yaxis: { ...LAYOUT_BASE.yaxis, range: [0, 22], title: "HP" },
       xaxis: { ...LAYOUT_BASE.xaxis,
                 tickvals: _tickVals(x, 10),
-                ticktext: _tickVals(x, 10).map(ticksToHMS),
-                title: "IGT (hh:mm:ss)" },
+                ticktext: _tickVals(x, 10).map(v => ticksToHMS(_xAxisMode === "rta" ? Math.round(v*20) : v)),
+                title: xTitle() },
       shapes, annotations,
     };
 
@@ -856,8 +889,8 @@ async function loadSpeed() {
   try {
     let data = await apiFetch("/api/speed" + rangeParams());
     data = filterByIgt(data);
-    const x   = igtAxis(data);
-    const lbl = igtLabels(data);
+    const x = xAxis(data);
+    const lbl = x.map(v => ticksToHMS(_xAxisMode === "rta" ? Math.round(v*20) : v));
 
     // Rolling average for X speed (same window size as speed_avg)
     const WINDOW = 5;
@@ -903,8 +936,8 @@ async function loadSpeed() {
       yaxis: { ...LAYOUT_BASE.yaxis, title: "bl/s" },
       xaxis: { ...LAYOUT_BASE.xaxis,
                 tickvals: _tickVals(x, 10),
-                ticktext: _tickVals(x, 10).map(ticksToHMS),
-                title: "IGT (hh:mm:ss)" },
+                ticktext: _tickVals(x, 10).map(v => ticksToHMS(_xAxisMode === "rta" ? Math.round(v*20) : v)),
+                title: xTitle() },
       legend: { ...LAYOUT_BASE.legend, itemclick: "toggle", itemdoubleclick: "toggleothers" },
       shapes: [{
         type: "line", xref: "paper", x0: 0, x1: 1,
@@ -929,8 +962,8 @@ async function loadDistance() {
   try {
     let data = await apiFetch("/api/distance" + rangeParams());
     data = filterByIgt(data);
-    const x   = igtAxis(data);
-    const lbl = igtLabels(data);
+    const x = xAxis(data);
+    const lbl = x.map(v => ticksToHMS(_xAxisMode === "rta" ? Math.round(v*20) : v));
 
     const traces = [
       {
@@ -956,8 +989,8 @@ async function loadDistance() {
       yaxis: { ...LAYOUT_BASE.yaxis, title: "Blocks" },
       xaxis: { ...LAYOUT_BASE.xaxis,
                 tickvals: _tickVals(x, 10),
-                ticktext: _tickVals(x, 10).map(ticksToHMS),
-                title: "IGT (hh:mm:ss)" },
+                ticktext: _tickVals(x, 10).map(v => ticksToHMS(_xAxisMode === "rta" ? Math.round(v*20) : v)),
+                title: xTitle() },
       legend: { ...LAYOUT_BASE.legend, itemclick: "toggle", itemdoubleclick: "toggleothers" },
     };
     Plotly.react("chart-dist", traces, layout, PLOTLY_CONFIG);
@@ -1181,8 +1214,8 @@ async function loadElevation() {
     let data = await apiFetch("/api/elevation" + rangeParams());
     data = filterByIgt(data);
     if (!data.length) return;
-    const x   = igtAxis(data);
-    const lbl = igtLabels(data);
+    const x = xAxis(data);
+    const lbl = x.map(v => ticksToHMS(_xAxisMode === "rta" ? Math.round(v*20) : v));
 
     const traces = [{
       x, y: data.map(d => d.elevation),
@@ -1198,8 +1231,8 @@ async function loadElevation() {
       yaxis: { ...LAYOUT_BASE.yaxis, title: "Y (blocks)", range: [40, 128] },
       xaxis: { ...LAYOUT_BASE.xaxis,
                 tickvals: _tickVals(x, 10),
-                ticktext: _tickVals(x, 10).map(ticksToHMS),
-                title: "IGT (hh:mm:ss)" },
+                ticktext: _tickVals(x, 10).map(v => ticksToHMS(_xAxisMode === "rta" ? Math.round(v*20) : v)),
+                title: xTitle() },
     };
     Plotly.react("chart-elevation", traces, layout, PLOTLY_CONFIG);
   } catch(e) { showError(e.message); }
