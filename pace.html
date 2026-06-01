@@ -207,7 +207,8 @@ function fmtDeltaIGT(diff) {
   return '<span class="' + cls + '">' + sign + fmtS(Math.abs(diff)) + '</span>';
 }
 
-var segPaceCache = {};   // { pct_int: pace_bl_s } — segments terminés uniquement
+var segPaceCache  = {};   // { pct_int: pace_bl_s } — segments terminés uniquement
+var rowHtmlCache  = {};   // { pct_int: html_string } — lignes terminées
 
 function renderPace(data) {
   if (!data || !data.length) return;
@@ -267,36 +268,48 @@ function renderPace(data) {
     var lastM = grp[grp.length - 1];
     var segS  = lastM.igt_total_s - prevIGT;
 
-    var hIGTp     = HIST[p]     != null ? HIST[p]     : null;
-    var hIGTpPrev = HIST[p - 1] != null ? HIST[p - 1] : null;
-    var hSegS     = (hIGTp != null && hIGTpPrev != null) ? hIGTp - hIGTpPrev : null;
-    var dIGT      = hIGTp != null ? hIGTp - lastM.igt_total_s : null;
-
-    var paceSeg;
     if (p !== currentPct) {
-      // Segment terminé : mettre en cache pour ne pas recalculer
-      if (segPaceCache[p] == null && segS > 0) {
-        segPaceCache[p] = 125508.21 / segS;
+      // Segment terminé : utiliser le cache HTML si disponible
+      if (rowHtmlCache[p] == null) {
+        var hIGTp     = HIST[p]     != null ? HIST[p]     : null;
+        var hIGTpPrev = HIST[p - 1] != null ? HIST[p - 1] : null;
+        var hSegS     = (hIGTp != null && hIGTpPrev != null) ? hIGTp - hIGTpPrev : null;
+        var dIGT      = hIGTp != null ? hIGTp - lastM.igt_total_s : null;
+        if (segPaceCache[p] == null && segS > 0) segPaceCache[p] = 125508.21 / segS;
+        var paceSeg = segPaceCache[p] != null ? segPaceCache[p].toFixed(4) : '--';
+        rowHtmlCache[p] =
+          '<tr>' +
+          '<td><b>' + p + '%</b></td>' +
+          '<td>' + (p * 125508).toLocaleString() + ' bl</td>' +
+          '<td>' + fmtS(lastM.igt_total_s) + '</td>' +
+          '<td>' + fmtS(segS) + '</td>' +
+          '<td>' + paceSeg + '</td>' +
+          '<td>' + fmtS(lastM.eta_ovr_s) + '</td>' +
+          '<td class="neu">' + (hSegS != null ? fmtS(hSegS) : '--') + '</td>' +
+          '<td>' + fmtDeltaIGT(dIGT) + '</td>' +
+          '</tr>';
       }
-      paceSeg = segPaceCache[p] != null ? segPaceCache[p].toFixed(4) : '--';
+      rows.push(rowHtmlCache[p]);
     } else {
-      // Segment en cours : utiliser la distance réelle parcourue dans ce %
+      // Segment en cours : toujours recalculé
+      var hIGTp     = HIST[p]     != null ? HIST[p]     : null;
+      var hIGTpPrev = HIST[p - 1] != null ? HIST[p - 1] : null;
+      var hSegS     = (hIGTp != null && hIGTpPrev != null) ? hIGTp - hIGTpPrev : null;
       var distInSeg = last.distance - (p - 1) * 125508.21;
-      paceSeg = (segS > 0 && distInSeg > 0) ? (distInSeg / segS).toFixed(4) : '--';
+      var paceSeg   = (segS > 0 && distInSeg > 0) ? (distInSeg / segS).toFixed(4) : '--';
+      rows.push(
+        '<tr class="cur">' +
+        '<td><b>' + p + '%</b></td>' +
+        '<td>' + (p * 125508).toLocaleString() + ' bl</td>' +
+        '<td>' + fmtS(lastM.igt_total_s) + '</td>' +
+        '<td>' + fmtS(segS) + '</td>' +
+        '<td>' + paceSeg + '</td>' +
+        '<td>' + fmtS(lastM.eta_ovr_s) + '</td>' +
+        '<td class="neu">' + (hSegS != null ? fmtS(hSegS) : '--') + '</td>' +
+        '<td><span class="neu">—</span></td>' +
+        '</tr>'
+      );
     }
-
-    rows.push(
-      '<tr class="' + (p === currentPct ? 'cur' : '') + '">' +
-      '<td><b>' + p + '%</b></td>' +
-      '<td>' + (p * 125508).toLocaleString() + ' bl</td>' +
-      '<td>' + fmtS(lastM.igt_total_s) + '</td>' +
-      '<td>' + fmtS(segS) + '</td>' +
-      '<td>' + paceSeg + '</td>' +
-      '<td>' + fmtS(lastM.eta_ovr_s) + '</td>' +
-      '<td class="neu">' + (hSegS != null ? fmtS(hSegS) : '--') + '</td>' +
-      '<td>' + (p !== currentPct ? fmtDeltaIGT(dIGT) : '<span class="neu">—</span>') + '</td>' +
-      '</tr>'
-    );
     prevIGT = lastM.igt_total_s;
   });
 
