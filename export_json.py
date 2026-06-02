@@ -302,9 +302,20 @@ if __name__ == "__main__":
 
     if args.watch:
         print(f"Watching tracker.db → pushing to GitHub every {INTERVAL}s. Ctrl+C to stop.")
+        _last_exported_ts = None
         while True:
             try:
-                export_all()
+                # Vérifier si la DB a de nouvelles données depuis le dernier export
+                db_check = Database(DB_PATH, readonly=True)
+                last_ts = db_check.get_meta("last_real_ts", "0")
+                db_check.close()
+
+                if last_ts != _last_exported_ts:
+                    export_all()
+                    _last_exported_ts = last_ts
+                    print(f"[{time.strftime('%H:%M:%S')}] Exported (last_ts={last_ts})")
+                else:
+                    print(f"[{time.strftime('%H:%M:%S')}] No new data, skipping export")
             except Exception as e:
                 print(f"[{time.strftime('%H:%M:%S')}] Export error: {e}")
             time.sleep(INTERVAL)
