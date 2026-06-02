@@ -319,11 +319,13 @@ function renderPace(data) {
 }
 
 // Détection Flask vs JSON statique
-var _useFlask = null;
+var _useFlask   = null;
+var _lastPaceTs = null;
+
 async function _detect() {
   if (_useFlask !== null) return;
   try {
-    var p = await fetch('/api/summary', { method: 'HEAD' });
+    var p = await fetch('/api/summary');
     _useFlask = p.ok;
   } catch(_) { _useFlask = false; }
 }
@@ -333,6 +335,13 @@ async function loadPace() {
     await _detect();
     var paceUrl    = _useFlask ? '/api/pace'    : 'data/pace.json?_='    + Date.now();
     var summaryUrl = _useFlask ? '/api/summary' : 'data/summary.json?_=' + Date.now();
+    // Skip si pas de nouvelles données
+    try {
+      var cs = await fetch(summaryUrl).then(function(r){ return r.json(); });
+      var ts = cs.last_real_ts || cs.first_real_ts;
+      if (ts && ts === _lastPaceTs) return;
+      _lastPaceTs = ts;
+    } catch(e) { /* continuer */ }
     var resp = await fetch(paceUrl);
     var data = await resp.json();
     if (data.length) {

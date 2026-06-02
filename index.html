@@ -661,6 +661,7 @@
 // Config
 // ================================================================
 const REFRESH_MS   = 30_000;   // auto-refresh interval
+let _lastKnownTs   = null;      // dernier timestamp vu — skip si pas changé
 let _firstRealTs   = null;     // partagé entre loadSummary et loadProgression
 const IGT_PER_SEC  = 20;       // 20 ticks = 1 second IGT
 
@@ -842,7 +843,14 @@ async function loadProgression() {
   } catch(e) { /* silencieux */ }
 }
 
-function loadAll() {
+async function loadAll() {
+  // Vérifier si les données ont changé avant de tout recharger
+  try {
+    const s = await apiFetch("/api/summary");
+    const ts = s.last_real_ts || s.first_real_ts;
+    if (ts && ts === _lastKnownTs) return;  // rien de nouveau
+    _lastKnownTs = ts;
+  } catch(e) { /* continuer quand même */ }
   loadSummary();
   loadProgression();
 }
