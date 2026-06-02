@@ -565,6 +565,15 @@
           <div class="label">Shears Crafted</div>
           <div class="value" id="stat-shears">—</div>
         </div>
+        <!-- Row: Iron Pickaxes + Ice Boat -->
+        <div class="stat-card">
+          <div class="label">Iron Pickaxes Crafted</div>
+          <div class="value silver" id="stat-pickaxes">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="label">Ice Boat Sessions</div>
+          <div class="value" style="color:#53d8fb" id="stat-ice-boat">—</div>
+        </div>
         <!-- Row: Walked Nights + Nights Slept -->
         <div class="stat-card">
           <div class="label">Walked Nights</div>
@@ -749,8 +758,10 @@ async function loadSummary() {
     document.getElementById("stat-soups").textContent   = s.soups_used           ?? "—";
     document.getElementById("stat-pork").textContent    = s.pork_eaten           ?? "—";
     document.getElementById("stat-ct").textContent      = s.crafting_tables_used ?? "—";
-    document.getElementById("stat-axes").textContent    = s.axes_crafted         ?? "—";
-    document.getElementById("stat-shears").textContent  = s.shears_crafted       ?? "—";
+    document.getElementById("stat-axes").textContent      = s.axes_crafted         ?? "—";
+    document.getElementById("stat-shears").textContent    = s.shears_crafted       ?? "—";
+    document.getElementById("stat-pickaxes").textContent  = s.pickaxes_crafted     ?? "—";
+    document.getElementById("stat-ice-boat").textContent  = s.ice_boat_sessions    ?? "—";
 
     // Rain / thunder: convert IGT ticks to hh:mm:ss
     document.getElementById("stat-rain").textContent    = s.total_rain_episodes    ?? "—";
