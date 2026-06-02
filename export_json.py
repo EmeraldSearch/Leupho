@@ -121,7 +121,7 @@ def export_speed(db: Database) -> None:
             "rts":         round(float(r["real_ts"]) - t0, 1),
             "speed_horiz": r["speed_horiz"],
             "speed_avg":   r["speed_avg"],
-            "speed_x":     float(r["speed_x"]) if r["speed_x"] is not None else 0.0,
+            "speed_x":     -float(r["speed_x"]) if r["speed_x"] is not None else 0.0,
         }
         for r in rows
     ])
