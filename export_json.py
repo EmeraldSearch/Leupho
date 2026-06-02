@@ -86,7 +86,9 @@ def export_summary(db: Database) -> None:
     row = db.execute(
         "SELECT inventory FROM ticks ORDER BY real_ts DESC LIMIT 1"
     ).fetchone()
-    d["inventory"] = row["inventory"] if row else ""
+    d["inventory"]        = row["inventory"] if row else ""
+    d["run_finished"]     = db.get_meta("run_finished", "0") == "1"
+    d["run_finished_igt"] = db.get_meta_int("run_finished_igt") or None
     write_json("summary.json", d)
 
 

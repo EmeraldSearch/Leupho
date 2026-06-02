@@ -217,7 +217,7 @@ function renderPace(data) {
 
   document.getElementById('prog-bar').style.width = (last.i / 1000) + '%';
   document.getElementById('s-pct').textContent    = last.pct.toFixed(3) + '%';
-  document.getElementById('s-igt').textContent    = fmtS(last.igt_total_s);
+  if (!window._pacIgtFrozen) document.getElementById('s-igt').textContent = fmtS(last.igt_total_s);
   document.getElementById('s-pace').textContent   = last.pace_overall.toFixed(4) + ' bl/s';
   document.getElementById('s-eta').textContent    = fmtS(last.eta_ovr_s);
 
@@ -340,7 +340,16 @@ async function loadPace() {
       try {
         var sum = await fetch(summaryUrl).then(function(r){ return r.json(); });
         if (sum.first_real_ts) {
-          document.getElementById('s-rta').textContent = fmtS(Date.now() / 1000 - sum.first_real_ts);
+          if (sum.run_finished && !window._pacRtaFrozen) {
+            window._pacRtaFrozen = true;
+            document.getElementById('s-rta').textContent = fmtS(Date.now() / 1000 - sum.first_real_ts);
+          } else if (!window._pacRtaFrozen) {
+            document.getElementById('s-rta').textContent = fmtS(Date.now() / 1000 - sum.first_real_ts);
+          }
+        }
+        if (sum.run_finished && sum.run_finished_igt) {
+          document.getElementById('s-igt').textContent = fmtS(sum.run_finished_igt / 20);
+          window._pacIgtFrozen = true;
         }
       } catch(_) {}
     } else {

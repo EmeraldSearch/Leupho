@@ -770,7 +770,20 @@ async function loadSummary() {
     document.getElementById("stat-nights-walked").textContent = s.nights_walked ?? "—";
     if (s.first_real_ts) {
       _firstRealTs = s.first_real_ts;
-      document.getElementById("stat-rta").textContent = fmtSecs(Date.now() / 1000 - s.first_real_ts);
+      // Si run terminée, figer le RTA au moment de la fin
+      if (s.run_finished && s.run_finished_igt) {
+        // RTA figé = on ne met plus à jour
+        if (!window._rtaFrozen) {
+          window._rtaFrozen = true;
+          document.getElementById("stat-rta").textContent = fmtSecs(Date.now() / 1000 - s.first_real_ts);
+        }
+      } else {
+        document.getElementById("stat-rta").textContent = fmtSecs(Date.now() / 1000 - s.first_real_ts);
+      }
+    }
+    if (s.run_finished && s.run_finished_igt) {
+      document.getElementById("stat-igt").textContent = ticksToHMS(s.run_finished_igt);
+      window._igtFrozen = true;
     }
     document.getElementById("stat-avgx-global").textContent =
       s.avg_x_global != null ? `${s.avg_x_global.toFixed(3)} bl/s` : "—";
