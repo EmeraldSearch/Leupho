@@ -870,7 +870,7 @@ async function loadBest10k() {
   } catch(e) {}
 }
 
-function loadAll() {
+async function loadAll() {
   // Vérifier si les données ont changé avant de tout recharger
   try {
     const s = await apiFetch("/api/summary");
