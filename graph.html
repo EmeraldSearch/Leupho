@@ -550,6 +550,7 @@
         <label><input type="checkbox" checked data-card="card-heatmap">   Chemin (XZ)</label>
         <label><input type="checkbox" checked data-card="card-deaths">   Death log</label>
         <label><input type="checkbox" checked data-card="card-weather">  Weather log</label>
+        <label><input type="checkbox" checked data-card="card-segments"> Segments 10k</label>
       </div>
     </div>
 
@@ -609,6 +610,12 @@
     <div class="chart-card" id="card-deaths">
       <h2>☠ Death log</h2>
       <div id="death-log"></div>
+    </div>
+
+    <!-- Segments 10k -->
+    <div class="chart-card" id="card-segments">
+      <h2>🏁 Segments 10k</h2>
+      <div id="segments-table" style="overflow-x:auto"></div>
     </div>
 
     <!-- Weather log -->
@@ -1343,6 +1350,50 @@ async function loadProgression() {
 // ================================================================
 // Load all
 // ================================================================
+async function loadSegments() {
+  try {
+    const isFlask = await fetch('/api/summary').then(r=>r.ok).catch(()=>false);
+    const url = isFlask ? '/api/segments_10k' : 'data/segments_10k.json?_='+Date.now();
+    const segs = await fetch(url).then(r=>r.json());
+    if (!segs || segs.length === 0) {
+      document.getElementById('segments-table').innerHTML =
+        '<p style="color:var(--subtext);font-size:.8rem">Aucun segment complété pour l'instant.</p>';
+      return;
+    }
+    const best = Math.min(...segs.map(s=>s.duration_ticks));
+    function fmtT(t) {
+      const s = Math.floor(t/20), m = Math.floor(s/60), sec = s%60;
+      return m+':'+String(sec).padStart(2,'0');
+    }
+    function fmtIGT(t) {
+      const s=Math.floor(t/20),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+      return h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+    }
+    let html = `<table style="width:100%;border-collapse:collapse;font-size:.8rem">
+      <thead><tr style="color:var(--subtext);border-bottom:1px solid var(--border)">
+        <th style="text-align:left;padding:4px 8px">Segment</th>
+        <th style="text-align:left;padding:4px 8px">Zone X</th>
+        <th style="text-align:left;padding:4px 8px">Durée</th>
+        <th style="text-align:left;padding:4px 8px">IGT début</th>
+        <th style="text-align:left;padding:4px 8px">IGT fin</th>
+      </tr></thead><tbody>`;
+    for (const s of segs) {
+      const isBest = s.duration_ticks === best;
+      const xStart = -((s.segment_num-1)*10000);
+      const xEnd   = -(s.segment_num*10000);
+      html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);${isBest?'color:#a8ff78':''}" >
+        <td style="padding:4px 8px">${isBest ? '🏆 ' : ''}${s.segment_num}</td>
+        <td style="padding:4px 8px;font-family:monospace">${xStart.toLocaleString()} → ${xEnd.toLocaleString()}</td>
+        <td style="padding:4px 8px;font-family:monospace;font-weight:${isBest?'bold':'normal'}">${fmtT(s.duration_ticks)}</td>
+        <td style="padding:4px 8px;font-family:monospace;color:var(--subtext)">${fmtIGT(s.igt_start)}</td>
+        <td style="padding:4px 8px;font-family:monospace;color:var(--subtext)">${fmtIGT(s.igt_end)}</td>
+      </tr>`;
+    }
+    html += '</tbody></table>';
+    document.getElementById('segments-table').innerHTML = html;
+  } catch(e) { console.error('loadSegments:', e); }
+}
+
 async function loadWeather() {
   try {
     const rows = await apiFetch("/api/weather");
@@ -1384,6 +1435,7 @@ async function loadAll() {
   loadItems();
   loadDeaths();
   loadWeather();
+  loadSegments();
   updateLastUpdated();
 }
 
