@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Farlands — Log</title>
+  <link rel="icon" type="image/gif" href="kazuwalk.gif?v=2"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:#1a1a2e; --panel:#16213e; --border:#2a2a4a;
+      --accent1:#e94560; --accent3:#53d8fb; --accent4:#a8ff78;
+      --gold:#f5c542; --text:#e0e0e0; --subtext:#8888aa;
+    }
+    html, body { min-height:100%; background:var(--bg); color:var(--text);
+      font-family:'Segoe UI',system-ui,sans-serif; font-size:14px; }
+    nav {
+      background:var(--panel); border-bottom:1px solid var(--border);
+      display:flex; align-items:center; flex-wrap:wrap;
+      gap:5px; padding:8px 16px; min-height:68px;
+    }
+    nav h1 { font-family:"Minecraft",monospace; font-size:.85rem; color:var(--accent3);
+      margin-right:8px; display:flex; align-items:center; }
+    .nav-btn {
+      font-family:"Minecraft",monospace; font-size:.7rem; padding:7px 14px;
+      background:#555; border-top:2px solid #aaa; border-left:2px solid #aaa;
+      border-right:2px solid #222; border-bottom:2px solid #222;
+      color:#fff; text-decoration:none; text-shadow:1px 1px 0 #1a1a1a;
+      cursor:pointer; white-space:nowrap; flex-shrink:0;
+    }
+    .nav-btn:hover { filter:brightness(1.3); }
+    .nav-btn.active { border-top-color:#222; border-left-color:#222;
+      border-right-color:#aaa; border-bottom-color:#aaa; filter:brightness(0.85); }
+    @media (max-width:480px) {
+      nav h1 { font-size:.6rem; }
+      .nav-btn { font-size:.45rem; padding:4px 8px; }
+    }
+
+    .log-wrapper { max-width:900px; margin:0 auto; padding:20px 16px; }
+
+    /* Filtres */
+    .filters {
+      display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px;
+      align-items:center;
+    }
+    .filter-btn {
+      padding:4px 10px; border-radius:20px; border:1px solid var(--border);
+      background:var(--panel); color:var(--subtext); font-size:.75rem;
+      cursor:pointer; transition:all .15s; white-space:nowrap;
+    }
+    .filter-btn:hover { border-color:var(--accent3); color:var(--text); }
+    .filter-btn.active { border-color:var(--accent3); background:rgba(83,216,251,0.1); color:var(--accent3); }
+    .filter-label { font-size:.75rem; color:var(--subtext); margin-right:4px; }
+
+    /* Stats bar */
+    .stats-bar {
+      display:flex; flex-wrap:wrap; gap:8px; margin-bottom:16px;
+      padding:10px 14px; background:var(--panel);
+      border:1px solid var(--border); border-radius:8px;
+    }
+    .stat-chip { font-size:.75rem; color:var(--subtext); }
+    .stat-chip span { color:var(--text); font-family:monospace; }
+
+    /* Log entries */
+    .log-entry {
+      display:flex; align-items:flex-start; gap:12px;
+      padding:8px 12px; border-bottom:1px solid rgba(255,255,255,0.04);
+      transition:background .1s;
+    }
+    .log-entry:hover { background:rgba(255,255,255,0.03); }
+    .log-icon { font-size:1.1rem; flex-shrink:0; width:24px; text-align:center; }
+    .log-time { font-family:monospace; font-size:.72rem; color:var(--subtext);
+      flex-shrink:0; width:70px; padding-top:1px; }
+    .log-desc { font-size:.82rem; flex:1; }
+    .log-desc .label { color:var(--text); }
+    .log-desc .detail { color:var(--subtext); font-size:.75rem; margin-top:1px; }
+
+    /* Couleurs par type */
+    .type-boat        .log-icon, .type-boat        .label { color:#5b9bd5; }
+    .type-soup        .log-icon, .type-soup        .label { color:#d97040; }
+    .type-pork        .log-icon, .type-pork        .label { color:#e07070; }
+    .type-crafting_table .log-icon, .type-crafting_table .label { color:#a08060; }
+    .type-axe         .log-icon, .type-axe         .label { color:#a0a0b0; }
+    .type-pickaxe     .log-icon, .type-pickaxe     .label { color:#6e7a8a; }
+    .type-shears      .log-icon, .type-shears      .label { color:#909090; }
+    .type-ice_boat_start .log-icon, .type-ice_boat_start .label { color:#a8e8ff; }
+    .type-night_slept .log-icon, .type-night_slept .label { color:#9080c0; }
+    .type-segment_10k .log-icon, .type-segment_10k .label { color:#a8ff78; }
+
+    .empty { text-align:center; color:var(--subtext); padding:40px;
+      font-size:.85rem; }
+    .loading { text-align:center; color:var(--subtext); padding:40px; }
+    .spinner { width:28px; height:28px; border:3px solid var(--border);
+      border-top-color:var(--accent3); border-radius:50%;
+      animation:spin .7s linear infinite; margin:0 auto 12px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<nav>
+  <h1><img src="kazuwalk.gif?v=2" style="height:52px;vertical-align:middle;image-rendering:pixelated;margin-right:8px;"><span style="display:flex;flex-direction:column;align-items:center;line-height:1.1;">Farlands<span style="font-size:.7em;opacity:.8">Tracker</span></span></h1>
+  <a href="index.html" class="nav-btn">Dashboard</a>
+  <a href="graph.html" class="nav-btn">Graphs</a>
+  <a href="pace.html" class="nav-btn">Pace</a>
+  <a href="map.html" class="nav-btn">Map</a>
+  <a href="log.html" class="nav-btn active">Log</a>
+  <a href="faq.html" class="nav-btn">FAQ</a>
+</nav>
+
+<div class="log-wrapper">
+
+  <div class="filters" id="filters">
+    <span class="filter-label">Filtrer :</span>
+    <button class="filter-btn active" data-type="all"      onclick="setFilter('all')">Tout</button>
+    <button class="filter-btn" data-type="boat"            onclick="setFilter('boat')">⚓ Bateaux</button>
+    <button class="filter-btn" data-type="soup"            onclick="setFilter('soup')">🍲 Soupes</button>
+    <button class="filter-btn" data-type="pork"            onclick="setFilter('pork')">🥩 Porc</button>
+    <button class="filter-btn" data-type="crafting_table"  onclick="setFilter('crafting_table')">🛠 Tables</button>
+    <button class="filter-btn" data-type="axe"             onclick="setFilter('axe')">🪓 Haches</button>
+    <button class="filter-btn" data-type="pickaxe"         onclick="setFilter('pickaxe')">⛏ Pioches</button>
+    <button class="filter-btn" data-type="shears"          onclick="setFilter('shears')">✂ Cisailles</button>
+    <button class="filter-btn" data-type="ice_boat_start"  onclick="setFilter('ice_boat_start')">🧊 Ice Boat</button>
+    <button class="filter-btn" data-type="night_slept"     onclick="setFilter('night_slept')">🌙 Nuits</button>
+    <button class="filter-btn" data-type="segment_10k"     onclick="setFilter('segment_10k')">🏁 Segments</button>
+  </div>
+
+  <div class="stats-bar" id="stats-bar" style="display:none"></div>
+
+  <div id="log-container">
+    <div class="loading"><div class="spinner"></div>Chargement…</div>
+  </div>
+
+</div>
+
+<script>
+const EVENT_META = {
+  boat:           { icon:'⚓', label:'Bateau utilisé' },
+  soup:           { icon:'🍲', label:'Soupe mangée' },
+  pork:           { icon:'🥩', label:'Porc mangé' },
+  crafting_table: { icon:'🛠', label:'Table de craft utilisée' },
+  axe:            { icon:'🪓', label:'Hache de fer craftée' },
+  pickaxe:        { icon:'⛏', label:'Pioche de fer craftée' },
+  shears:         { icon:'✂', label:'Cisailles craftées' },
+  ice_boat_start: { icon:'🧊', label:'Session Ice Boat #' },
+  night_slept:    { icon:'🌙', label:'Nuit dormie' },
+  segment_10k:    { icon:'🏁', label:'Segment 10k terminé' },
+};
+
+let _events   = [];
+let _filter   = 'all';
+let _lastTs   = null;
+const REFRESH = 30_000;
+
+function ticksToHMS(t) {
+  const s=Math.floor(t/20), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  return h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+function fmtDur(t) {
+  const s=Math.floor(t/20), m=Math.floor(s/60), sec=s%60;
+  return m+':'+String(sec).padStart(2,'0');
+}
+
+async function load() {
+  try {
+    const isFlask = await fetch('/api/summary').then(r=>r.ok).catch(()=>false);
+    const url = isFlask ? '/api/events?limit=5000' : 'data/events.json?_='+Date.now();
+    const data = await fetch(url).then(r=>r.json());
+    _events = data;
+    render();
+    updateStats();
+  } catch(e) {
+    document.getElementById('log-container').innerHTML =
+      '<div class="empty">Aucun événement — le tracker doit tourner pour remplir le journal.</div>';
+  }
+}
+
+function setFilter(f) {
+  _filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.type === f);
+  });
+  render();
+}
+
+function render() {
+  const filtered = _filter === 'all'
+    ? _events
+    : _events.filter(e => e.type === _filter);
+
+  if (filtered.length === 0) {
+    document.getElementById('log-container').innerHTML =
+      '<div class="empty">Aucun événement de ce type.</div>';
+    return;
+  }
+
+  // Trier du plus récent au plus ancien
+  const sorted = [...filtered].sort((a,b) => b.igt - a.igt);
+
+  let html = '';
+  let prevIGT = -1;
+
+  // Compteurs par type pour numéroter (en ordre chronologique)
+  const typeCounters = {};
+  const chronological = [...filtered].sort((a,b) => a.igt - b.igt);
+  const evNumbers = {};
+  for (const ev of chronological) {
+    typeCounters[ev.type] = (typeCounters[ev.type] || 0) + 1;
+    evNumbers[ev.id] = typeCounters[ev.type];
+  }
+
+  for (const ev of sorted) {
+    const meta = EVENT_META[ev.type] || { icon:'•', label: ev.type };
+    const num = evNumbers[ev.id];
+    let label = meta.label + ' #' + num;
+    let detail = '';
+
+    // Détail selon le type
+    if (ev.type === 'ice_boat_start' && ev.data) {
+      label = 'Session Ice Boat #' + ev.data;
+    } else if (ev.type === 'segment_10k' && ev.data) {
+      try {
+        const d = JSON.parse(ev.data);
+        const xStart = -((d.seg-1)*10000);
+        const xEnd   = -(d.seg*10000);
+        label = 'Segment ' + d.seg + ' terminé';
+        detail = xStart.toLocaleString() + ' → ' + xEnd.toLocaleString() +
+                 '  (' + fmtDur(d.dur) + ')';
+      } catch(e) {}
+    }
+
+    const igt = ticksToHMS(ev.igt);
+
+    // Séparateur si écart > 10 min IGT
+    if (prevIGT > 0 && prevIGT - ev.igt > 12000) {
+      html += `<div style="text-align:center;color:var(--border);font-size:.7rem;
+        padding:6px;border-bottom:1px solid var(--border)">
+        — ${ticksToHMS(prevIGT - ev.igt)} plus tard —</div>`;
+    }
+    prevIGT = ev.igt;
+
+    html += `<div class="log-entry type-${ev.type}">
+      <div class="log-icon">${meta.icon}</div>
+      <div class="log-time">${igt}</div>
+      <div class="log-desc">
+        <div class="label">${label}</div>
+        ${detail ? '<div class="detail">'+detail+'</div>' : ''}
+      </div>
+    </div>`;
+  }
+
+  document.getElementById('log-container').innerHTML = html;
+}
+
+function updateStats() {
+  const counts = {};
+  for (const ev of _events) {
+    counts[ev.type] = (counts[ev.type] || 0) + 1;
+  }
+  const order = ['boat','soup','pork','crafting_table','axe','pickaxe','shears','ice_boat_start','night_slept','segment_10k'];
+  const icons  = {boat:'⚓',soup:'🍲',pork:'🥩',crafting_table:'🛠',axe:'🪓',pickaxe:'⛏',shears:'✂',ice_boat_start:'🧊',night_slept:'🌙',segment_10k:'🏁'};
+  let html = '';
+  for (const t of order) {
+    if (counts[t]) {
+      html += `<div class="stat-chip">${icons[t]} <span>${counts[t]}</span></div>`;
+    }
+  }
+  const bar = document.getElementById('stats-bar');
+  if (html) { bar.innerHTML = html; bar.style.display = 'flex'; }
+}
+
+load();
+setInterval(load, REFRESH);
+</script>
+</body>
+</html>
