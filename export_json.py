@@ -240,7 +240,7 @@ def git_push() -> None:
             "data/summary.json", "data/hp.json", "data/speed.json",
             "data/distance.json", "data/elevation.json", "data/heatmap.json",
             "data/item_flow.json", "data/deaths.json", "data/weather.json",
-            "data/pace.json", "data/map_data.json",
+            "data/pace.json", "data/map_data.json", "data/segments_10k.json",
             "index.html", "graph.html", "pace.html", "faq.html", "map.html",
             "inventory_sprites.png", "inventory_sprites.json", "skin.png", "kazuwalk.gif"
         ], check=False, capture_output=True)
@@ -275,6 +275,16 @@ def export_weather(db: Database) -> None:
     ])
 
 
+def export_segments_10k(db: Database) -> None:
+    rows = db.fetch_segments_10k()
+    write_json("segments_10k.json", [{
+        "segment_num":    r["segment_num"],
+        "igt_start":      r["igt_start"],
+        "igt_end":        r["igt_end"],
+        "duration_ticks": r["duration_ticks"],
+    } for r in rows])
+
+
 def export_map() -> None:
     """Génère map_data.json via gen_map.py."""
     import sys
@@ -295,6 +305,7 @@ def export_all() -> None:
         export_deaths(db)
         export_weather(db)
         export_pace(db)
+        export_segments_10k(db)
     finally:
         db.close()
     export_map()

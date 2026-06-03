@@ -593,6 +593,11 @@
           <div class="label">Ice Boat Sessions</div>
           <div class="value" style="color:#a8e8ff" id="stat-ice-boat">—</div>
         </div>
+        <!-- Row: Best 10k -->
+        <div class="stat-card" style="grid-column:span 2">
+          <div class="label">Best 10k segment</div>
+          <div class="value" style="color:var(--accent4)" id="stat-best10k">—</div>
+        </div>
         <!-- Hidden -->
         <div style="display:none" id="stat-dist">—</div>
         <div style="display:none" id="stat-saves">—</div>
@@ -764,6 +769,8 @@ async function loadSummary() {
     document.getElementById("stat-shears").textContent    = s.shears_crafted       ?? "—";
     document.getElementById("stat-pickaxes").textContent  = s.pickaxes_crafted     ?? "—";
     document.getElementById("stat-ice-boat").textContent  = s.ice_boat_sessions    ?? "—";
+    // Best 10k
+    loadBest10k();
 
     // Rain / thunder: convert IGT ticks to hh:mm:ss
     document.getElementById("stat-rain").textContent    = s.total_rain_episodes    ?? "—";
@@ -844,7 +851,26 @@ async function loadProgression() {
   } catch(e) { /* silencieux */ }
 }
 
-async function loadAll() {
+async function fmtTicks(ticks) {
+  const s   = Math.floor(ticks / 20);
+  const m   = Math.floor(s / 60);
+  const sec = s % 60;
+  return m + ':' + String(sec).padStart(2,'0');
+}
+
+async function loadBest10k() {
+  try {
+    const isFlask = await fetch('/api/summary').then(r=>r.ok).catch(()=>false);
+    const url = isFlask ? '/api/segments_10k' : 'data/segments_10k.json?_='+Date.now();
+    const segs = await fetch(url).then(r=>r.json());
+    if (!segs || segs.length === 0) return;
+    const best = segs.reduce((a,b) => a.duration_ticks < b.duration_ticks ? a : b);
+    document.getElementById('stat-best10k').textContent =
+      fmtTicks(best.duration_ticks) + '  (seg. ' + best.segment_num + ')';
+  } catch(e) {}
+}
+
+function loadAll() {
   // Vérifier si les données ont changé avant de tout recharger
   try {
     const s = await apiFetch("/api/summary");
