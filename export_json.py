@@ -241,7 +241,7 @@ def git_push() -> None:
             "data/distance.json", "data/elevation.json", "data/heatmap.json",
             "data/item_flow.json", "data/deaths.json", "data/weather.json",
             "data/pace.json", "data/map_data.json", "data/segments_10k.json", "data/events.json",
-            "index.html", "graph.html", "pace.html", "faq.html", "map.html",
+            "index.html", "graph.html", "pace.html", "faq.html", "map.html", "log.html",
             "inventory_sprites.png", "inventory_sprites.json", "skin.png", "kazuwalk.gif"
         ], check=False, capture_output=True)
         result = subprocess.run(["git", "-C", BASE_DIR, "diff", "--cached", "--quiet"], capture_output=True)
