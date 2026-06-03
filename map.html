@@ -459,12 +459,21 @@ function ticksToHMS(ticks) {
 
 function nearestPathPoint(mx, mz) {
   if (!_data || !_data.path) return null;
-  const THRESHOLD_PX = 12;
-  let best = null, bestD = Infinity;
+  const THRESHOLD_PX = 16;
   const path = _data.path;
-  // Chercher dans un voisinage raisonnable (pas tous les points)
-  const stride = Math.max(1, Math.floor(path.length / 5000));
+  // Phase 1 : chercher le meilleur avec stride pour trouver la zone
+  const stride = Math.max(1, Math.floor(path.length / 3000));
+  let best = null, bestD = Infinity;
   for (let i = 0; i < path.length; i += stride) {
+    const {sx, sz} = w2s(path[i][0], path[i][1]);
+    const d = Math.hypot(sx - mx, sz - mz);
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  if (best === null || bestD > THRESHOLD_PX * 4) return null;
+  // Phase 2 : affiner dans le voisinage du meilleur point
+  const lo = Math.max(0, best - stride * 2);
+  const hi = Math.min(path.length - 1, best + stride * 2);
+  for (let i = lo; i <= hi; i++) {
     const {sx, sz} = w2s(path[i][0], path[i][1]);
     const d = Math.hypot(sx - mx, sz - mz);
     if (d < bestD) { bestD = d; best = i; }
