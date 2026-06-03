@@ -1357,7 +1357,7 @@ async function loadSegments() {
     const segs = await fetch(url).then(r=>r.json());
     if (!segs || segs.length === 0) {
       document.getElementById('segments-table').innerHTML =
-        '<p style="color:var(--subtext);font-size:.8rem">Aucun segment complété pour l'instant.</p>';
+        '<p style="color:var(--subtext);font-size:.8rem">Aucun segment complété pour linstant.</p>';
       return;
     }
     const best = Math.min(...segs.map(s=>s.duration_ticks));
