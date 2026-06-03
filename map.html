@@ -135,7 +135,6 @@
     <div class="sb">
       <h3>Afficher</h3>
       <label class="cb-row"><input type="checkbox" id="show-path"    checked onchange="redraw()"> Chemin</label>
-      <label class="cb-row"><input type="checkbox" id="show-pct"     checked onchange="redraw()"> Repères %</label>
       <label class="cb-row"><input type="checkbox" id="show-grid"    checked onchange="redraw()"> Grille</label>
       <label class="cb-row"><input type="checkbox" id="show-labels"  checked onchange="redraw()"> Labels grille</label>
       <label class="cb-row"><input type="checkbox" id="show-origin"  checked onchange="redraw()"> Origine (0,0)</label>
@@ -168,7 +167,6 @@
 <script>
 // ── Data ────────────────────────────────────────────────────────
 let _data     = null;
-let _pctMarks = [];   // [{pct, x, z}] repères à chaque 1%
 
 // ── View ─────────────────────────────────────────────────────────
 let _ox = 0, _oz = 0, _scale = 1;
@@ -189,8 +187,7 @@ async function loadData() {
     _data = await r.json();
     document.getElementById('loading').style.display = 'none';
     initView();
-    buildPctMarks();
-    updateStats();
+      updateStats();
     redraw();
   } catch(e) {
     document.getElementById('loading').innerHTML =
@@ -199,25 +196,37 @@ async function loadData() {
 }
 
 // ── Init ─────────────────────────────────────────────────────────
+const MAP_LIMIT = 12_550_824;
+
 function initView() {
   const c = document.getElementById('map-container');
   resizeCanvas();
   const W = c.clientWidth, H = c.clientHeight;
 
-  if (!_data.path || _data.path.length === 0) return;
+  if (!_data || !_data.path || _data.path.length === 0) {
+    // Fallback : vue complète
+    _scale = Math.min(W, H) / (MAP_LIMIT * 2 * 1.05);
+    _ox = W/2; _oz = H/2;
+    return;
+  }
 
-  // Bounds du chemin
+  // Zoom initial sur le chemin parcouru
   const xs = _data.path.map(p=>p[0]);
   const zs = _data.path.map(p=>p[1]);
   const minX = Math.min(...xs), maxX = Math.max(...xs);
   const minZ = Math.min(...zs), maxZ = Math.max(...zs);
-  const rangeX = maxX - minX || 1000;
-  const rangeZ = maxZ - minZ || 500;
+  const rangeX = Math.max(maxX - minX, 1000);
+  const rangeZ = Math.max(maxZ - minZ, 500);
 
-  _scale = Math.min(W / (rangeX * 1.1), H / (rangeZ * 4)) ;
-  _scale = Math.max(0.00001, Math.min(_scale, 4));
+  _scale = Math.min(W / (rangeX * 1.15), H / (rangeZ * 3));
+  _scale = Math.min(_scale, 4);
   _ox = W/2 - (minX + rangeX/2) * _scale;
   _oz = H/2 - (minZ + rangeZ/2) * _scale;
+}
+
+function minScale(W, H) {
+  // Échelle minimale = vue complète du monde carré
+  return Math.min(W, H) / (MAP_LIMIT * 2 * 1.05);
 }
 
 function resizeCanvas() {
@@ -232,26 +241,17 @@ function buildPctMarks() {
   _pctMarks = [];
   const path = _data.path;
 
-  // Calculer distance cumulée
-  let total = 0;
-  const dists = [0];
-  for (let i = 1; i < path.length; i++) {
-    const dx = path[i][0] - path[i-1][0];
-    total += Math.abs(dx);  // distance en X uniquement (progression vers -X)
-    dists.push(total);
-  }
-
-  // Un repère par % (1% = FAR_LANDS / 100 blocs)
-  const startX = path[0][0];
+  // Les repères % sont basés sur la coordonnée X absolue
+  // 1% = FAR_LANDS / 100 blocs parcourus depuis X=0
+  // On cherche le point du chemin dont |x| est le plus proche de pct * FAR_LANDS / 100
   for (let pct = 1; pct <= 100; pct++) {
-    const targetX = startX - (FAR_LANDS * pct / 100);
-    // Trouver le point le plus proche sur le chemin
+    const targetAbsX = FAR_LANDS * pct / 100;
     let best = null, bestDist = Infinity;
     for (let i = 0; i < path.length; i++) {
-      const d = Math.abs(path[i][0] - targetX);
+      const d = Math.abs(Math.abs(path[i][0]) - targetAbsX);
       if (d < bestDist) { bestDist = d; best = i; }
     }
-    if (best !== null) {
+    if (best !== null && bestDist < FAR_LANDS / 100 * 2) {
       _pctMarks.push({ pct, x: path[best][0], z: path[best][1] });
     }
   }
@@ -358,29 +358,28 @@ function redraw() {
     }
   }
 
-  // ── Repères % ──
-  if (document.getElementById('show-pct').checked && _pctMarks.length > 0) {
-    for (const m of _pctMarks) {
-      const {sx, sz} = w2s(m.x, m.z);
-      if (sx < -10 || sz < -10 || sx > W+10 || sz > H+10) continue;
-
-      const isMajor = m.pct % 10 === 0;
-      const h = isMajor ? 12 : 6;
-
-      ctx.strokeStyle = isMajor ? 'rgba(245,197,66,0.9)' : 'rgba(245,197,66,0.4)';
-      ctx.lineWidth = isMajor ? 1.5 : 1;
-      ctx.beginPath();
-      ctx.moveTo(sx, sz - h); ctx.lineTo(sx, sz + h);
-      ctx.stroke();
-
-      if (isMajor && _scale > 0.00003) {
-        ctx.fillStyle = 'rgba(245,197,66,0.85)';
-        ctx.font = `${Math.max(9, Math.min(11, _scale * 300))}px monospace`;
-        ctx.textAlign = 'center';
-        ctx.fillText(m.pct + '%', sx, sz - h - 3);
-      }
-    }
-  }
+  // ── Bords de la map : carré Far Lands ──
+  const {sx: flXneg} = w2s(-MAP_LIMIT, 0);
+  const {sx: flXpos} = w2s( MAP_LIMIT, 0);
+  const {sz: flZneg} = w2s(0, -MAP_LIMIT);
+  const {sz: flZpos} = w2s(0,  MAP_LIMIT);
+  ctx.strokeStyle = 'rgba(233,69,96,0.5)';
+  ctx.lineWidth = 1.5; ctx.setLineDash([6,4]);
+  // X = -MAP_LIMIT (gauche)
+  ctx.beginPath(); ctx.moveTo(flXneg, 0); ctx.lineTo(flXneg, H); ctx.stroke();
+  // X = +MAP_LIMIT (droite)
+  ctx.beginPath(); ctx.moveTo(flXpos, 0); ctx.lineTo(flXpos, H); ctx.stroke();
+  // Z = -MAP_LIMIT (haut)
+  ctx.beginPath(); ctx.moveTo(0, flZneg); ctx.lineTo(W, flZneg); ctx.stroke();
+  // Z = +MAP_LIMIT (bas)
+  ctx.beginPath(); ctx.moveTo(0, flZpos); ctx.lineTo(W, flZpos); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(233,69,96,0.7)';
+  ctx.font = '10px monospace';
+  if (flXneg > 2 && flXneg < W) { ctx.textAlign='left';  ctx.fillText('Far Lands', flXneg+4, 14); }
+  if (flXpos > 2 && flXpos < W) { ctx.textAlign='right'; ctx.fillText('Far Lands', flXpos-4, 14); }
+  if (flZneg > 2 && flZneg < H) { ctx.textAlign='left';  ctx.fillText('Far Lands', 4, flZneg-4); }
+  if (flZpos > 2 && flZpos < H) { ctx.textAlign='left';  ctx.fillText('Far Lands', 4, flZpos+12); }
 
   // ── Chemin ──
   if (document.getElementById('show-path').checked && path.length > 1) {
@@ -449,6 +448,30 @@ function teleport() {
   redraw();
 }
 
+// ── Helpers ─────────────────────────────────────────────────────
+function ticksToHMS(ticks) {
+  const s = Math.floor(ticks / 20);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return h + ':' + String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
+}
+
+function nearestPathPoint(mx, mz) {
+  if (!_data || !_data.path) return null;
+  const THRESHOLD_PX = 12;
+  let best = null, bestD = Infinity;
+  const path = _data.path;
+  // Chercher dans un voisinage raisonnable (pas tous les points)
+  const stride = Math.max(1, Math.floor(path.length / 5000));
+  for (let i = 0; i < path.length; i += stride) {
+    const {sx, sz} = w2s(path[i][0], path[i][1]);
+    const d = Math.hypot(sx - mx, sz - mz);
+    if (d < bestD) { bestD = d; best = i; }
+  }
+  return bestD < THRESHOLD_PX ? best : null;
+}
+
 // ── Events ───────────────────────────────────────────────────────
 const container = document.getElementById('map-container');
 
@@ -458,7 +481,9 @@ container.addEventListener('wheel', e => {
   const mx = e.clientX - rect.left, mz = e.clientY - rect.top;
   const factor = e.deltaY < 0 ? 1.2 : 1/1.2;
   const wx = (mx-_ox)/_scale, wz = (mz-_oz)/_scale;
-  _scale = Math.max(0.000005, Math.min(50, _scale*factor));
+  const cv_ = document.getElementById("map-container");
+  const ms = minScale(cv_.clientWidth, cv_.clientHeight);
+  _scale = Math.max(ms * 0.9, Math.min(50, _scale*factor));
   _ox = mx - wx*_scale; _oz = mz - wz*_scale;
   redraw();
 }, {passive:false});
@@ -477,6 +502,23 @@ window.addEventListener('mousemove', e => {
   // % hint
   const pct = Math.abs(x) / FAR_LANDS * 100;
   document.getElementById('pct-hint').textContent = pct < 101 ? pct.toFixed(2)+'%' : '';
+
+  // Tooltip chemin
+  const tip = document.getElementById('tooltip');
+  const nearest = nearestPathPoint(mx, mz);
+  if (nearest !== null && _data.path[nearest]) {
+    const pt = _data.path[nearest];
+    const ptPct = (Math.abs(pt[0]) / FAR_LANDS * 100).toFixed(3);
+    const igt   = pt[2] ? ticksToHMS(pt[2]) : '—';
+    tip.style.display = 'block';
+    tip.style.left = (mx + 14) + 'px';
+    tip.style.top  = (mz + 14) + 'px';
+    tip.innerHTML  = `X: ${Math.round(pt[0]).toLocaleString()}<br>Z: ${Math.round(pt[1]).toLocaleString()}<br>IGT: ${igt}<br>${ptPct}%`;
+    container.style.cursor = 'default';
+  } else {
+    tip.style.display = 'none';
+    if (!_drag) container.style.cursor = 'crosshair';
+  }
 
   if (_drag) {
     _ox = _dox + (e.clientX-_dsx);
