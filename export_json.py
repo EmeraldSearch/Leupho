@@ -268,6 +268,13 @@ def export_weather(db: Database) -> None:
     ])
 
 
+def export_map() -> None:
+    """Génère map_data.json via gen_map.py."""
+    import sys
+    gen_map = os.path.join(BASE_DIR, "gen_map.py")
+    if os.path.exists(gen_map):
+        subprocess.run([sys.executable, gen_map], cwd=BASE_DIR, check=False)
+
 def export_all() -> None:
     db = Database(DB_PATH, readonly=True)
     try:
@@ -283,6 +290,7 @@ def export_all() -> None:
         export_pace(db)
     finally:
         db.close()
+    export_map()
     git_push()
 
 
