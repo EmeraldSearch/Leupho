@@ -305,12 +305,12 @@ function redraw() {
   const chunkPx = 16 * _scale;
 
   // ── Biomes ──
+  const palette = _data.palettes ? _data.palettes[_style] : null;
   for (const chunk of _data.chunks) {
-    const {sx, sz} = worldToScreen(chunk.cx * 16, chunk.cz * 16);
+    const cx = chunk[0], cz = chunk[1], biome = chunk[2];
+    const {sx, sz} = worldToScreen(cx * 16, cz * 16);
     if (sx > W || sz > H || sx + chunkPx < 0 || sz + chunkPx < 0) continue;
-
-    const color = style.biomes[chunk.biome] || style.biomes["-1"];
-    ctx.fillStyle = color;
+    ctx.fillStyle = palette ? (palette[String(biome)] || '#648c96') : '#648c96';
     ctx.fillRect(Math.floor(sx), Math.floor(sz), Math.ceil(chunkPx) + 1, Math.ceil(chunkPx) + 1);
   }
 
@@ -348,11 +348,11 @@ function redraw() {
     ctx.lineJoin    = 'round';
     ctx.lineCap     = 'round';
     ctx.beginPath();
-    const first = _data.path[0];
-    const {sx: fx, sz: fz} = worldToScreen(first.x, first.z);
+    const fp = _data.path[0];
+    const {sx: fx, sz: fz} = worldToScreen(fp[0], fp[1]);
     ctx.moveTo(fx, fz);
     for (let i = 1; i < _data.path.length; i++) {
-      const {sx, sz} = worldToScreen(_data.path[i].x, _data.path[i].z);
+      const {sx, sz} = worldToScreen(_data.path[i][0], _data.path[i][1]);
       ctx.lineTo(sx, sz);
     }
     ctx.stroke();
@@ -364,8 +364,8 @@ function redraw() {
     ctx.fill();
 
     // Point actuel (rouge clignotant)
-    const last = _data.path[_data.path.length - 1];
-    const {sx: lx, sz: lz} = worldToScreen(last.x, last.z);
+    const lp = _data.path[_data.path.length - 1];
+    const {sx: lx, sz: lz} = worldToScreen(lp[0], lp[1]);
     ctx.fillStyle = '#ff4444';
     ctx.beginPath();
     ctx.arc(lx, lz, 6, 0, Math.PI * 2);
@@ -378,7 +378,7 @@ function redraw() {
   // ── Morts ──
   if (document.getElementById('show-deaths').checked) {
     for (const ev of _data.events) {
-      if (ev.type !== 'death') continue;
+      if (ev.t !== 'death') continue;
       const {sx, sz} = worldToScreen(ev.x, ev.z);
       if (sx < -10 || sz < -10 || sx > W+10 || sz > H+10) continue;
 
@@ -423,11 +423,13 @@ const BIOME_NAMES = {
 function buildLegend() {
   if (!_data) return;
   const style = STYLES[_style];
-  const seen  = new Set(_data.chunks.map(c => String(c.biome)));
+  const palette = _data.palettes ? _data.palettes[_style] : null;
+  const names   = _data.biome_names || {};
+  const seen    = new Set(_data.chunks.map(c => String(c[2])));
   const el    = document.getElementById('legend');
   el.innerHTML = Array.from(seen).sort().map(b => {
-    const color = style.biomes[b] || style.biomes["-1"];
-    const name  = BIOME_NAMES[b] || ('Biome ' + b);
+    const color = palette ? (palette[b] || '#648c96') : '#648c96';
+    const name  = names[b] || ('Biome ' + b);
     return `<div class="legend-item">
       <div class="legend-dot" style="background:${color}"></div>
       <span>${name}</span>
@@ -479,7 +481,7 @@ window.addEventListener('mousemove', e => {
       tooltip.style.display = 'block';
       tooltip.style.left    = (mx + 12) + 'px';
       tooltip.style.top     = (mz + 12) + 'px';
-      tooltip.innerHTML     = `<b>${hit.label}</b><br>X: ${Math.round(hit.x)} Z: ${Math.round(hit.z)}`;
+      tooltip.innerHTML     = `<b>Mort #${hit.n}</b><br>X: ${Math.round(hit.x)} Z: ${Math.round(hit.z)}`;
     } else {
       tooltip.style.display = 'none';
     }
