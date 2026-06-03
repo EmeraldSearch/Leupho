@@ -236,7 +236,7 @@ def export_pace(db: Database) -> None:
 
 def git_push() -> None:
     try:
-        subprocess.run(["git", "-C", BASE_DIR, "add", "data/", "index.html", "graph.html", "pace.html", "faq.html", "inventory_sprites.png", "inventory_sprites.json", "skin.png", "kazuwalk.gif"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", BASE_DIR, "add", "data/", "index.html", "graph.html", "pace.html", "faq.html", "map.html", "inventory_sprites.png", "inventory_sprites.json", "skin.png", "kazuwalk.gif"], check=True, capture_output=True)
         result = subprocess.run(["git", "-C", BASE_DIR, "diff", "--cached", "--quiet"], capture_output=True)
         if result.returncode != 0:
             subprocess.run(["git", "-C", BASE_DIR, "commit", "-m", "data: auto-update"], check=True, capture_output=True)
