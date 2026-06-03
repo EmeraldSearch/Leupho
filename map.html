@@ -15,10 +15,11 @@
     html, body { height:100%; background:var(--bg); color:var(--text);
       font-family:'Segoe UI',system-ui,sans-serif; font-size:14px; overflow:hidden; }
 
+    /* ── Nav ── */
     nav {
       background:var(--panel); border-bottom:1px solid var(--border);
       display:flex; align-items:center; flex-wrap:wrap;
-      gap:5px; padding:8px 16px; min-height:68px;
+      gap:5px; padding:8px 16px; min-height:68px; position:relative; z-index:10;
     }
     nav h1 { font-family:"Minecraft",monospace; font-size:.85rem; color:var(--accent3);
       margin-right:8px; display:flex; align-items:center; }
@@ -33,63 +34,98 @@
     .nav-btn.active { border-top-color:#222; border-left-color:#222;
       border-right-color:#aaa; border-bottom-color:#aaa; filter:brightness(0.85); }
 
+    /* ── Layout ── */
     .map-layout { display:flex; height:calc(100vh - 68px); }
 
     /* ── Sidebar ── */
     .map-sidebar {
-      width:220px; flex-shrink:0;
-      background:var(--panel); border-right:1px solid var(--border);
-      display:flex; flex-direction:column; overflow-y:auto;
+      width:200px; flex-shrink:0; background:var(--panel);
+      border-right:1px solid var(--border);
+      display:flex; flex-direction:column; overflow-y:auto; z-index:5;
     }
-    .sidebar-section { padding:12px; border-bottom:1px solid var(--border); }
-    .sidebar-section h3 { font-size:.7rem; text-transform:uppercase;
-      letter-spacing:.07em; color:var(--subtext); margin-bottom:8px; }
+    .sb-section { padding:10px 12px; border-bottom:1px solid var(--border); }
+    .sb-section h3 {
+      font-size:.65rem; text-transform:uppercase; letter-spacing:.07em;
+      color:var(--subtext); margin-bottom:8px;
+    }
 
-    /* Style buttons */
+    /* Style buttons — style Minecraft */
     .style-btn {
-      display:block; width:100%; padding:7px 10px; margin-bottom:5px;
-      background:#333; border:1px solid var(--border); border-radius:4px;
-      color:var(--subtext); font-size:.8rem; cursor:pointer; text-align:left;
-      transition:all .15s;
+      display:flex; align-items:center; gap:8px; width:100%; padding:7px 10px;
+      margin-bottom:4px; background:#2a2a3e; border:1px solid var(--border);
+      border-radius:4px; color:var(--subtext); font-size:.78rem; cursor:pointer;
+      transition:all .15s; text-align:left;
     }
+    .style-btn .dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
     .style-btn:hover { border-color:var(--accent3); color:var(--text); }
-    .style-btn.active { background:var(--accent3); color:#000;
-      border-color:var(--accent3); font-weight:600; }
+    .style-btn.active {
+      border-color:var(--accent3); color:var(--text); background:#1e2a3e;
+    }
+    .style-btn.active::before { content:'▶'; font-size:.6rem; color:var(--accent3); margin-right:2px; }
+
+    /* Checkboxes */
+    .cb-row { display:flex; align-items:center; gap:6px; font-size:.78rem;
+      padding:3px 0; cursor:pointer; color:var(--subtext); }
+    .cb-row:hover { color:var(--text); }
+    .cb-row input { accent-color:var(--accent3); }
 
     /* Legend */
-    .legend-item { display:flex; align-items:center; gap:8px;
-      font-size:.75rem; padding:2px 0; }
-    .legend-dot { width:12px; height:12px; border-radius:2px; flex-shrink:0; }
+    .legend-item { display:flex; align-items:center; gap:7px;
+      font-size:.72rem; padding:2px 0; color:var(--subtext); }
+    .legend-swatch { width:12px; height:12px; border-radius:2px; flex-shrink:0;
+      border:1px solid rgba(255,255,255,0.1); }
 
-    /* Coords display */
-    .coords { font-family:monospace; font-size:.75rem; color:var(--subtext);
-      padding:8px 12px; }
+    /* Coords */
+    .coords-bar {
+      padding:6px 12px; font-family:monospace; font-size:.72rem;
+      color:var(--subtext); border-top:1px solid var(--border); margin-top:auto;
+    }
 
-    /* ── Canvas ── */
-    .map-container { flex:1; position:relative; overflow:hidden; cursor:grab; }
-    .map-container:active { cursor:grabbing; }
-    #map-canvas { position:absolute; top:0; left:0; }
+    /* ── Canvas container ── */
+    .map-container { flex:1; position:relative; overflow:hidden; cursor:crosshair; }
+    #map-canvas { position:absolute; top:0; left:0; image-rendering:pixelated; }
 
     /* Tooltip */
     #map-tooltip {
-      position:absolute; background:rgba(22,33,62,.95);
+      position:absolute; background:rgba(22,33,62,.97);
       border:1px solid var(--border); border-radius:6px;
       padding:6px 10px; font-size:.75rem; pointer-events:none;
-      display:none; z-index:10; max-width:180px;
+      display:none; z-index:20; box-shadow:0 4px 12px rgba(0,0,0,.5);
+      max-width:200px; line-height:1.5;
+    }
+    #map-tooltip b { color:var(--gold); }
+
+    /* Loading overlay */
+    #map-loading {
+      position:absolute; inset:0; background:var(--bg);
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; z-index:30; gap:16px;
+    }
+    .spinner { width:36px; height:36px; border:3px solid var(--border);
+      border-top-color:var(--accent3); border-radius:50%;
+      animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .load-text { color:var(--subtext); font-size:.85rem; }
+    .load-err { color:var(--accent1); text-align:center; line-height:1.6; }
+
+    /* Scale bar */
+    #scale-bar {
+      position:absolute; bottom:12px; right:12px;
+      background:rgba(22,33,62,.85); border:1px solid var(--border);
+      border-radius:4px; padding:4px 8px; font-size:.7rem; color:var(--subtext);
+      pointer-events:none;
     }
 
-    /* Loading */
-    #map-loading {
-      position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-      text-align:center; color:var(--subtext);
+    /* Minimap toggle */
+    #map-info {
+      position:absolute; top:8px; right:8px;
+      background:rgba(22,33,62,.9); border:1px solid var(--border);
+      border-radius:6px; padding:6px 10px; font-size:.72rem;
+      color:var(--subtext); pointer-events:none; line-height:1.6;
     }
-    .spinner { width:32px; height:32px; border:3px solid var(--border);
-      border-top-color:var(--accent3); border-radius:50%;
-      animation:spin .8s linear infinite; margin:0 auto 12px; }
-    @keyframes spin { to { transform:rotate(360deg); } }
 
     @media (max-width:640px) {
-      .map-sidebar { width:160px; }
+      .map-sidebar { width:150px; }
       .style-btn { font-size:.7rem; }
     }
   </style>
@@ -107,415 +143,409 @@
 
 <div class="map-layout">
 
-  <!-- Sidebar -->
+  <!-- ── Sidebar ── -->
   <div class="map-sidebar">
-    <div class="sidebar-section">
+
+    <div class="sb-section">
       <h3>Style</h3>
-      <button class="style-btn active" onclick="setStyle('realistic')" id="btn-realistic">🌿 Réaliste</button>
-      <button class="style-btn" onclick="setStyle('topo')" id="btn-topo">🗺 Topographique</button>
-      <button class="style-btn" onclick="setStyle('minecraft')" id="btn-minecraft">⛏ Minecraft</button>
+      <button class="style-btn active" onclick="setStyle('minecraft')" id="btn-minecraft">
+        <span class="dot" style="background:#3f76e4"></span> Minecraft
+      </button>
+      <button class="style-btn" onclick="setStyle('realistic')" id="btn-realistic">
+        <span class="dot" style="background:#4a8a3c"></span> Réaliste
+      </button>
+      <button class="style-btn" onclick="setStyle('topo')" id="btn-topo">
+        <span class="dot" style="background:#8a9a70"></span> Topographique
+      </button>
     </div>
 
-    <div class="sidebar-section">
-      <h3>Afficher</h3>
-      <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer;margin-bottom:5px;">
-        <input type="checkbox" id="show-path" checked onchange="redraw()"> Chemin
-      </label>
-      <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer;margin-bottom:5px;">
-        <input type="checkbox" id="show-deaths" checked onchange="redraw()"> Morts
-      </label>
-      <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;cursor:pointer;">
-        <input type="checkbox" id="show-grid" onchange="redraw()"> Grille chunks
-      </label>
+    <div class="sb-section">
+      <h3>Calques</h3>
+      <label class="cb-row"><input type="checkbox" id="show-path" checked onchange="redraw()"> Chemin</label>
+      <label class="cb-row"><input type="checkbox" id="show-deaths" checked onchange="redraw()"> Morts ✝</label>
+      <label class="cb-row"><input type="checkbox" id="show-grid" onchange="redraw()"> Grille chunks</label>
+      <label class="cb-row"><input type="checkbox" id="show-origin" checked onchange="redraw()"> Origine (0,0)</label>
     </div>
 
-    <div class="sidebar-section" id="legend-section">
+    <div class="sb-section">
       <h3>Légende</h3>
       <div id="legend"></div>
     </div>
 
-    <div class="coords" id="coords">X: — | Z: —</div>
+    <div class="coords-bar" id="coords-bar">
+      <div>X: <span id="cx">—</span></div>
+      <div>Z: <span id="cz">—</span></div>
+      <div style="margin-top:3px;color:var(--subtext);font-size:.65rem" id="biome-hint"></div>
+    </div>
   </div>
 
-  <!-- Map -->
+  <!-- ── Canvas ── -->
   <div class="map-container" id="map-container">
     <div id="map-loading">
       <div class="spinner"></div>
-      Chargement de la carte…
+      <div class="load-text" id="load-text">Chargement de la carte…</div>
     </div>
     <canvas id="map-canvas"></canvas>
     <div id="map-tooltip"></div>
+    <div id="scale-bar">— blocs</div>
+    <div id="map-info"></div>
   </div>
 </div>
 
 <script>
-// ── Data ────────────────────────────────────────────────────────
-let _data = null;
-let _style = 'realistic';
+// ── State ────────────────────────────────────────────────────────
+let _data    = null;
+let _style   = 'minecraft';
+let _offsetX = 0, _offsetZ = 0, _scale = 2;
+let _dragging = false, _dragSX = 0, _dragSZ = 0, _dragOX = 0, _dragOZ = 0;
+let _hoverChunk = null;
 
-// ── View state ──────────────────────────────────────────────────
-let _offsetX = 0, _offsetZ = 0;
-let _scale   = 1;       // pixels par bloc
-let _dragging = false, _dragStartX = 0, _dragStartZ = 0, _dragOffX = 0, _dragOffZ = 0;
+// Chunk lookup map: "cx,cz" → biome
+let _chunkMap = {};
 
-// ── Styles ──────────────────────────────────────────────────────
+// ── Styles ───────────────────────────────────────────────────────
 const STYLES = {
+  minecraft: {
+    bg: "#050a14",
+    path: "#ff3333", pathW: 2,
+    death: "#ff0000",
+    grid: "rgba(255,255,255,0.08)",
+    origin: "rgba(255,255,255,0.5)",
+  },
   realistic: {
-    name: "Réaliste",
-    biomes: {
-      0:  "#8DB360",  // Rain Forest
-      1:  "#B1DC76",  // Swampland
-      2:  "#96C054",  // Seasonal Forest
-      3:  "#507832",  // Forest
-      4:  "#B4C864",  // Savanna
-      5:  "#649632",  // Shrubland
-      6:  "#FFFFFF",  // Tundra
-      7:  "#DCEEDC",  // Seasonal Forest Snow
-      8:  "#C8E4FF",  // Taiga
-      9:  "#FAF5D2",  // Desert
-      10: "#B4C87A",  // Plains
-      11: "#91AF64",  // Ice Desert
-      12: "#64A0C8",  // Ocean
-      13: "#78B4FF",  // River
-      14: "#64AFAF",  // Mushroom
-      "-1":"#3C6478",  // Unknown
-    },
-    bg:      "#1a2a3a",
-    path:    "#ff4444",
-    pathW:   2,
-    death:   "#ff0000",
-    grid:    "rgba(255,255,255,0.1)",
-    text:    "#ffffff",
+    bg: "#0a1520",
+    path: "#ff6644", pathW: 2,
+    death: "#cc2200",
+    grid: "rgba(200,220,180,0.1)",
+    origin: "rgba(255,255,255,0.4)",
   },
   topo: {
-    name: "Topographique",
-    biomes: {
-      0:  "#9aad7e", 1:  "#b5c99a", 2:  "#a8be8c", 3:  "#7a9a64",
-      4:  "#c8c88c", 5:  "#aab882", 6:  "#e8e8e8", 7:  "#d2d8d2",
-      8:  "#c8d8e0", 9:  "#e0d8b8", 10: "#b8cc8a", 11: "#a8b878",
-      12: "#8aaabf", 13: "#9cb8d0", 14: "#94b4b4", "-1":"#607888",
-    },
-    bg:      "#2a2a22",
-    path:    "#e05020",
-    pathW:   2,
-    death:   "#c00000",
-    grid:    "rgba(200,200,150,0.15)",
-    text:    "#eeeecc",
-  },
-  minecraft: {
-    name: "Minecraft",
-    biomes: {
-      0:  "#83B346",  // Rain Forest → like jungle
-      1:  "#2C4205",  // Swampland
-      2:  "#507A32",  // Seasonal Forest
-      3:  "#1F821F",  // Forest
-      4:  "#BDB25F",  // Savanna
-      5:  "#91BD59",  // Shrubland → like plains
-      6:  "#FFFFFF",  // Tundra (snow)
-      7:  "#80B497",  // Seasonal Forest Snow
-      8:  "#3A7A6A",  // Taiga
-      9:  "#DBCD8E",  // Desert
-      10: "#91BD59",  // Plains
-      11: "#80B497",  // Ice Desert
-      12: "#3F76E4",  // Ocean
-      13: "#3F76E4",  // River
-      14: "#CC8899",  // Mushroom
-      "-1":"#3F76E4", // Unknown → ocean
-    },
-    bg:      "#000000",
-    path:    "#FF5555",
-    pathW:   3,
-    death:   "#FF0000",
-    grid:    "rgba(0,0,0,0.3)",
-    text:    "#FFFFFF",
+    bg: "#141414",
+    path: "#e06030", pathW: 2,
+    death: "#c01010",
+    grid: "rgba(200,200,150,0.12)",
+    origin: "rgba(255,255,255,0.3)",
   },
 };
 
-// ── Load data ────────────────────────────────────────────────────
+// ── Fetch ────────────────────────────────────────────────────────
 async function loadMapData() {
   try {
-    const isFlask = await fetch('/api/summary').then(r => r.ok).catch(() => false);
-    const url = isFlask ? '/data/map_data.json' : 'data/map_data.json?_=' + Date.now();
+    document.getElementById('load-text').textContent = 'Détection du serveur…';
+    const isFlask = await fetch('/api/summary').then(r=>r.ok).catch(()=>false);
+    const url = isFlask ? '/data/map_data.json' : 'data/map_data.json?_='+Date.now();
+    document.getElementById('load-text').textContent = 'Chargement map_data.json…';
     const r = await fetch(url);
-    if (!r.ok) throw new Error('map_data.json introuvable');
+    if (!r.ok) throw new Error('map_data.json introuvable (lance gen_map.py)');
+    document.getElementById('load-text').textContent = 'Parsing…';
     _data = await r.json();
+
+    // Construire la lookup map
+    _chunkMap = {};
+    for (const c of _data.chunks) {
+      _chunkMap[c[0]+','+c[1]] = c[2];
+    }
+
     document.getElementById('map-loading').style.display = 'none';
     initView();
     buildLegend();
     redraw();
   } catch(e) {
     document.getElementById('map-loading').innerHTML =
-      '<div style="color:#e94560">❌ ' + e.message + '<br><small>Lance gen_map.py pour générer la carte.</small></div>';
+      '<div class="load-err">❌ '+e.message+'<br><small style="color:var(--subtext)">Lance py gen_map.py dans ton dossier save.</small></div>';
   }
 }
 
-// ── Init view ────────────────────────────────────────────────────
+// ── Init ─────────────────────────────────────────────────────────
 function initView() {
   const b = _data.bounds;
   const container = document.getElementById('map-container');
-  const W = container.clientWidth;
-  const H = container.clientHeight;
-
-  const rangeX = b.max_x - b.min_x;
-  const rangeZ = b.max_z - b.min_z;
-
-  // Scale pour que tout rentre + petite marge
-  _scale = Math.min(W / rangeX, H / rangeZ) * 0.9;
-  _scale = Math.max(0.5, Math.min(_scale, 4));
-
-  // Centrer
-  _offsetX = W / 2 - (b.min_x + rangeX / 2) * _scale;
-  _offsetZ = H / 2 - (b.min_z + rangeZ / 2) * _scale;
-
+  const W = container.clientWidth, H = container.clientHeight;
+  const rangeX = b.max_x - b.min_x, rangeZ = b.max_z - b.min_z;
+  _scale = Math.min(W / rangeX, H / rangeZ) * 0.85;
+  _scale = Math.max(0.3, Math.min(_scale, 8));
+  _offsetX = W/2 - (b.min_x + rangeX/2) * _scale;
+  _offsetZ = H/2 - (b.min_z + rangeZ/2) * _scale;
   resizeCanvas();
 }
 
 function resizeCanvas() {
-  const container = document.getElementById('map-container');
-  const canvas = document.getElementById('map-canvas');
-  canvas.width  = container.clientWidth;
-  canvas.height = container.clientHeight;
+  const c = document.getElementById('map-container');
+  const cv = document.getElementById('map-canvas');
+  cv.width = c.clientWidth; cv.height = c.clientHeight;
 }
 
-// ── Coordinates ─────────────────────────────────────────────────
-function screenToWorld(sx, sz) {
-  return {
-    x: (sx - _offsetX) / _scale,
-    z: (sz - _offsetZ) / _scale,
-  };
-}
-function worldToScreen(x, z) {
-  return {
-    sx: x * _scale + _offsetX,
-    sz: z * _scale + _offsetZ,
-  };
-}
+// ── Coords ───────────────────────────────────────────────────────
+function s2w(sx, sz) { return { x:(sx-_offsetX)/_scale, z:(sz-_offsetZ)/_scale }; }
+function w2s(x,  z)  { return { sx:x*_scale+_offsetX,   sz:z*_scale+_offsetZ   }; }
 
 // ── Draw ─────────────────────────────────────────────────────────
 function redraw() {
   if (!_data) return;
-  const canvas = document.getElementById('map-canvas');
-  const ctx    = canvas.getContext('2d');
-  const style  = STYLES[_style];
-  const W = canvas.width, H = canvas.height;
+  const cv  = document.getElementById('map-canvas');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const style   = STYLES[_style];
+  const palette = _data.palettes[_style] || _data.palettes['minecraft'];
+  const cpx = Math.max(1, Math.ceil(16 * _scale));
+  const cpx1 = cpx + 1;
 
+  // Background
   ctx.fillStyle = style.bg;
   ctx.fillRect(0, 0, W, H);
 
-  const chunkPx = 16 * _scale;
-
-  // ── Biomes ──
-  const palette = _data.palettes ? _data.palettes[_style] : null;
-  for (const chunk of _data.chunks) {
-    const cx = chunk[0], cz = chunk[1], biome = chunk[2];
-    const {sx, sz} = worldToScreen(cx * 16, cz * 16);
-    if (sx > W || sz > H || sx + chunkPx < 0 || sz + chunkPx < 0) continue;
-    ctx.fillStyle = palette ? (palette[String(biome)] || '#648c96') : '#648c96';
-    ctx.fillRect(Math.floor(sx), Math.floor(sz), Math.ceil(chunkPx) + 1, Math.ceil(chunkPx) + 1);
+  // Biomes
+  for (const c of _data.chunks) {
+    const {sx, sz} = w2s(c[0]*16, c[1]*16);
+    if (sx > W || sz > H || sx+cpx < 0 || sz+cpx < 0) continue;
+    ctx.fillStyle = palette[String(c[2])] || '#3a4a5a';
+    ctx.fillRect(Math.floor(sx), Math.floor(sz), cpx1, cpx1);
   }
 
-  // ── Grille chunks ──
-  if (document.getElementById('show-grid').checked) {
+  // Grille chunks
+  if (document.getElementById('show-grid').checked && _scale > 1) {
     ctx.strokeStyle = style.grid;
     ctx.lineWidth = 1;
     const b = _data.bounds;
-    const cxMin = Math.floor(b.min_x / 16), cxMax = Math.ceil(b.max_x / 16);
-    const czMin = Math.floor(b.min_z / 16), czMax = Math.ceil(b.max_z / 16);
-    for (let cx = cxMin; cx <= cxMax; cx++) {
-      const {sx} = worldToScreen(cx * 16, 0);
+    for (let cx = b.min_x>>4; cx <= (b.max_x>>4)+1; cx++) {
+      const {sx} = w2s(cx*16, 0);
+      if (sx < -1 || sx > W+1) continue;
       ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, H); ctx.stroke();
     }
-    for (let cz = czMin; cz <= czMax; cz++) {
-      const {sz} = worldToScreen(0, cz * 16);
+    for (let cz = b.min_z>>4; cz <= (b.max_z>>4)+1; cz++) {
+      const {sz} = w2s(0, cz*16);
+      if (sz < -1 || sz > H+1) continue;
       ctx.beginPath(); ctx.moveTo(0, sz); ctx.lineTo(W, sz); ctx.stroke();
     }
   }
 
-  // ── Axe X=0 et Z=0 ──
-  ctx.strokeStyle = 'rgba(255,255,255,0.3)';
-  ctx.lineWidth = 1;
-  ctx.setLineDash([4, 4]);
-  const {sx: ox} = worldToScreen(0, 0);
-  const {sz: oz} = worldToScreen(0, 0);
-  ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(0, oz); ctx.lineTo(W, oz); ctx.stroke();
-  ctx.setLineDash([]);
+  // Axes
+  if (document.getElementById('show-origin').checked) {
+    ctx.strokeStyle = style.origin;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    const {sx: ox} = w2s(0, 0); const {sz: oz} = w2s(0, 0);
+    ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, oz); ctx.lineTo(W, oz); ctx.stroke();
+    ctx.setLineDash([]);
+    // Label
+    if (ox > 0 && ox < W && oz > 0 && oz < H) {
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.font = '10px monospace';
+      ctx.fillText('0,0', ox+4, oz-4);
+    }
+  }
 
-  // ── Chemin ──
-  if (document.getElementById('show-path').checked && _data.path.length > 0) {
+  // Highlight chunk survolé
+  if (_hoverChunk) {
+    const {sx, sz} = w2s(_hoverChunk.cx*16, _hoverChunk.cz*16);
+    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(sx, sz, cpx, cpx);
+  }
+
+  // Chemin
+  if (document.getElementById('show-path').checked && _data.path.length > 1) {
     ctx.strokeStyle = style.path;
-    ctx.lineWidth   = style.pathW;
-    ctx.lineJoin    = 'round';
-    ctx.lineCap     = 'round';
+    ctx.lineWidth   = Math.max(1, style.pathW * Math.min(1, _scale));
+    ctx.lineJoin    = 'round'; ctx.lineCap = 'round';
     ctx.beginPath();
     const fp = _data.path[0];
-    const {sx: fx, sz: fz} = worldToScreen(fp[0], fp[1]);
+    const {sx:fx, sz:fz} = w2s(fp[0], fp[1]);
     ctx.moveTo(fx, fz);
     for (let i = 1; i < _data.path.length; i++) {
-      const {sx, sz} = worldToScreen(_data.path[i][0], _data.path[i][1]);
+      const {sx, sz} = w2s(_data.path[i][0], _data.path[i][1]);
       ctx.lineTo(sx, sz);
     }
     ctx.stroke();
 
-    // Point de départ (vert)
+    // Départ
     ctx.fillStyle = '#00ff88';
-    ctx.beginPath();
-    ctx.arc(fx, fz, 5, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.beginPath(); ctx.arc(fx, fz, Math.max(3,4*_scale/2), 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth=1; ctx.stroke();
 
-    // Point actuel (rouge clignotant)
-    const lp = _data.path[_data.path.length - 1];
-    const {sx: lx, sz: lz} = worldToScreen(lp[0], lp[1]);
+    // Position actuelle
+    const lp = _data.path[_data.path.length-1];
+    const {sx:lx, sz:lz} = w2s(lp[0], lp[1]);
     ctx.fillStyle = '#ff4444';
-    ctx.beginPath();
-    ctx.arc(lx, lz, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    ctx.beginPath(); ctx.arc(lx, lz, Math.max(4,5*_scale/2), 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#ffffff'; ctx.lineWidth=1.5; ctx.stroke();
+    // Halo pulsant (simulé)
+    ctx.strokeStyle = 'rgba(255,68,68,0.3)';
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(lx, lz, Math.max(7,8*_scale/2), 0, Math.PI*2); ctx.stroke();
   }
 
-  // ── Morts ──
+  // Morts
   if (document.getElementById('show-deaths').checked) {
     for (const ev of _data.events) {
       if (ev.t !== 'death') continue;
-      const {sx, sz} = worldToScreen(ev.x, ev.z);
-      if (sx < -10 || sz < -10 || sx > W+10 || sz > H+10) continue;
-
-      // Croix rouge
-      ctx.strokeStyle = style.death;
-      ctx.lineWidth   = 2.5;
-      const s = 7;
+      const {sx, sz} = w2s(ev.x, ev.z);
+      if (sx<-10||sz<-10||sx>W+10||sz>H+10) continue;
+      const s = Math.max(4, 6 * Math.min(1.5, _scale));
+      ctx.strokeStyle = '#ff3333'; ctx.lineWidth = 2;
       ctx.beginPath();
-      ctx.moveTo(sx - s, sz - s); ctx.lineTo(sx + s, sz + s);
-      ctx.moveTo(sx + s, sz - s); ctx.lineTo(sx - s, sz + s);
+      ctx.moveTo(sx-s, sz-s); ctx.lineTo(sx+s, sz+s);
+      ctx.moveTo(sx+s, sz-s); ctx.lineTo(sx-s, sz+s);
       ctx.stroke();
+      // Cercle
+      ctx.strokeStyle = 'rgba(255,51,51,0.4)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(sx, sz, s*1.4, 0, Math.PI*2); ctx.stroke();
     }
   }
 
-  // ── Origine label ──
-  const {sx: lox, sz: loz} = worldToScreen(0, 0);
-  if (lox > 0 && lox < W && loz > 0 && loz < H) {
-    ctx.fillStyle = style.text;
-    ctx.font = '11px monospace';
-    ctx.fillText('0,0', lox + 4, loz - 4);
-  }
+  updateScaleBar();
+  updateMapInfo();
 }
 
-// ── Style switch ─────────────────────────────────────────────────
+// ── UI helpers ───────────────────────────────────────────────────
+function updateScaleBar() {
+  const blocs = Math.round(200 / _scale);
+  document.getElementById('scale-bar').textContent = blocs.toLocaleString() + ' bl';
+}
+
+function updateMapInfo() {
+  if (!_data) return;
+  const el = document.getElementById('map-info');
+  const b = _data.bounds;
+  const rangeX = b.max_x - b.min_x;
+  el.innerHTML = `Seed: <b style="color:var(--accent3)">${_data.seed || '?'}</b><br>` +
+    `Zone: ${(rangeX/1000).toFixed(0)}km × ${((b.max_z-b.min_z)/1000).toFixed(0)}km`;
+}
+
 function setStyle(s) {
   _style = s;
-  ['realistic','topo','minecraft'].forEach(id => {
-    document.getElementById('btn-' + id).classList.toggle('active', id === s);
+  ['minecraft','realistic','topo'].forEach(id => {
+    document.getElementById('btn-'+id).classList.toggle('active', id===s);
   });
   buildLegend();
   redraw();
 }
 
-// ── Legend ───────────────────────────────────────────────────────
-const BIOME_NAMES = {
-  0:"Rain Forest",1:"Swampland",2:"Seasonal Forest",3:"Forest",
-  4:"Savanna",5:"Shrubland",6:"Tundra",7:"Sais. Forest (Snow)",
-  8:"Taiga",9:"Desert",10:"Plains",11:"Ice Desert",
-  12:"Ocean",13:"River",14:"Mushroom","-1":"Inconnu",
+const BIOME_NAMES_JS = {
+  "0":"Rainforest","1":"Swampland","2":"Seasonal Forest","3":"Forest",
+  "4":"Savanna","5":"Shrubland","6":"Tundra","8":"Taiga",
+  "9":"Desert","10":"Plains","11":"Ice Desert","12":"Ocean","13":"River",
 };
 
 function buildLegend() {
   if (!_data) return;
-  const style = STYLES[_style];
-  const palette = _data.palettes ? _data.palettes[_style] : null;
+  const palette = _data.palettes[_style] || _data.palettes['minecraft'];
   const names   = _data.biome_names || {};
-  const seen    = new Set(_data.chunks.map(c => String(c[2])));
-  const el    = document.getElementById('legend');
-  el.innerHTML = Array.from(seen).sort().map(b => {
-    const color = palette ? (palette[b] || '#648c96') : '#648c96';
-    const name  = names[b] || ('Biome ' + b);
+  const seen    = [...new Set(_data.chunks.map(c=>String(c[2])))].sort((a,b)=>+a-+b);
+  document.getElementById('legend').innerHTML = seen.map(b => {
+    const col  = palette[b] || '#3a4a5a';
+    const name = names[b] || BIOME_NAMES_JS[b] || 'Biome '+b;
     return `<div class="legend-item">
-      <div class="legend-dot" style="background:${color}"></div>
+      <div class="legend-swatch" style="background:${col}"></div>
       <span>${name}</span>
     </div>`;
   }).join('');
 }
 
-// ── Zoom / Pan ────────────────────────────────────────────────────
+// ── Events ───────────────────────────────────────────────────────
 const container = document.getElementById('map-container');
 
 container.addEventListener('wheel', e => {
   e.preventDefault();
-  const rect   = container.getBoundingClientRect();
-  const mx     = e.clientX - rect.left;
-  const mz     = e.clientY - rect.top;
-  const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
-  const wx     = (mx - _offsetX) / _scale;
-  const wz     = (mz - _offsetZ) / _scale;
-  _scale   = Math.max(0.1, Math.min(32, _scale * factor));
-  _offsetX = mx - wx * _scale;
-  _offsetZ = mz - wz * _scale;
+  const rect  = container.getBoundingClientRect();
+  const mx = e.clientX - rect.left, mz = e.clientY - rect.top;
+  const factor = e.deltaY < 0 ? 1.18 : 1/1.18;
+  const wx = (mx-_offsetX)/_scale, wz = (mz-_offsetZ)/_scale;
+  _scale = Math.max(0.08, Math.min(64, _scale*factor));
+  _offsetX = mx - wx*_scale; _offsetZ = mz - wz*_scale;
   redraw();
-}, { passive: false });
+}, {passive:false});
 
 container.addEventListener('mousedown', e => {
-  _dragging  = true;
-  _dragStartX = e.clientX;
-  _dragStartZ = e.clientY;
-  _dragOffX  = _offsetX;
-  _dragOffZ  = _offsetZ;
+  _dragging=true; _dragSX=e.clientX; _dragSZ=e.clientY;
+  _dragOX=_offsetX; _dragOZ=_offsetZ;
+  container.style.cursor='grabbing';
 });
+
 window.addEventListener('mousemove', e => {
   const rect = container.getBoundingClientRect();
-  const mx   = e.clientX - rect.left;
-  const mz   = e.clientY - rect.top;
-  const w    = screenToWorld(mx, mz);
-  document.getElementById('coords').textContent =
-    `X: ${Math.round(w.x)} | Z: ${Math.round(w.z)}`;
+  const mx = e.clientX - rect.left, mz = e.clientY - rect.top;
+  if (mx<0||mz<0||mx>container.clientWidth||mz>container.clientHeight) return;
+
+  const {x, z} = s2w(mx, mz);
+  document.getElementById('cx').textContent = Math.round(x);
+  document.getElementById('cz').textContent = Math.round(z);
+
+  // Biome au survol
+  const cx = Math.floor(x/16), cz = Math.floor(z/16);
+  const biome = _chunkMap[cx+','+cz];
+  const palette = _data ? (_data.palettes[_style]||_data.palettes['minecraft']) : {};
+  const bnames  = _data ? (_data.biome_names||{}) : {};
+  if (biome !== undefined) {
+    const name = bnames[String(biome)] || BIOME_NAMES_JS[String(biome)] || 'Biome '+biome;
+    document.getElementById('biome-hint').textContent = '📍 ' + name;
+    _hoverChunk = {cx, cz};
+  } else {
+    document.getElementById('biome-hint').textContent = '';
+    _hoverChunk = null;
+  }
 
   // Tooltip morts
+  const tooltip = document.getElementById('map-tooltip');
+  let hit = null;
   if (_data) {
-    const tooltip = document.getElementById('map-tooltip');
-    let hit = null;
     for (const ev of _data.events) {
-      const {sx, sz} = worldToScreen(ev.x, ev.z);
-      if (Math.abs(sx - mx) < 10 && Math.abs(sz - mz) < 10) { hit = ev; break; }
-    }
-    if (hit) {
-      tooltip.style.display = 'block';
-      tooltip.style.left    = (mx + 12) + 'px';
-      tooltip.style.top     = (mz + 12) + 'px';
-      tooltip.innerHTML     = `<b>Mort #${hit.n}</b><br>X: ${Math.round(hit.x)} Z: ${Math.round(hit.z)}`;
-    } else {
-      tooltip.style.display = 'none';
+      const {sx, sz} = w2s(ev.x, ev.z);
+      if (Math.abs(sx-mx)<10 && Math.abs(sz-mz)<10) { hit=ev; break; }
     }
   }
-
-  if (!_dragging) return;
-  _offsetX = _dragOffX + (e.clientX - _dragStartX);
-  _offsetZ = _dragOffZ + (e.clientY - _dragStartZ);
-  redraw();
-});
-window.addEventListener('mouseup', () => { _dragging = false; });
-
-// Touch support
-container.addEventListener('touchstart', e => {
-  if (e.touches.length === 1) {
-    _dragging = true;
-    _dragStartX = e.touches[0].clientX;
-    _dragStartZ = e.touches[0].clientY;
-    _dragOffX = _offsetX; _dragOffZ = _offsetZ;
+  if (hit) {
+    tooltip.style.display='block';
+    tooltip.style.left=(mx+14)+'px'; tooltip.style.top=(mz+14)+'px';
+    tooltip.innerHTML=`<b>Mort #${hit.n}</b><br>X: ${Math.round(hit.x)}<br>Z: ${Math.round(hit.z)}`;
+  } else {
+    tooltip.style.display='none';
   }
-}, { passive: true });
-container.addEventListener('touchmove', e => {
-  if (_dragging && e.touches.length === 1) {
-    _offsetX = _dragOffX + (e.touches[0].clientX - _dragStartX);
-    _offsetZ = _dragOffZ + (e.touches[0].clientY - _dragStartZ);
+
+  if (_dragging) {
+    _offsetX = _dragOX + (e.clientX-_dragSX);
+    _offsetZ = _dragOZ + (e.clientY-_dragSZ);
     redraw();
   }
-}, { passive: true });
-container.addEventListener('touchend', () => { _dragging = false; });
+});
 
-// Resize
-window.addEventListener('resize', () => { resizeCanvas(); redraw(); });
+window.addEventListener('mouseup', () => {
+  _dragging=false; container.style.cursor='crosshair';
+  if (_hoverChunk) redraw();
+});
 
-// ── Start ─────────────────────────────────────────────────────────
+// Touch
+container.addEventListener('touchstart', e => {
+  if (e.touches.length===1) {
+    _dragging=true; _dragSX=e.touches[0].clientX; _dragSZ=e.touches[0].clientY;
+    _dragOX=_offsetX; _dragOZ=_offsetZ;
+  }
+},{passive:true});
+container.addEventListener('touchmove', e => {
+  if (_dragging && e.touches.length===1) {
+    _offsetX = _dragOX + (e.touches[0].clientX-_dragSX);
+    _offsetZ = _dragOZ + (e.touches[0].clientY-_dragSZ);
+    redraw();
+  }
+},{passive:true});
+container.addEventListener('touchend', ()=>{ _dragging=false; });
+
+// Double-click = reset view
+container.addEventListener('dblclick', () => { initView(); redraw(); });
+
+window.addEventListener('resize', () => { resizeCanvas(); if(_data) redraw(); });
+
+// Animation loop pour le halo de position actuelle
+let _frame = 0;
+function animate() {
+  requestAnimationFrame(animate);
+  _frame++;
+  if (_frame % 30 === 0 && _data) redraw();
+}
+animate();
+
+// ── Start ────────────────────────────────────────────────────────
 loadMapData();
 </script>
 </body>
