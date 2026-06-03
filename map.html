@@ -8,60 +8,53 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg:#1a1a2e; --panel:#16213e; --border:#2a2a4a;
-      --accent1:#e94560; --accent3:#53d8fb; --accent4:#a8ff78;
-      --gold:#f5c542; --text:#e0e0e0; --subtext:#8888aa; --radius:8px;
+      --bg:#0d0d14; --panel:#16213e; --border:#2a2a4a;
+      --accent3:#53d8fb; --accent4:#a8ff78; --gold:#f5c542;
+      --text:#e0e0e0; --subtext:#8888aa;
     }
     html, body { height:100%; background:var(--bg); color:var(--text);
       font-family:'Segoe UI',system-ui,sans-serif; font-size:14px; overflow:hidden; }
 
-    /* ── Nav ── */
     nav {
       background:var(--panel); border-bottom:1px solid var(--border);
       display:flex; align-items:center; flex-wrap:wrap;
-      gap:5px; padding:8px 16px; min-height:68px; position:relative; z-index:10;
+      gap:5px; padding:8px 16px; min-height:68px; z-index:10; position:relative;
     }
-    nav h1 { font-family:"Minecraft",monospace; font-size:.85rem; color:var(--accent3);
-      margin-right:8px; display:flex; align-items:center; }
     .nav-btn {
       font-family:"Minecraft",monospace; font-size:.7rem; padding:7px 14px;
       background:#555; border-top:2px solid #aaa; border-left:2px solid #aaa;
       border-right:2px solid #222; border-bottom:2px solid #222;
-      color:#fff; text-decoration:none; text-shadow:1px 1px 0 #1a1a1a;
-      cursor:pointer; white-space:nowrap; flex-shrink:0;
+      color:#fff; text-decoration:none; cursor:pointer; white-space:nowrap;
     }
     .nav-btn:hover { filter:brightness(1.3); }
     .nav-btn.active { border-top-color:#222; border-left-color:#222;
       border-right-color:#aaa; border-bottom-color:#aaa; filter:brightness(0.85); }
 
-    /* ── Layout ── */
     .map-layout { display:flex; height:calc(100vh - 68px); }
 
     /* ── Sidebar ── */
-    .map-sidebar {
-      width:200px; flex-shrink:0; background:var(--panel);
+    .sidebar {
+      width:210px; flex-shrink:0; background:var(--panel);
       border-right:1px solid var(--border);
-      display:flex; flex-direction:column; overflow-y:auto; z-index:5;
+      display:flex; flex-direction:column; overflow-y:auto;
     }
-    .sb-section { padding:10px 12px; border-bottom:1px solid var(--border); }
-    .sb-section h3 {
-      font-size:.65rem; text-transform:uppercase; letter-spacing:.07em;
-      color:var(--subtext); margin-bottom:8px;
-    }
+    .sb { padding:10px 12px; border-bottom:1px solid var(--border); }
+    .sb h3 { font-size:.65rem; text-transform:uppercase; letter-spacing:.07em;
+      color:var(--subtext); margin-bottom:8px; }
 
-    /* Style buttons — style Minecraft */
-    .style-btn {
-      display:flex; align-items:center; gap:8px; width:100%; padding:7px 10px;
-      margin-bottom:4px; background:#2a2a3e; border:1px solid var(--border);
-      border-radius:4px; color:var(--subtext); font-size:.78rem; cursor:pointer;
-      transition:all .15s; text-align:left;
+    /* TP input */
+    .tp-row { display:flex; gap:4px; margin-bottom:5px; }
+    .tp-row input {
+      flex:1; background:#1a1a2e; border:1px solid var(--border);
+      color:var(--text); padding:5px 7px; border-radius:3px;
+      font-size:.75rem; font-family:monospace; width:0;
     }
-    .style-btn .dot { width:10px; height:10px; border-radius:2px; flex-shrink:0; }
-    .style-btn:hover { border-color:var(--accent3); color:var(--text); }
-    .style-btn.active {
-      border-color:var(--accent3); color:var(--text); background:#1e2a3e;
+    .tp-row input:focus { outline:none; border-color:var(--accent3); }
+    .tp-btn {
+      padding:5px 10px; background:#3a5a7a; border:none; border-radius:3px;
+      color:var(--text); font-size:.75rem; cursor:pointer; white-space:nowrap;
     }
-    .style-btn.active::before { content:'▶'; font-size:.6rem; color:var(--accent3); margin-right:2px; }
+    .tp-btn:hover { background:#4a7a9a; }
 
     /* Checkboxes */
     .cb-row { display:flex; align-items:center; gap:6px; font-size:.78rem;
@@ -69,71 +62,55 @@
     .cb-row:hover { color:var(--text); }
     .cb-row input { accent-color:var(--accent3); }
 
-    /* Legend */
-    .legend-item { display:flex; align-items:center; gap:7px;
-      font-size:.72rem; padding:2px 0; color:var(--subtext); }
-    .legend-swatch { width:12px; height:12px; border-radius:2px; flex-shrink:0;
-      border:1px solid rgba(255,255,255,0.1); }
+    /* Stats */
+    .stat-row { display:flex; justify-content:space-between;
+      font-size:.72rem; padding:2px 0; }
+    .stat-row span:first-child { color:var(--subtext); }
+    .stat-row span:last-child  { color:var(--text); font-family:monospace; }
 
     /* Coords */
-    .coords-bar {
-      padding:6px 12px; font-family:monospace; font-size:.72rem;
-      color:var(--subtext); border-top:1px solid var(--border); margin-top:auto;
-    }
+    .coords-bar { padding:8px 12px; font-family:monospace; font-size:.72rem;
+      color:var(--subtext); margin-top:auto; border-top:1px solid var(--border); }
 
-    /* ── Canvas container ── */
+    /* ── Canvas ── */
     .map-container { flex:1; position:relative; overflow:hidden; cursor:crosshair; }
-    #map-canvas { position:absolute; top:0; left:0; image-rendering:pixelated; }
+    #map-canvas { position:absolute; top:0; left:0; }
 
     /* Tooltip */
-    #map-tooltip {
-      position:absolute; background:rgba(22,33,62,.97);
-      border:1px solid var(--border); border-radius:6px;
-      padding:6px 10px; font-size:.75rem; pointer-events:none;
-      display:none; z-index:20; box-shadow:0 4px 12px rgba(0,0,0,.5);
-      max-width:200px; line-height:1.5;
+    #tooltip {
+      position:absolute; background:rgba(16,21,48,.95);
+      border:1px solid var(--border); border-radius:5px;
+      padding:5px 9px; font-size:.72rem; pointer-events:none;
+      display:none; z-index:20; font-family:monospace;
     }
-    #map-tooltip b { color:var(--gold); }
-
-    /* Loading overlay */
-    #map-loading {
-      position:absolute; inset:0; background:var(--bg);
-      display:flex; flex-direction:column; align-items:center;
-      justify-content:center; z-index:30; gap:16px;
-    }
-    .spinner { width:36px; height:36px; border:3px solid var(--border);
-      border-top-color:var(--accent3); border-radius:50%;
-      animation:spin .7s linear infinite; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    .load-text { color:var(--subtext); font-size:.85rem; }
-    .load-err { color:var(--accent1); text-align:center; line-height:1.6; }
 
     /* Scale bar */
     #scale-bar {
-      position:absolute; bottom:12px; right:12px;
-      background:rgba(22,33,62,.85); border:1px solid var(--border);
-      border-radius:4px; padding:4px 8px; font-size:.7rem; color:var(--subtext);
-      pointer-events:none;
+      position:absolute; bottom:10px; right:10px;
+      background:rgba(16,21,48,.85); border:1px solid var(--border);
+      border-radius:4px; padding:3px 8px; font-size:.7rem;
+      color:var(--subtext); pointer-events:none; font-family:monospace;
     }
 
-    /* Minimap toggle */
-    #map-info {
-      position:absolute; top:8px; right:8px;
-      background:rgba(22,33,62,.9); border:1px solid var(--border);
-      border-radius:6px; padding:6px 10px; font-size:.72rem;
-      color:var(--subtext); pointer-events:none; line-height:1.6;
+    /* Loading */
+    #loading {
+      position:absolute; inset:0; background:var(--bg);
+      display:flex; flex-direction:column; align-items:center;
+      justify-content:center; z-index:30; gap:12px;
     }
-
-    @media (max-width:640px) {
-      .map-sidebar { width:150px; }
-      .style-btn { font-size:.7rem; }
-    }
+    .spinner { width:32px; height:32px; border:3px solid var(--border);
+      border-top-color:var(--accent3); border-radius:50%;
+      animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
   </style>
 </head>
 <body>
 
 <nav>
-  <h1><img src="kazuwalk.gif?v=2" style="height:52px;vertical-align:middle;image-rendering:pixelated;margin-right:8px;">Farlands Tracker</h1>
+  <h1 style="font-size:.85rem;color:var(--accent3);margin-right:8px;display:flex;align-items:center;">
+    <img src="kazuwalk.gif?v=2" style="height:52px;vertical-align:middle;image-rendering:pixelated;margin-right:8px;">
+    Farlands Tracker
+  </h1>
   <a href="index.html" class="nav-btn">Dashboard</a>
   <a href="graph.html" class="nav-btn">Graphs</a>
   <a href="pace.html" class="nav-btn">Pace</a>
@@ -143,130 +120,104 @@
 
 <div class="map-layout">
 
-  <!-- ── Sidebar ── -->
-  <div class="map-sidebar">
+  <div class="sidebar">
 
-    <div class="sb-section">
-      <h3>Style</h3>
-      <button class="style-btn active" onclick="setStyle('minecraft')" id="btn-minecraft">
-        <span class="dot" style="background:#3f76e4"></span> Minecraft
-      </button>
-      <button class="style-btn" onclick="setStyle('realistic')" id="btn-realistic">
-        <span class="dot" style="background:#4a8a3c"></span> Réaliste
-      </button>
-      <button class="style-btn" onclick="setStyle('topo')" id="btn-topo">
-        <span class="dot" style="background:#8a9a70"></span> Topographique
-      </button>
+    <div class="sb">
+      <h3>Téléportation</h3>
+      <div class="tp-row">
+        <input type="number" id="tp-x" placeholder="X" />
+        <input type="number" id="tp-z" placeholder="Z" />
+        <button class="tp-btn" onclick="teleport()">Go</button>
+      </div>
+      <div style="font-size:.68rem;color:var(--subtext)">Entrée pour valider</div>
     </div>
 
-    <div class="sb-section">
-      <h3>Calques</h3>
-      <label class="cb-row"><input type="checkbox" id="show-path" checked onchange="redraw()"> Chemin</label>
-      <label class="cb-row"><input type="checkbox" id="show-deaths" checked onchange="redraw()"> Morts ✝</label>
-      <label class="cb-row"><input type="checkbox" id="show-grid" onchange="redraw()"> Grille chunks</label>
-      <label class="cb-row"><input type="checkbox" id="show-origin" checked onchange="redraw()"> Origine (0,0)</label>
+    <div class="sb">
+      <h3>Afficher</h3>
+      <label class="cb-row"><input type="checkbox" id="show-path"    checked onchange="redraw()"> Chemin</label>
+      <label class="cb-row"><input type="checkbox" id="show-pct"     checked onchange="redraw()"> Repères %</label>
+      <label class="cb-row"><input type="checkbox" id="show-grid"    checked onchange="redraw()"> Grille</label>
+      <label class="cb-row"><input type="checkbox" id="show-labels"  checked onchange="redraw()"> Labels grille</label>
+      <label class="cb-row"><input type="checkbox" id="show-origin"  checked onchange="redraw()"> Origine (0,0)</label>
+      <label class="cb-row"><input type="checkbox" id="show-cur"     checked onchange="redraw()"> Position actuelle</label>
     </div>
 
-    <div class="sb-section">
-      <h3>Légende</h3>
-      <div id="legend"></div>
+    <div class="sb">
+      <h3>Statistiques</h3>
+      <div id="stats-content" style="font-size:.72rem;color:var(--subtext);">—</div>
     </div>
 
-    <div class="coords-bar" id="coords-bar">
-      <div>X: <span id="cx">—</span></div>
-      <div>Z: <span id="cz">—</span></div>
-      <div style="margin-top:3px;color:var(--subtext);font-size:.65rem" id="biome-hint"></div>
+    <div class="coords-bar">
+      <div>X: <span id="cx" style="color:var(--text)">—</span></div>
+      <div>Z: <span id="cz" style="color:var(--text)">—</span></div>
+      <div style="margin-top:3px;font-size:.65rem" id="pct-hint"></div>
     </div>
   </div>
 
-  <!-- ── Canvas ── -->
   <div class="map-container" id="map-container">
-    <div id="map-loading">
+    <div id="loading">
       <div class="spinner"></div>
-      <div class="load-text" id="load-text">Chargement de la carte…</div>
+      <div style="color:var(--subtext);font-size:.85rem">Chargement…</div>
     </div>
     <canvas id="map-canvas"></canvas>
-    <div id="map-tooltip"></div>
-    <div id="scale-bar">— blocs</div>
-    <div id="map-info"></div>
+    <div id="tooltip"></div>
+    <div id="scale-bar">—</div>
   </div>
 </div>
 
 <script>
-// ── State ────────────────────────────────────────────────────────
-let _data    = null;
-let _style   = 'minecraft';
-let _offsetX = 0, _offsetZ = 0, _scale = 2;
-let _dragging = false, _dragSX = 0, _dragSZ = 0, _dragOX = 0, _dragOZ = 0;
-let _hoverChunk = null;
+// ── Data ────────────────────────────────────────────────────────
+let _data     = null;
+let _pctMarks = [];   // [{pct, x, z}] repères à chaque 1%
 
-// Chunk lookup map: "cx,cz" → biome
-let _chunkMap = {};
+// ── View ─────────────────────────────────────────────────────────
+let _ox = 0, _oz = 0, _scale = 1;
+let _drag = false, _dsx = 0, _dsz = 0, _dox = 0, _doz = 0;
 
-// ── Styles ───────────────────────────────────────────────────────
-const STYLES = {
-  minecraft: {
-    bg: "#050a14",
-    path: "#ff3333", pathW: 2,
-    death: "#ff0000",
-    grid: "rgba(255,255,255,0.08)",
-    origin: "rgba(255,255,255,0.5)",
-  },
-  realistic: {
-    bg: "#0a1520",
-    path: "#ff6644", pathW: 2,
-    death: "#cc2200",
-    grid: "rgba(200,220,180,0.1)",
-    origin: "rgba(255,255,255,0.4)",
-  },
-  topo: {
-    bg: "#141414",
-    path: "#e06030", pathW: 2,
-    death: "#c01010",
-    grid: "rgba(200,200,150,0.12)",
-    origin: "rgba(255,255,255,0.3)",
-  },
-};
+const FAR_LANDS = 12_550_824;
 
-// ── Fetch ────────────────────────────────────────────────────────
-async function loadMapData() {
+function s2w(sx, sz) { return { x:(sx-_ox)/_scale, z:(sz-_oz)/_scale }; }
+function w2s(x,  z)  { return { sx:x*_scale+_ox,   sz:z*_scale+_oz   }; }
+
+// ── Load ─────────────────────────────────────────────────────────
+async function loadData() {
   try {
-    document.getElementById('load-text').textContent = 'Détection du serveur…';
     const isFlask = await fetch('/api/summary').then(r=>r.ok).catch(()=>false);
     const url = isFlask ? '/data/map_data.json' : 'data/map_data.json?_='+Date.now();
-    document.getElementById('load-text').textContent = 'Chargement map_data.json…';
     const r = await fetch(url);
-    if (!r.ok) throw new Error('map_data.json introuvable (lance gen_map.py)');
-    document.getElementById('load-text').textContent = 'Parsing…';
+    if (!r.ok) throw new Error('map_data.json introuvable — lance gen_map.py');
     _data = await r.json();
-
-    // Construire la lookup map
-    _chunkMap = {};
-    for (const c of _data.chunks) {
-      _chunkMap[c[0]+','+c[1]] = c[2];
-    }
-
-    document.getElementById('map-loading').style.display = 'none';
+    document.getElementById('loading').style.display = 'none';
     initView();
-    buildLegend();
+    buildPctMarks();
+    updateStats();
     redraw();
   } catch(e) {
-    document.getElementById('map-loading').innerHTML =
-      '<div class="load-err">❌ '+e.message+'<br><small style="color:var(--subtext)">Lance py gen_map.py dans ton dossier save.</small></div>';
+    document.getElementById('loading').innerHTML =
+      `<div style="color:#e94560;text-align:center;padding:20px">${e.message}</div>`;
   }
 }
 
 // ── Init ─────────────────────────────────────────────────────────
 function initView() {
-  const b = _data.bounds;
-  const container = document.getElementById('map-container');
-  const W = container.clientWidth, H = container.clientHeight;
-  const rangeX = b.max_x - b.min_x, rangeZ = b.max_z - b.min_z;
-  _scale = Math.min(W / rangeX, H / rangeZ) * 0.85;
-  _scale = Math.max(0.3, Math.min(_scale, 8));
-  _offsetX = W/2 - (b.min_x + rangeX/2) * _scale;
-  _offsetZ = H/2 - (b.min_z + rangeZ/2) * _scale;
+  const c = document.getElementById('map-container');
   resizeCanvas();
+  const W = c.clientWidth, H = c.clientHeight;
+
+  if (!_data.path || _data.path.length === 0) return;
+
+  // Bounds du chemin
+  const xs = _data.path.map(p=>p[0]);
+  const zs = _data.path.map(p=>p[1]);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minZ = Math.min(...zs), maxZ = Math.max(...zs);
+  const rangeX = maxX - minX || 1000;
+  const rangeZ = maxZ - minZ || 500;
+
+  _scale = Math.min(W / (rangeX * 1.1), H / (rangeZ * 4)) ;
+  _scale = Math.max(0.00001, Math.min(_scale, 4));
+  _ox = W/2 - (minX + rangeX/2) * _scale;
+  _oz = H/2 - (minZ + rangeZ/2) * _scale;
 }
 
 function resizeCanvas() {
@@ -275,9 +226,69 @@ function resizeCanvas() {
   cv.width = c.clientWidth; cv.height = c.clientHeight;
 }
 
-// ── Coords ───────────────────────────────────────────────────────
-function s2w(sx, sz) { return { x:(sx-_offsetX)/_scale, z:(sz-_offsetZ)/_scale }; }
-function w2s(x,  z)  { return { sx:x*_scale+_offsetX,   sz:z*_scale+_offsetZ   }; }
+// ── Pct marks ────────────────────────────────────────────────────
+function buildPctMarks() {
+  if (!_data || !_data.path || _data.path.length < 2) return;
+  _pctMarks = [];
+  const path = _data.path;
+
+  // Calculer distance cumulée
+  let total = 0;
+  const dists = [0];
+  for (let i = 1; i < path.length; i++) {
+    const dx = path[i][0] - path[i-1][0];
+    total += Math.abs(dx);  // distance en X uniquement (progression vers -X)
+    dists.push(total);
+  }
+
+  // Un repère par % (1% = FAR_LANDS / 100 blocs)
+  const startX = path[0][0];
+  for (let pct = 1; pct <= 100; pct++) {
+    const targetX = startX - (FAR_LANDS * pct / 100);
+    // Trouver le point le plus proche sur le chemin
+    let best = null, bestDist = Infinity;
+    for (let i = 0; i < path.length; i++) {
+      const d = Math.abs(path[i][0] - targetX);
+      if (d < bestDist) { bestDist = d; best = i; }
+    }
+    if (best !== null) {
+      _pctMarks.push({ pct, x: path[best][0], z: path[best][1] });
+    }
+  }
+}
+
+function updateStats() {
+  if (!_data) return;
+  const path = _data.path || [];
+  const el   = document.getElementById('stats-content');
+  if (path.length === 0) { el.textContent = 'Aucun chemin'; return; }
+
+  const startX = path[0][0];
+  const lastX  = path[path.length-1][0];
+  const dist   = Math.abs(lastX - startX);
+  const pct    = (dist / FAR_LANDS * 100).toFixed(3);
+  const remaining = FAR_LANDS - dist;
+
+  el.innerHTML = `
+    <div style="margin-bottom:4px">
+      <div style="color:var(--gold);font-size:.8rem;margin-bottom:2px">${pct}% accompli</div>
+      <div style="background:#1a1a2e;border-radius:3px;height:4px;overflow:hidden">
+        <div style="background:var(--accent4);width:${Math.min(100,pct)}%;height:100%"></div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:space-between;margin-top:4px">
+      <span>Début</span><span style="color:var(--text)">${Math.round(startX).toLocaleString()}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span>Actuel</span><span style="color:var(--text)">${Math.round(lastX).toLocaleString()}</span>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span>Restant</span><span style="color:var(--text)">${Math.round(remaining).toLocaleString()} bl</span>
+    </div>
+    <div style="display:flex;justify-content:space-between">
+      <span>Points</span><span style="color:var(--text)">${path.length.toLocaleString()}</span>
+    </div>`;
+}
 
 // ── Draw ─────────────────────────────────────────────────────────
 function redraw() {
@@ -285,162 +296,157 @@ function redraw() {
   const cv  = document.getElementById('map-canvas');
   const ctx = cv.getContext('2d');
   const W = cv.width, H = cv.height;
-  const style   = STYLES[_style];
-  const palette = _data.palettes[_style] || _data.palettes['minecraft'];
-  const cpx = Math.max(1, Math.ceil(16 * _scale));
-  const cpx1 = cpx + 1;
+  const path = _data.path || [];
 
-  // Background
-  ctx.fillStyle = style.bg;
+  // Fond
+  ctx.fillStyle = '#080810';
   ctx.fillRect(0, 0, W, H);
 
-  // Biomes
-  for (const c of _data.chunks) {
-    const {sx, sz} = w2s(c[0]*16, c[1]*16);
-    if (sx > W || sz > H || sx+cpx < 0 || sz+cpx < 0) continue;
-    ctx.fillStyle = palette[String(c[2])] || '#3a4a5a';
-    ctx.fillRect(Math.floor(sx), Math.floor(sz), cpx1, cpx1);
-  }
-
-  // Grille chunks
-  if (document.getElementById('show-grid').checked && _scale > 1) {
-    ctx.strokeStyle = style.grid;
+  // ── Grille ──
+  if (document.getElementById('show-grid').checked) {
+    // Adapter l'espacement de la grille au zoom
+    const gridBlocs = gridSpacing();
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
     ctx.lineWidth = 1;
-    const b = _data.bounds;
-    for (let cx = b.min_x>>4; cx <= (b.max_x>>4)+1; cx++) {
-      const {sx} = w2s(cx*16, 0);
-      if (sx < -1 || sx > W+1) continue;
+
+    const wMin = s2w(0, 0), wMax = s2w(W, H);
+    const gx0 = Math.floor(wMin.x / gridBlocs) * gridBlocs;
+    const gz0 = Math.floor(wMin.z / gridBlocs) * gridBlocs;
+
+    for (let gx = gx0; gx < wMax.x; gx += gridBlocs) {
+      const {sx} = w2s(gx, 0);
       ctx.beginPath(); ctx.moveTo(sx, 0); ctx.lineTo(sx, H); ctx.stroke();
     }
-    for (let cz = b.min_z>>4; cz <= (b.max_z>>4)+1; cz++) {
-      const {sz} = w2s(0, cz*16);
-      if (sz < -1 || sz > H+1) continue;
+    for (let gz = gz0; gz < wMax.z; gz += gridBlocs) {
+      const {sz} = w2s(0, gz);
       ctx.beginPath(); ctx.moveTo(0, sz); ctx.lineTo(W, sz); ctx.stroke();
+    }
+
+    // Labels grille
+    if (document.getElementById('show-labels').checked && _scale > 0.00005) {
+      ctx.fillStyle = 'rgba(136,136,170,0.7)';
+      ctx.font = `${Math.max(9, Math.min(11, _scale * 500))}px monospace`;
+      ctx.textAlign = 'left';
+      for (let gx = gx0; gx < wMax.x; gx += gridBlocs) {
+        const {sx} = w2s(gx, 0);
+        if (sx > 2 && sx < W - 40) {
+          ctx.fillText(Math.round(gx).toLocaleString(), sx + 3, 12);
+        }
+      }
+      ctx.textAlign = 'right';
+      for (let gz = gz0; gz < wMax.z; gz += gridBlocs) {
+        const {sz} = w2s(0, gz);
+        if (sz > 12 && sz < H - 2) {
+          ctx.fillText(Math.round(gz).toLocaleString(), W - 3, sz - 2);
+        }
+      }
     }
   }
 
-  // Axes
+  // ── Axe X=0 Z=0 ──
   if (document.getElementById('show-origin').checked) {
-    ctx.strokeStyle = style.origin;
-    ctx.lineWidth = 1;
-    ctx.setLineDash([3, 3]);
-    const {sx: ox} = w2s(0, 0); const {sz: oz} = w2s(0, 0);
-    ctx.beginPath(); ctx.moveTo(ox, 0); ctx.lineTo(ox, H); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(0, oz); ctx.lineTo(W, oz); ctx.stroke();
+    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+    ctx.lineWidth = 1; ctx.setLineDash([4,4]);
+    const {sx:ox} = w2s(0,0), {sz:oz} = w2s(0,0);
+    ctx.beginPath(); ctx.moveTo(ox,0); ctx.lineTo(ox,H); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,oz); ctx.lineTo(W,oz); ctx.stroke();
     ctx.setLineDash([]);
-    // Label
-    if (ox > 0 && ox < W && oz > 0 && oz < H) {
-      ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.font = '10px monospace';
+    if (ox>0&&ox<W&&oz>0&&oz<H) {
+      ctx.fillStyle='rgba(255,255,255,0.5)';
+      ctx.font='10px monospace'; ctx.textAlign='left';
       ctx.fillText('0,0', ox+4, oz-4);
     }
   }
 
-  // Highlight chunk survolé
-  if (_hoverChunk) {
-    const {sx, sz} = w2s(_hoverChunk.cx*16, _hoverChunk.cz*16);
-    ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(sx, sz, cpx, cpx);
+  // ── Repères % ──
+  if (document.getElementById('show-pct').checked && _pctMarks.length > 0) {
+    for (const m of _pctMarks) {
+      const {sx, sz} = w2s(m.x, m.z);
+      if (sx < -10 || sz < -10 || sx > W+10 || sz > H+10) continue;
+
+      const isMajor = m.pct % 10 === 0;
+      const h = isMajor ? 12 : 6;
+
+      ctx.strokeStyle = isMajor ? 'rgba(245,197,66,0.9)' : 'rgba(245,197,66,0.4)';
+      ctx.lineWidth = isMajor ? 1.5 : 1;
+      ctx.beginPath();
+      ctx.moveTo(sx, sz - h); ctx.lineTo(sx, sz + h);
+      ctx.stroke();
+
+      if (isMajor && _scale > 0.00003) {
+        ctx.fillStyle = 'rgba(245,197,66,0.85)';
+        ctx.font = `${Math.max(9, Math.min(11, _scale * 300))}px monospace`;
+        ctx.textAlign = 'center';
+        ctx.fillText(m.pct + '%', sx, sz - h - 3);
+      }
+    }
   }
 
-  // Chemin
-  if (document.getElementById('show-path').checked && _data.path.length > 1) {
-    ctx.strokeStyle = style.path;
-    ctx.lineWidth   = Math.max(1, style.pathW * Math.min(1, _scale));
+  // ── Chemin ──
+  if (document.getElementById('show-path').checked && path.length > 1) {
+    ctx.strokeStyle = '#53d8fb';
+    ctx.lineWidth   = Math.max(1, Math.min(2.5, _scale * 5000));
     ctx.lineJoin    = 'round'; ctx.lineCap = 'round';
     ctx.beginPath();
-    const fp = _data.path[0];
-    const {sx:fx, sz:fz} = w2s(fp[0], fp[1]);
+    const {sx:fx, sz:fz} = w2s(path[0][0], path[0][1]);
     ctx.moveTo(fx, fz);
-    for (let i = 1; i < _data.path.length; i++) {
-      const {sx, sz} = w2s(_data.path[i][0], _data.path[i][1]);
+    for (let i = 1; i < path.length; i++) {
+      const {sx, sz} = w2s(path[i][0], path[i][1]);
       ctx.lineTo(sx, sz);
     }
     ctx.stroke();
 
     // Départ
-    ctx.fillStyle = '#00ff88';
-    ctx.beginPath(); ctx.arc(fx, fz, Math.max(3,4*_scale/2), 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth=1; ctx.stroke();
+    ctx.fillStyle = '#a8ff78';
+    ctx.beginPath(); ctx.arc(fx, fz, 4, 0, Math.PI*2); ctx.fill();
 
     // Position actuelle
-    const lp = _data.path[_data.path.length-1];
-    const {sx:lx, sz:lz} = w2s(lp[0], lp[1]);
-    ctx.fillStyle = '#ff4444';
-    ctx.beginPath(); ctx.arc(lx, lz, Math.max(4,5*_scale/2), 0, Math.PI*2); ctx.fill();
-    ctx.strokeStyle = '#ffffff'; ctx.lineWidth=1.5; ctx.stroke();
-    // Halo pulsant (simulé)
-    ctx.strokeStyle = 'rgba(255,68,68,0.3)';
-    ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(lx, lz, Math.max(7,8*_scale/2), 0, Math.PI*2); ctx.stroke();
-  }
-
-  // Morts
-  if (document.getElementById('show-deaths').checked) {
-    for (const ev of _data.events) {
-      if (ev.t !== 'death') continue;
-      const {sx, sz} = w2s(ev.x, ev.z);
-      if (sx<-10||sz<-10||sx>W+10||sz>H+10) continue;
-      const s = Math.max(4, 6 * Math.min(1.5, _scale));
-      ctx.strokeStyle = '#ff3333'; ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(sx-s, sz-s); ctx.lineTo(sx+s, sz+s);
-      ctx.moveTo(sx+s, sz-s); ctx.lineTo(sx-s, sz+s);
+    if (document.getElementById('show-cur').checked) {
+      const lp = path[path.length-1];
+      const {sx:lx, sz:lz} = w2s(lp[0], lp[1]);
+      ctx.fillStyle = '#e94560';
+      ctx.beginPath(); ctx.arc(lx, lz, 5, 0, Math.PI*2); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
       ctx.stroke();
-      // Cercle
-      ctx.strokeStyle = 'rgba(255,51,51,0.4)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(sx, sz, s*1.4, 0, Math.PI*2); ctx.stroke();
     }
   }
 
+  // ── Barre d'échelle ──
   updateScaleBar();
-  updateMapInfo();
 }
 
-// ── UI helpers ───────────────────────────────────────────────────
+function gridSpacing() {
+  // Choisir l'espacement de grille adapté au zoom
+  const blocs_per_px = 1 / _scale;
+  const target_px = 80;
+  const raw = blocs_per_px * target_px;
+  const exp = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / exp;
+  const nice = norm < 1.5 ? 1 : norm < 3.5 ? 2 : norm < 7.5 ? 5 : 10;
+  return nice * exp;
+}
+
 function updateScaleBar() {
   const blocs = Math.round(200 / _scale);
-  document.getElementById('scale-bar').textContent = blocs.toLocaleString() + ' bl';
+  let label;
+  if (blocs >= 1000) label = (blocs/1000).toFixed(1) + ' km';
+  else               label = blocs.toLocaleString() + ' bl';
+  document.getElementById('scale-bar').textContent = '← ' + label + ' →';
 }
 
-function updateMapInfo() {
-  if (!_data) return;
-  const el = document.getElementById('map-info');
-  const b = _data.bounds;
-  const rangeX = b.max_x - b.min_x;
-  el.innerHTML = `Seed: <b style="color:var(--accent3)">${_data.seed || '?'}</b><br>` +
-    `Zone: ${(rangeX/1000).toFixed(0)}km × ${((b.max_z-b.min_z)/1000).toFixed(0)}km`;
-}
+// ── TP ───────────────────────────────────────────────────────────
+function teleport() {
+  const x = parseFloat(document.getElementById('tp-x').value);
+  const z = parseFloat(document.getElementById('tp-z').value);
+  if (isNaN(x) && isNaN(z)) return;
 
-function setStyle(s) {
-  _style = s;
-  ['minecraft','realistic','topo'].forEach(id => {
-    document.getElementById('btn-'+id).classList.toggle('active', id===s);
-  });
-  buildLegend();
+  const c  = document.getElementById('map-container');
+  const cx = isNaN(x) ? s2w(c.clientWidth/2, 0).x : x;
+  const cz = isNaN(z) ? s2w(0, c.clientHeight/2).z : z;
+
+  _ox = c.clientWidth/2  - cx * _scale;
+  _oz = c.clientHeight/2 - cz * _scale;
   redraw();
-}
-
-const BIOME_NAMES_JS = {
-  "0":"Rainforest","1":"Swampland","2":"Seasonal Forest","3":"Forest",
-  "4":"Savanna","5":"Shrubland","6":"Tundra","8":"Taiga",
-  "9":"Desert","10":"Plains","11":"Ice Desert","12":"Ocean","13":"River",
-};
-
-function buildLegend() {
-  if (!_data) return;
-  const palette = _data.palettes[_style] || _data.palettes['minecraft'];
-  const names   = _data.biome_names || {};
-  const seen    = [...new Set(_data.chunks.map(c=>String(c[2])))].sort((a,b)=>+a-+b);
-  document.getElementById('legend').innerHTML = seen.map(b => {
-    const col  = palette[b] || '#3a4a5a';
-    const name = names[b] || BIOME_NAMES_JS[b] || 'Biome '+b;
-    return `<div class="legend-item">
-      <div class="legend-swatch" style="background:${col}"></div>
-      <span>${name}</span>
-    </div>`;
-  }).join('');
 }
 
 // ── Events ───────────────────────────────────────────────────────
@@ -450,103 +456,64 @@ container.addEventListener('wheel', e => {
   e.preventDefault();
   const rect  = container.getBoundingClientRect();
   const mx = e.clientX - rect.left, mz = e.clientY - rect.top;
-  const factor = e.deltaY < 0 ? 1.18 : 1/1.18;
-  const wx = (mx-_offsetX)/_scale, wz = (mz-_offsetZ)/_scale;
-  _scale = Math.max(0.08, Math.min(64, _scale*factor));
-  _offsetX = mx - wx*_scale; _offsetZ = mz - wz*_scale;
+  const factor = e.deltaY < 0 ? 1.2 : 1/1.2;
+  const wx = (mx-_ox)/_scale, wz = (mz-_oz)/_scale;
+  _scale = Math.max(0.000005, Math.min(50, _scale*factor));
+  _ox = mx - wx*_scale; _oz = mz - wz*_scale;
   redraw();
 }, {passive:false});
 
 container.addEventListener('mousedown', e => {
-  _dragging=true; _dragSX=e.clientX; _dragSZ=e.clientY;
-  _dragOX=_offsetX; _dragOZ=_offsetZ;
+  _drag=true; _dsx=e.clientX; _dsz=e.clientY; _dox=_ox; _doz=_oz;
   container.style.cursor='grabbing';
 });
-
 window.addEventListener('mousemove', e => {
   const rect = container.getBoundingClientRect();
-  const mx = e.clientX - rect.left, mz = e.clientY - rect.top;
-  if (mx<0||mz<0||mx>container.clientWidth||mz>container.clientHeight) return;
-
+  const mx = e.clientX-rect.left, mz = e.clientY-rect.top;
   const {x, z} = s2w(mx, mz);
-  document.getElementById('cx').textContent = Math.round(x);
-  document.getElementById('cz').textContent = Math.round(z);
+  document.getElementById('cx').textContent = Math.round(x).toLocaleString();
+  document.getElementById('cz').textContent = Math.round(z).toLocaleString();
 
-  // Biome au survol
-  const cx = Math.floor(x/16), cz = Math.floor(z/16);
-  const biome = _chunkMap[cx+','+cz];
-  const palette = _data ? (_data.palettes[_style]||_data.palettes['minecraft']) : {};
-  const bnames  = _data ? (_data.biome_names||{}) : {};
-  if (biome !== undefined) {
-    const name = bnames[String(biome)] || BIOME_NAMES_JS[String(biome)] || 'Biome '+biome;
-    document.getElementById('biome-hint').textContent = '📍 ' + name;
-    _hoverChunk = {cx, cz};
-  } else {
-    document.getElementById('biome-hint').textContent = '';
-    _hoverChunk = null;
-  }
+  // % hint
+  const pct = Math.abs(x) / FAR_LANDS * 100;
+  document.getElementById('pct-hint').textContent = pct < 101 ? pct.toFixed(2)+'%' : '';
 
-  // Tooltip morts
-  const tooltip = document.getElementById('map-tooltip');
-  let hit = null;
-  if (_data) {
-    for (const ev of _data.events) {
-      const {sx, sz} = w2s(ev.x, ev.z);
-      if (Math.abs(sx-mx)<10 && Math.abs(sz-mz)<10) { hit=ev; break; }
-    }
-  }
-  if (hit) {
-    tooltip.style.display='block';
-    tooltip.style.left=(mx+14)+'px'; tooltip.style.top=(mz+14)+'px';
-    tooltip.innerHTML=`<b>Mort #${hit.n}</b><br>X: ${Math.round(hit.x)}<br>Z: ${Math.round(hit.z)}`;
-  } else {
-    tooltip.style.display='none';
-  }
-
-  if (_dragging) {
-    _offsetX = _dragOX + (e.clientX-_dragSX);
-    _offsetZ = _dragOZ + (e.clientY-_dragSZ);
+  if (_drag) {
+    _ox = _dox + (e.clientX-_dsx);
+    _oz = _doz + (e.clientY-_dsz);
     redraw();
   }
 });
-
 window.addEventListener('mouseup', () => {
-  _dragging=false; container.style.cursor='crosshair';
-  if (_hoverChunk) redraw();
+  _drag=false; container.style.cursor='crosshair';
 });
 
 // Touch
 container.addEventListener('touchstart', e => {
   if (e.touches.length===1) {
-    _dragging=true; _dragSX=e.touches[0].clientX; _dragSZ=e.touches[0].clientY;
-    _dragOX=_offsetX; _dragOZ=_offsetZ;
+    _drag=true; _dsx=e.touches[0].clientX; _dsz=e.touches[0].clientY;
+    _dox=_ox; _doz=_oz;
   }
 },{passive:true});
 container.addEventListener('touchmove', e => {
-  if (_dragging && e.touches.length===1) {
-    _offsetX = _dragOX + (e.touches[0].clientX-_dragSX);
-    _offsetZ = _dragOZ + (e.touches[0].clientY-_dragSZ);
+  if(_drag&&e.touches.length===1) {
+    _ox=_dox+(e.touches[0].clientX-_dsx);
+    _oz=_doz+(e.touches[0].clientY-_dsz);
     redraw();
   }
 },{passive:true});
-container.addEventListener('touchend', ()=>{ _dragging=false; });
+container.addEventListener('touchend',()=>{ _drag=false; });
 
-// Double-click = reset view
+// Double-clic reset
 container.addEventListener('dblclick', () => { initView(); redraw(); });
+
+// Entrée dans les inputs TP
+document.getElementById('tp-x').addEventListener('keydown', e => { if(e.key==='Enter') teleport(); });
+document.getElementById('tp-z').addEventListener('keydown', e => { if(e.key==='Enter') teleport(); });
 
 window.addEventListener('resize', () => { resizeCanvas(); if(_data) redraw(); });
 
-// Animation loop pour le halo de position actuelle
-let _frame = 0;
-function animate() {
-  requestAnimationFrame(animate);
-  _frame++;
-  if (_frame % 30 === 0 && _data) redraw();
-}
-animate();
-
-// ── Start ────────────────────────────────────────────────────────
-loadMapData();
+loadData();
 </script>
 </body>
 </html>
