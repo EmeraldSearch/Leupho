@@ -94,7 +94,14 @@
       .nav-btn { font-size: .45rem; padding: 4px 8px; }
     }
 
-  </style>
+      .view-btn {
+      font-family:"Minecraft",monospace; font-size:.65rem; padding:5px 10px;
+      border:2px solid var(--border); border-radius:4px; cursor:pointer;
+      background:var(--bg); color:var(--subtext); transition:all .15s;
+      display:inline-block; margin-right:4px;
+    }
+    .view-btn:hover, .view-btn.active { background:var(--accent3); color:#000; border-color:var(--accent3); }
+</style>
 </head>
 <body>
 
@@ -147,23 +154,38 @@
   </div>
 
   <div class="card">
-    <h2>Tableau par % entier</h2>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>%</th>
-            <th>Distance</th>
-            <th>IGT total</th>
-            <th>Segment</th>
-            <th>Pace overall</th>
-            <th>ETA (ovr.)</th>
-            <th>IGT prec.</th>
-            <th>Delta IGT</th>
-          </tr>
-        </thead>
-        <tbody id="pace-tbody"></tbody>
-      </table>
+    <h2 style="display:flex;align-items:center;justify-content:space-between">
+      <span id="table-title">Tableau par % entier</span>
+      <span>
+        <span class="view-btn active" id="btn-pct" onclick="setView('pct')">%</span>
+        <span class="view-btn" id="btn-10k" onclick="setView('10k')">10k</span>
+      </span>
+    </h2>
+
+    <!-- Vue % -->
+    <div id="view-pct">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>%</th>
+              <th>Distance</th>
+              <th>IGT total</th>
+              <th>Segment</th>
+              <th>Pace overall</th>
+              <th>ETA (ovr.)</th>
+              <th>IGT prec.</th>
+              <th>Delta IGT</th>
+            </tr>
+          </thead>
+          <tbody id="pace-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Vue 10k -->
+    <div id="view-10k" style="display:none">
+      <div class="table-wrap" id="segments-table"></div>
     </div>
   </div>
 
@@ -329,6 +351,71 @@ async function _detect() {
     var p = await fetch('/api/summary');
     _useFlask = p.ok;
   } catch(_) { _useFlask = false; }
+}
+
+var _currentView = 'pct';
+
+function setView(v) {
+  _currentView = v;
+  document.getElementById('btn-pct').classList.toggle('active', v === 'pct');
+  document.getElementById('btn-10k').classList.toggle('active', v === '10k');
+  document.getElementById('view-pct').style.display = v === 'pct' ? '' : 'none';
+  document.getElementById('view-10k').style.display = v === '10k' ? '' : 'none';
+  document.getElementById('table-title').textContent =
+    v === 'pct' ? 'Tableau par % entier' : 'Segments 10k';
+  if (v === '10k') loadSegments();
+}
+
+async function loadSegments() {
+  var el = document.getElementById('segments-table');
+  try {
+    var isFlask = await fetch('/api/summary').then(function(r){return r.ok;}).catch(function(){return false;});
+    var url = isFlask ? '/api/segments_10k' : 'data/segments_10k.json?_=' + Date.now();
+    var segs = await fetch(url).then(function(r){return r.json();});
+    if (!segs || segs.length === 0) {
+      el.innerHTML = '<p style="color:var(--subtext);font-size:.8rem;padding:12px">Aucun segment complete.</p>';
+      return;
+    }
+    var best = Math.min.apply(null, segs.map(function(s){return s.duration_ticks;}));
+    function fmtDur(t) {
+      var s=Math.floor(t/20),m=Math.floor(s/60),sec=s%60;
+      return m+':'+String(sec).padStart(2,'0');
+    }
+    function fmtIGT(t) {
+      var s=Math.floor(t/20),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+      return h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+    }
+    var html = '<table style="width:100%;border-collapse:collapse;font-size:.8rem">' +
+      '<thead><tr style="color:var(--subtext);border-bottom:1px solid var(--border)">' +
+      '<th style="text-align:left;padding:5px 8px">Seg.</th>' +
+      '<th style="text-align:left;padding:5px 8px">Zone X</th>' +
+      '<th style="text-align:left;padding:5px 8px">Duree</th>' +
+      '<th style="text-align:left;padding:5px 8px">IGT debut</th>' +
+      '<th style="text-align:left;padding:5px 8px">IGT fin</th>' +
+      '</tr></thead><tbody>';
+    for (var i = 0; i < segs.length; i++) {
+      var s = segs[i];
+      var isBest = s.duration_ticks === best;
+      var xStart = -((s.segment_num-1)*10000);
+      var xEnd   = -(s.segment_num*10000);
+      html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05)' +
+        (isBest ? ';color:#a8ff78' : '') + '">' +
+        '<td style="padding:5px 8px">' + (isBest ? '🏆 ' : '') + s.segment_num + '</td>' +
+        '<td style="padding:5px 8px;font-family:monospace">' +
+          xStart.toLocaleString() + ' → ' + xEnd.toLocaleString() + '</td>' +
+        '<td style="padding:5px 8px;font-family:monospace;font-weight:' +
+          (isBest?'bold':'normal') + '">' + fmtDur(s.duration_ticks) + '</td>' +
+        '<td style="padding:5px 8px;font-family:monospace;color:var(--subtext)">' +
+          fmtIGT(s.igt_start) + '</td>' +
+        '<td style="padding:5px 8px;font-family:monospace;color:var(--subtext)">' +
+          fmtIGT(s.igt_end) + '</td>' +
+        '</tr>';
+    }
+    html += '</tbody></table>';
+    el.innerHTML = html;
+  } catch(e) {
+    el.innerHTML = '<p style="color:var(--subtext)">Erreur chargement segments.</p>';
+  }
 }
 
 async function loadPace() {
