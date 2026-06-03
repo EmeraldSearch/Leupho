@@ -629,21 +629,7 @@
 const REFRESH_MS   = 30_000;
 let _lastKnownTs   = null;
 
-// Lazy load : observer de visibilité pour chaque chart-card
-const _chartObs = new IntersectionObserver((entries) => {
-  entries.forEach(e => {
-    if (e.isIntersecting) e.target._needsLoad = true;
-  });
-}, { rootMargin: "200px" });
-document.querySelectorAll('.chart-card').forEach(el => {
-  el._needsLoad = false;
-  _chartObs.observe(el);
-});
 
-function _isVisible(id) {
-  const el = document.getElementById(id);
-  return el && el._needsLoad !== false;
-}
 let _xAxisMode = 'igt';
 
 function setXAxis(mode) {
@@ -1389,16 +1375,15 @@ async function loadAll() {
   } catch(e) { /* continuer */ }
 
   loadSummary();
-  // Charger seulement les graphes visibles
-  if (_isVisible('card-hp'))        loadHP();
-  if (_isVisible('card-speed'))     loadSpeed();
-  if (_isVisible('card-dist'))      loadDistance();
-  if (_isVisible('card-path'))      loadX();
-  if (_isVisible('card-elevation')) loadElevation();
-  if (_isVisible('card-heatmap'))   loadHeatmap();
-  if (_isVisible('card-items'))     loadItems();
-  if (_isVisible('card-deaths'))    loadDeaths();
-  if (_isVisible('card-weather'))   loadWeather();
+  loadHP();
+  loadSpeed();
+  loadDistance();
+  loadX();
+  loadElevation();
+  loadHeatmap();
+  loadItems();
+  loadDeaths();
+  loadWeather();
   updateLastUpdated();
 }
 
