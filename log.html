@@ -76,20 +76,20 @@
     .log-desc .detail { color:var(--subtext); font-size:.75rem; margin-top:1px; }
 
     /* Couleurs par type */
-    .type-boat        .log-icon, .type-boat        .label { color:#5b9bd5; }
-    .type-soup        .log-icon, .type-soup        .label { color:#d97040; }
-    .type-pork        .log-icon, .type-pork        .label { color:#e07070; }
-    .type-crafting_table .log-icon, .type-crafting_table .label { color:#a08060; }
-    .type-axe         .log-icon, .type-axe         .label { color:#a0a0b0; }
+    .type-boat           .log-icon, .type-boat           .label { color:#a0522d; }
+    .type-soup           .log-icon, .type-soup           .label { color:#ff6b6b; }
+    .type-pork           .log-icon, .type-pork           .label { color:#ff69b4; }
+    .type-crafting_table .log-icon, .type-crafting_table .label { color:#d4956a; }
+    .type-axe            .log-icon, .type-axe            .label { color:#a8a8b3; }
     .type-pickaxe     .log-icon, .type-pickaxe     .label { color:#6e7a8a; }
-    .type-shears      .log-icon, .type-shears      .label { color:#909090; }
+    .type-shears         .log-icon, .type-shears         .label { color:#e0e0e0; }
     .type-ice_boat_start .log-icon, .type-ice_boat_start .label { color:#a8e8ff; }
-    .type-night_slept  .log-icon, .type-night_slept  .label { color:#9080c0; }
-    .type-night_walked .log-icon, .type-night_walked .label { color:#7070a0; }
+    .type-night_slept    .log-icon, .type-night_slept    .label { color:#c39bd3; }
+    .type-night_walked   .log-icon, .type-night_walked   .label { color:#9b59b6; }
     .type-segment_10k  .log-icon, .type-segment_10k  .label { color:#a8ff78; }
-    .type-death         .log-icon, .type-death         .label { color:#e94560; }
-    .type-weather_rain  .log-icon, .type-weather_rain  .label { color:#53d8fb; }
-    .type-weather_thunder .log-icon, .type-weather_thunder .label { color:#a0c0ff; }
+    .type-death          .log-icon, .type-death          .label { color:#444455; }
+    .type-weather_rain   .log-icon, .type-weather_rain   .label { color:#3498db; }
+    .type-weather_thunder .log-icon, .type-weather_thunder .label { color:#ffff55; }
 
     .empty { text-align:center; color:var(--subtext); padding:40px;
       font-size:.85rem; }
@@ -131,6 +131,7 @@
     <button class="filter-btn" data-type="death"           onclick="setFilter('death')">✝ Morts</button>
     <button class="filter-btn" data-type="weather_rain"    onclick="setFilter('weather_rain')">🌧 Pluie</button>
     <button class="filter-btn" data-type="weather_thunder" onclick="setFilter('weather_thunder')">⛈ Orage</button>
+    <button class="filter-btn" onclick="downloadLog()" style="margin-left:auto;border-color:var(--accent3);color:var(--accent3)">⬇ Export CSV</button>
   </div>
 
   <div class="stats-bar" id="stats-bar" style="display:none"></div>
@@ -171,6 +172,39 @@ function ticksToHMS(t) {
 function fmtDur(t) {
   const s=Math.floor(t/20), m=Math.floor(s/60), sec=s%60;
   return m+':'+String(sec).padStart(2,'0');
+}
+
+function downloadLog() {
+  if (!_events || _events.length === 0) return;
+
+  const filtered = _filter === 'all' ? _events : _events.filter(e => e.type === _filter);
+  const sorted   = [...filtered].sort((a,b) => a.igt - b.igt);
+
+  const lines = ['IGT,Type,Detail'];
+  for (const ev of sorted) {
+    const igt  = ticksToHMS(ev.igt);
+    let detail = '';
+    if (ev.type === 'ice_boat_start' && ev.data) detail = 'Session #' + ev.data;
+    else if (ev.type === 'segment_10k' && ev.data) {
+      try { const d = JSON.parse(ev.data); detail = 'Seg '+d.seg+' ('+fmtDur(d.dur)+')'; } catch(e) {}
+    } else if (ev.type === 'death' && ev.data) {
+      try { const d = JSON.parse(ev.data); detail = '#'+d.n+' X:'+Math.round(d.x)+' Z:'+Math.round(d.z); } catch(e) {}
+    } else if (ev.data) {
+      detail = ev.data;
+    }
+    lines.push([igt, ev.type, detail].map(s => '"'+String(s).replace(/"/g,'""')+'"').join(','));
+  }
+
+  const blob = new Blob([lines.join('
+')], {type:'text/csv;charset=utf-8;'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = 'farlands_log' + (_filter !== 'all' ? '_'+_filter : '') + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 async function load() {
