@@ -103,7 +103,7 @@ def export_hp(db: Database, full: bool = False) -> None:
         "SELECT igt, real_ts, CAST(health AS REAL) AS health FROM ticks ORDER BY real_ts"
     ).fetchall()
     if full:
-        rows_full = downsample(rows, 500_000)
+        rows_full = downsample(rows, 1_000_000)
         write_json("hp_full.json", _hp_data(rows_full, t0))
     else:
         rows_hour = downsample(rows, 10000)
@@ -125,7 +125,7 @@ def export_speed(db: Database, full: bool = False) -> None:
            ORDER BY t.igt"""
     ).fetchall()
     if full:
-        write_json("speed_full.json", _speed_data(downsample(rows, 500_000), t0))
+        write_json("speed_full.json", _speed_data(downsample(rows, 1_000_000), t0))
     else:
         write_json("speed.json", _speed_data(downsample(rows, 10000), t0))
 
@@ -148,7 +148,7 @@ def export_distance(db: Database, full: bool = False) -> None:
         write_json("distance.json", []); write_json("distance_full.json", []); return
     x_start = float(rows[0]["x_total"] or 0)
     if full:
-        write_json("distance_full.json", _dist_data(downsample(rows, 500_000), t0, x_start))
+        write_json("distance_full.json", _dist_data(downsample(rows, 1_000_000), t0, x_start))
     else:
         write_json("distance.json", _dist_data(downsample(rows, 10000), t0, x_start))
 
@@ -170,7 +170,7 @@ def export_elevation(db: Database, full: bool = False) -> None:
         "FROM ticks WHERE elevation IS NOT NULL ORDER BY real_ts"
     ).fetchall()
     if full:
-        write_json("elevation_full.json", _elev_data(downsample(rows, 500_000), t0))
+        write_json("elevation_full.json", _elev_data(downsample(rows, 1_000_000), t0))
     else:
         write_json("elevation.json", _elev_data(downsample(rows, 10000), t0))
 
