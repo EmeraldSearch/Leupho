@@ -401,12 +401,13 @@ async function loadSegments() {
       var durColor = isBest ? '#f5c542' : (isFast ? '#a8ff78' : '');
       var xStart = -((s.segment_num-1)*10000);
       var xEnd   = -(s.segment_num*10000);
+      var tdStyle = 'padding:5px 8px' + (durColor ? ';color:'+durColor : '');
       html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">' +
-        '<td style="padding:5px 8px">' + (isBest ? '🏆 ' : '') + s.segment_num + '</td>' +
-        '<td style="padding:5px 8px;font-family:monospace">' +
+        '<td style="' + tdStyle + '">' + (isBest ? '🏆 ' : '') + s.segment_num + '</td>' +
+        '<td style="' + tdStyle + ';font-family:monospace">' +
           xStart.toLocaleString() + ' → ' + xEnd.toLocaleString() + '</td>' +
-        '<td style="padding:5px 8px;font-family:monospace;font-weight:' +
-          (isBest?'bold':'normal') + (durColor ? ';color:'+durColor : '') + '">' + fmtDur(s.duration_ticks) + '</td>' +
+        '<td style="' + tdStyle + ';font-family:monospace;font-weight:' +
+          (isBest?'bold':'normal') + '">' + fmtDur(s.duration_ticks) + '</td>' +
         '<td style="padding:5px 8px;font-family:monospace;color:var(--subtext)">' +
           fmtIGT(s.igt_start) + '</td>' +
         '<td style="padding:5px 8px;font-family:monospace;color:var(--subtext)">' +
