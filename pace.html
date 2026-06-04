@@ -396,16 +396,17 @@ async function loadSegments() {
       '</tr></thead><tbody>';
     for (var i = 0; i < segs.length; i++) {
       var s = segs[i];
-      var isBest = s.duration_ticks === best;
+      var isBest   = s.duration_ticks === best;
+      var isFast   = s.duration_ticks < 36000;  // < 30min = 36000 ticks
+      var durColor = isBest ? '#f5c542' : (isFast ? '#a8ff78' : '');
       var xStart = -((s.segment_num-1)*10000);
       var xEnd   = -(s.segment_num*10000);
-      html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05)' +
-        (isBest ? ';color:#a8ff78' : '') + '">' +
+      html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">' +
         '<td style="padding:5px 8px">' + (isBest ? '🏆 ' : '') + s.segment_num + '</td>' +
         '<td style="padding:5px 8px;font-family:monospace">' +
           xStart.toLocaleString() + ' → ' + xEnd.toLocaleString() + '</td>' +
         '<td style="padding:5px 8px;font-family:monospace;font-weight:' +
-          (isBest?'bold':'normal') + '">' + fmtDur(s.duration_ticks) + '</td>' +
+          (isBest?'bold':'normal') + (durColor ? ';color:'+durColor : '') + '">' + fmtDur(s.duration_ticks) + '</td>' +
         '<td style="padding:5px 8px;font-family:monospace;color:var(--subtext)">' +
           fmtIGT(s.igt_start) + '</td>' +
         '<td style="padding:5px 8px;font-family:monospace;color:var(--subtext)">' +
