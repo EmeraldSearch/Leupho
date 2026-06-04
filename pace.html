@@ -94,7 +94,18 @@
       .nav-btn { font-size: .45rem; padding: 4px 8px; }
     }
 
-      .view-btn {
+      @keyframes rainbow {
+      0%   { color: #ff4444; }
+      16%  { color: #ffaa00; }
+      33%  { color: #ffff00; }
+      50%  { color: #44ff44; }
+      66%  { color: #44aaff; }
+      83%  { color: #cc44ff; }
+      100% { color: #ff4444; }
+    }
+    .rainbow { animation: rainbow 2s linear infinite; font-weight: bold; }
+
+    .view-btn {
       font-family:"Minecraft",monospace; font-size:.65rem; padding:5px 10px;
       border:2px solid var(--border); border-radius:4px; cursor:pointer;
       background:var(--bg); color:var(--subtext); transition:all .15s;
@@ -413,17 +424,20 @@ async function loadSegments() {
       '</tr></thead><tbody>';
     for (var i = 0; i < segs.length; i++) {
       var s = segs[i];
-      var isBest   = s.duration_ticks === best;
-      var isFast   = s.duration_ticks < 36000;  // < 30min = 36000 ticks
-      var durColor = isBest ? '#f5c542' : (isFast ? '#a8ff78' : '');
+      var isBest      = s.duration_ticks === best;
+      var isSub30     = s.duration_ticks < 36000;   // < 30:00
+      var isSub3327   = s.duration_ticks < 40140;   // < 33:27
+      var isAbove3551 = s.duration_ticks > 43020;   // > 35:51
+      var durColor    = isAbove3551 ? '#ff4444' : isSub30 ? '#f5c542' : isSub3327 ? '#a8ff78' : '';
       var xStart = -((s.segment_num-1)*10000);
       var xEnd   = -(s.segment_num*10000);
-      var tdStyle = 'padding:5px 8px' + (durColor ? ';color:'+durColor : '');
+      var tdStyle  = 'padding:5px 8px' + (!isBest && durColor ? ';color:'+durColor : '');
+      var tdClass  = isBest ? ' class="rainbow"' : '';
       html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">' +
-        '<td style="' + tdStyle + '">' + (isBest ? '🏆 ' : '') + s.segment_num + '</td>' +
-        '<td style="' + tdStyle + ';font-family:monospace">' +
+        '<td' + tdClass + ' style="' + tdStyle + '">' + (isBest ? '🏆 ' : '') + s.segment_num + '</td>' +
+        '<td' + tdClass + ' style="' + tdStyle + ';font-family:monospace">' +
           xStart.toLocaleString() + ' → ' + xEnd.toLocaleString() + '</td>' +
-        '<td style="' + tdStyle + ';font-family:monospace;font-weight:' +
+        '<td' + tdClass + ' style="' + tdStyle + ';font-family:monospace;font-weight:' +
           (isBest?'bold':'normal') + '">' + fmtDur(s.duration_ticks) + '</td>' +
         '<td style="padding:5px 8px;font-family:monospace;color:var(--subtext)">' +
           fmtIGT(s.igt_start) + '</td>' +
