@@ -663,9 +663,9 @@ function updateFullLink() {
   const lc = document.getElementById('full-link-container');
   if (!lc) return;
   if (!_fullMode) {
-    lc.innerHTML = '<a href="graph.html?full=1" target="_blank" style="color:var(--accent3);font-size:.7rem;text-decoration:none">↗ Version complète (500k pts)</a>';
+    lc.innerHTML = '<a href="graph.html?full=1" target="_blank" style="color:var(--accent3);font-size:.7rem;text-decoration:none">↗ Version complète (1M pts)</a>';
   } else {
-    lc.innerHTML = '<span style="color:var(--subtext);font-size:.7rem">Mode complet actif</span>';
+    lc.innerHTML = '<a href="graph.html" style="color:var(--subtext);font-size:.7rem;text-decoration:none">← Dernière heure</a>';
   }
 }
 
