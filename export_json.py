@@ -92,21 +92,31 @@ def export_summary(db: Database) -> None:
     write_json("summary.json", d)
 
 
-def export_hp(db: Database) -> None:
+def _hp_data(rows, t0):
+    deaths = [r["igt"] for r in rows if float(r["health"]) <= 0]
+    return {"data": [{"igt": r["igt"], "rts": round(float(r["real_ts"]) - t0, 1), "health": float(r["health"])} for r in rows], "deaths": deaths}
+
+def export_hp(db: Database, full: bool = False) -> None:
     first = db.execute("SELECT MIN(real_ts) AS t FROM ticks").fetchone()
     t0 = float(first["t"] or 0)
     rows = db.execute(
         "SELECT igt, real_ts, CAST(health AS REAL) AS health FROM ticks ORDER BY real_ts"
     ).fetchall()
-    rows   = downsample(rows, 10000)
-    deaths = [r["igt"] for r in rows if float(r["health"]) <= 0]
-    write_json("hp.json", {
-        "data":   [{"igt": r["igt"], "rts": round(float(r["real_ts"]) - t0, 1), "health": float(r["health"])} for r in rows],
-        "deaths": deaths,
-    })
+    if full:
+        rows_full = downsample(rows, 500_000)
+        write_json("hp_full.json", _hp_data(rows_full, t0))
+    else:
+        rows_hour = downsample(rows, 10000)
+        write_json("hp.json", _hp_data(rows_hour, t0))
 
 
-def export_speed(db: Database) -> None:
+def _speed_data(rows, t0):
+    return [{"igt": r["igt"], "rts": round(float(r["real_ts"]) - t0, 1),
+             "speed_horiz": r["speed_horiz"], "speed_avg": r["speed_avg"],
+             "speed_x": -float(r["speed_x"]) if r["speed_x"] is not None else 0.0}
+            for r in rows]
+
+def export_speed(db: Database, full: bool = False) -> None:
     first = db.execute("SELECT MIN(real_ts) AS t FROM ticks").fetchone()
     t0 = float(first["t"] or 0)
     rows = db.execute(
@@ -114,20 +124,18 @@ def export_speed(db: Database) -> None:
            FROM speed s JOIN ticks t ON s.world_time = t.world_time
            ORDER BY t.igt"""
     ).fetchall()
-    rows = downsample(rows, 10000)
-    write_json("speed.json", [
-        {
-            "igt":         r["igt"],
-            "rts":         round(float(r["real_ts"]) - t0, 1),
-            "speed_horiz": r["speed_horiz"],
-            "speed_avg":   r["speed_avg"],
-            "speed_x":     -float(r["speed_x"]) if r["speed_x"] is not None else 0.0,
-        }
-        for r in rows
-    ])
+    if full:
+        write_json("speed_full.json", _speed_data(downsample(rows, 500_000), t0))
+    else:
+        write_json("speed.json", _speed_data(downsample(rows, 10000), t0))
 
 
-def export_distance(db: Database) -> None:
+def _dist_data(rows, t0, x_start):
+    return [{"igt": r["igt"], "rts": round(float(r["real_ts"]) - t0, 1),
+             "dist_total": float(r["dist_total"] or 0),
+             "x_total": x_start - float(r["x_total"] or 0)} for r in rows]
+
+def export_distance(db: Database, full: bool = False) -> None:
     first = db.execute("SELECT MIN(real_ts) AS t FROM ticks").fetchone()
     t0 = float(first["t"] or 0)
     rows = db.execute(
@@ -137,19 +145,12 @@ def export_distance(db: Database) -> None:
            FROM ticks ORDER BY real_ts"""
     ).fetchall()
     if not rows:
-        write_json("distance.json", [])
-        return
+        write_json("distance.json", []); write_json("distance_full.json", []); return
     x_start = float(rows[0]["x_total"] or 0)
-    rows = downsample(rows, 10000)
-    write_json("distance.json", [
-        {
-            "igt":        r["igt"],
-            "rts":        round(float(r["real_ts"]) - t0, 1),
-            "dist_total": float(r["dist_total"] or 0),
-            "x_total":    x_start - float(r["x_total"] or 0),
-        }
-        for r in rows
-    ])
+    if full:
+        write_json("distance_full.json", _dist_data(downsample(rows, 500_000), t0, x_start))
+    else:
+        write_json("distance.json", _dist_data(downsample(rows, 10000), t0, x_start))
 
 
 def export_heatmap(db: Database) -> None:
@@ -158,17 +159,20 @@ def export_heatmap(db: Database) -> None:
     write_json("heatmap.json", [{"x": r["x"], "z": r["z"]} for r in rows])
 
 
-def export_elevation(db: Database) -> None:
+def _elev_data(rows, t0):
+    return [{"igt": r["igt"], "rts": round(float(r["real_ts"]) - t0, 1), "elevation": float(r["elevation"])} for r in rows]
+
+def export_elevation(db: Database, full: bool = False) -> None:
     first = db.execute("SELECT MIN(real_ts) AS t FROM ticks").fetchone()
     t0 = float(first["t"] or 0)
     rows = db.execute(
         "SELECT igt, real_ts, CAST(elevation AS REAL) AS elevation "
         "FROM ticks WHERE elevation IS NOT NULL ORDER BY real_ts"
     ).fetchall()
-    rows = downsample(rows, 10000)
-    write_json("elevation.json", [
-        {"igt": r["igt"], "rts": round(float(r["real_ts"]) - t0, 1), "elevation": float(r["elevation"])} for r in rows
-    ])
+    if full:
+        write_json("elevation_full.json", _elev_data(downsample(rows, 500_000), t0))
+    else:
+        write_json("elevation.json", _elev_data(downsample(rows, 10000), t0))
 
 
 def export_item_flow(db: Database) -> None:
@@ -234,16 +238,20 @@ def export_pace(db: Database) -> None:
 # Git push
 # ==============================================================
 
-def git_push() -> None:
+def git_push(full: bool = False) -> None:
     try:
-        subprocess.run(["git", "-C", BASE_DIR, "add",
+        files = [
             "data/summary.json", "data/hp.json", "data/speed.json",
             "data/distance.json", "data/elevation.json", "data/heatmap.json",
             "data/item_flow.json", "data/deaths.json", "data/weather.json",
             "data/pace.json", "data/map_data.json", "data/segments_10k.json", "data/events.json",
             "index.html", "graph.html", "pace.html", "faq.html", "map.html", "log.html",
-            "inventory_sprites.png", "inventory_sprites.json", "skin.png", "kazuwalk.gif"
-        ], check=False, capture_output=True)
+            "inventory_sprites.png", "inventory_sprites.json", "skin.png", "kazuwalk.gif",
+        ]
+        if full:
+            files += ["data/hp_full.json", "data/speed_full.json",
+                      "data/distance_full.json", "data/elevation_full.json"]
+        subprocess.run(["git", "-C", BASE_DIR, "add"] + files, check=False, capture_output=True)
         result = subprocess.run(["git", "-C", BASE_DIR, "diff", "--cached", "--quiet"], capture_output=True)
         if result.returncode != 0:
             subprocess.run(["git", "-C", BASE_DIR, "commit", "-m", "data: auto-update"], check=True, capture_output=True)
@@ -302,15 +310,15 @@ def export_map() -> None:
     if os.path.exists(gen_map):
         subprocess.run([sys.executable, gen_map], cwd=BASE_DIR, check=False)
 
-def export_all() -> None:
+def export_all(full: bool = False) -> None:
     db = Database(DB_PATH, readonly=True)
     try:
         export_summary(db)
-        export_hp(db)
-        export_speed(db)
-        export_distance(db)
+        export_hp(db, full=full)
+        export_speed(db, full=full)
+        export_distance(db, full=full)
         export_heatmap(db)
-        export_elevation(db)
+        export_elevation(db, full=full)
         export_item_flow(db)
         export_deaths(db)
         export_weather(db)
@@ -320,7 +328,7 @@ def export_all() -> None:
     finally:
         db.close()
     export_map()
-    git_push()
+    git_push(full=full)
 
 
 # ==============================================================
@@ -338,23 +346,30 @@ if __name__ == "__main__":
         NO_DOWNSAMPLE = True
 
     if args.watch:
-        print(f"Watching tracker.db → pushing to GitHub every {INTERVAL}s. Ctrl+C to stop.")
+        print(f"Watching tracker.db → pushing every {INTERVAL}s, full export every hour. Ctrl+C to stop.")
         _last_exported_ts = None
+        _last_full_export = 0.0
+        FULL_INTERVAL     = 3600
         while True:
             try:
-                # Vérifier si la DB a de nouvelles données depuis le dernier export
                 db_check = Database(DB_PATH, readonly=True)
-                last_ts = db_check.get_meta("last_real_ts", "0")
+                last_ts  = db_check.get_meta("last_real_ts", "0")
                 db_check.close()
 
                 if last_ts != _last_exported_ts:
-                    export_all()
+                    now     = time.time()
+                    do_full = (now - _last_full_export) >= FULL_INTERVAL
+                    export_all(full=do_full)
                     _last_exported_ts = last_ts
-                    print(f"[{time.strftime('%H:%M:%S')}] Exported (last_ts={last_ts})")
+                    if do_full:
+                        _last_full_export = now
+                        print(f"[{time.strftime('%H:%M:%S')}] Exported (hour + full)")
+                    else:
+                        print(f"[{time.strftime('%H:%M:%S')}] Exported (hour only)")
                 else:
-                    print(f"[{time.strftime('%H:%M:%S')}] No new data, skipping export")
+                    print(f"[{time.strftime('%H:%M:%S')}] No new data, skipping")
             except Exception as e:
                 print(f"[{time.strftime('%H:%M:%S')}] Export error: {e}")
             time.sleep(INTERVAL)
     else:
-        export_all()
+        export_all(full=args.full)
