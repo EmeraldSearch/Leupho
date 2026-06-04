@@ -502,38 +502,17 @@
   <!-- ── Sidebar ────────────────────────────────────────────── -->
   <aside>
 
-    <!-- Vue temporelle -->
     <div class="sidebar-section">
-      <h3>Vue</h3>
-      <div style="display:flex;flex-direction:column;gap:5px;">
-        <button class="btn btn-ghost active" id="btn-view-all"  onclick="setView('all')"  style="text-align:left">Tout</button>
-        <button class="btn btn-ghost"        id="btn-view-hour" onclick="setView('hour')" style="text-align:left">Dernière heure IGT</button>
-      </div>
-      <div style="margin-top:8px;" id="full-link-container"></div>
-    </div>
-
-    <!-- Axe X toggle -->
-    <div class="sidebar-section">
-      <h3>Axe X</h3>
-      <div style="display:flex;gap:6px;">
-        <button id="btn-igt" onclick="setXAxis('igt')"
-          style="flex:1;padding:7px;background:#555;border-top:2px solid #222;border-left:2px solid #222;border-right:2px solid #aaa;border-bottom:2px solid #aaa;color:var(--accent4);font-family:monospace;font-size:.65rem;cursor:pointer;">
-          IGT
-        </button>
-        <button id="btn-rta" onclick="setXAxis('rta')"
-          style="flex:1;padding:7px;background:#555;border-top:2px solid #aaa;border-left:2px solid #aaa;border-right:2px solid #222;border-bottom:2px solid #222;color:var(--subtext);font-family:monospace;font-size:.65rem;cursor:pointer;">
-          RTA
-        </button>
-      </div>
+      <div id="full-link-container"></div>
     </div>
 
     <!-- Chart toggles -->
     <div class="sidebar-section">
       <h3>Charts</h3>
       <div class="toggle-list">
-        <label><input type="checkbox" checked data-card="card-hp">       Health</label>
         <label><input type="checkbox" checked data-card="card-speed">    Speed</label>
         <label><input type="checkbox" checked data-card="card-elevation"> Élévation</label>
+        <label><input type="checkbox" checked data-card="card-hp">       Health</label>
         <label><input type="checkbox" checked data-card="card-items">    Inventaire</label>
       </div>
     </div>
@@ -551,22 +530,22 @@
     <script>if (window.innerWidth <= 640) document.getElementById('mobile-warning').style.display = 'block';</script>
 
     <!-- HP -->
-    <div class="chart-card" id="card-hp">
-      <h2>❤ Health over time</h2>
-      <div class="plotly-chart" id="chart-hp"></div>
-    </div>
-
     <!-- Speed -->
     <div class="chart-card" id="card-speed">
       <h2>💨 Horizontal speed</h2>
       <div class="plotly-chart" id="chart-speed"></div>
     </div>
 
-    <!-- Distance -->
     <!-- Elevation -->
     <div class="chart-card" id="card-elevation">
       <h2>⛰ Élévation (coordonnée Y)</h2>
       <div class="plotly-chart" id="chart-elevation"></div>
+    </div>
+
+    <!-- Health -->
+    <div class="chart-card" id="card-hp">
+      <h2>❤ Health over time</h2>
+      <div class="plotly-chart" id="chart-hp"></div>
     </div>
 
     <!-- Inventaire -->
