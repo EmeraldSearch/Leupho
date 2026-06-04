@@ -483,7 +483,29 @@
       font-size: .82rem;
       display: none;
     }
-  </style>
+      /* Panel inventaire flottant */
+    #inv-panel {
+      position:fixed; bottom:16px; right:16px; z-index:50;
+      background:var(--panel); border:1px solid var(--border);
+      border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,.5);
+      width:450px; overflow:hidden;
+      transition:height .2s, opacity .2s;
+    }
+    #inv-panel-header {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:7px 12px; cursor:pointer; user-select:none;
+      border-bottom:1px solid var(--border); background:rgba(255,255,255,.03);
+    }
+    #inv-panel-header:hover { background:rgba(255,255,255,.06); }
+    #inv-panel-title { font-size:.75rem; color:var(--subtext); }
+    #inv-panel-toggle { font-size:.7rem; color:var(--subtext); }
+    #inv-panel-body {
+      padding:8px;
+      display:flex; align-items:center; gap:10px;
+    }
+    #inv-panel.collapsed #inv-panel-body { display:none; }
+    #inv-panel.collapsed { border-radius:8px; }
+</style>
 </head>
 <body>
 <div class="layout">
@@ -513,7 +535,7 @@
         <label><input type="checkbox" checked data-card="card-speed">    Speed</label>
         <label><input type="checkbox" checked data-card="card-elevation"> Élévation</label>
         <label><input type="checkbox" checked data-card="card-hp">       Health</label>
-        <label><input type="checkbox" checked data-card="card-items">    Inventaire</label>
+        <label style="display:none"><input type="checkbox" checked data-card="card-items">    Inventaire</label>
       </div>
     </div>
 
@@ -549,7 +571,7 @@
     </div>
 
     <!-- Inventaire -->
-    <div class="chart-card" id="card-items">
+    <div class="chart-card" id="card-items" style="display:none">
       <h2>🎒 Inventaire</h2>
       <div style="display:flex; align-items:center; gap:12px; background:#c6c6c6; border:3px solid; border-color:#fff #555 #555 #fff; padding:7px; box-sizing:border-box;">
         <canvas id="skin-canvas" style="width:80px; height:160px; flex-shrink:0; background:transparent;"></canvas>
@@ -1248,6 +1270,7 @@ async function loadAll() {
   loadItems();
   updateLastUpdated();
   updateFullLink();
+  if (_invPanelOpen) loadInvPanel();
 }
 
 function updateLastUpdated() {
@@ -1259,11 +1282,98 @@ function updateLastUpdated() {
 loadAll();
 setInterval(loadAll, REFRESH_MS);
 
+// ── Panel inventaire flottant ────────────────────────────────────
+var _invPanelOpen   = true;
+var _invSkinPanel   = null;
+
+function toggleInvPanel() {
+  _invPanelOpen = !_invPanelOpen;
+  const panel  = document.getElementById('inv-panel');
+  const toggle = document.getElementById('inv-panel-toggle');
+  panel.classList.toggle('collapsed', !_invPanelOpen);
+  toggle.textContent = _invPanelOpen ? '▼ Réduire' : '▲ Ouvrir';
+  if (_invPanelOpen) loadInvPanel();
+}
+
+async function loadInvPanel() {
+  try {
+    if (_useFlask) {
+      const data = await apiFetch('/api/inventory');
+      renderInvPanel(data.inventory, data.igt);
+    } else {
+      // GitHub Pages : lire depuis summary.json qui contient l'inventaire
+      const s = await apiFetch('/api/summary');
+      if (s && s.inventory) renderInvPanel(s.inventory, s.total_igt || 0);
+    }
+  } catch(e) {}
+}
+
+function renderInvPanel(invStr, igt) {
+  document.getElementById('inv-panel-igt').textContent = ticksToHMS(igt);
+  const slots = new Array(36).fill(null);
+  if (invStr) {
+    invStr.split(',').forEach(function(part) {
+      const bits = part.split(':');
+      if (bits.length < 3) return;
+      const slot   = parseInt(bits[0]);
+      const damage = bits.length >= 4 ? parseInt(bits[bits.length-1]) || 0 : 0;
+      const count  = bits.length >= 4 ? parseInt(bits[bits.length-2]) || 0 : parseInt(bits[bits.length-1]) || 0;
+      const name   = bits.length >= 4 ? bits.slice(1,-2).join(':') : bits.slice(1,-1).join(':');
+      if (slot >= 0 && slot < 36 && name && count > 0)
+        slots[slot] = {name, count, damage};
+    });
+  }
+  const grid = document.getElementById('inv-grid-panel');
+  if (!grid) return;
+  let html = '';
+  for (let i = 9; i < 36; i++) html += renderSlot(slots[i]);
+  html += '<div class="inv-hotbar-sep"></div>';
+  for (let i = 0; i < 9; i++) html += renderSlot(slots[i]);
+  grid.innerHTML = html;
+  // Skin
+  if (typeof skinview3d !== 'undefined') {
+    const canvas = document.getElementById('skin-canvas-panel');
+    if (canvas && !_invSkinPanel) {
+      _invSkinPanel = new skinview3d.SkinViewer({canvas, width:48, height:96, skin:'/skin.png'});
+      _invSkinPanel.playerWrapper.rotation.y = -0.4;
+      _invSkinPanel.renderer.setClearColor(0x000000, 0);
+      _invSkinPanel.animation = null;
+    }
+  }
+}
+
+function ticksToHMS(t) {
+  const s=Math.floor(t/20), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), sec=s%60;
+  return h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+
+// Rafraîchir le panel si ouvert
+// Charger au démarrage
+loadInvPanel();
+
+setInterval(function() {
+  if (_invPanelOpen && _useFlask) loadInvPanel();
+}, 2000);
+
 
 function _unused() {
   const el = document.getElementById("last-updated");
   if (el) el.textContent = "Updated " + new Date().toLocaleTimeString();
 }
 </script>
+  <!-- Panel inventaire flottant -->
+  <div id="inv-panel">
+    <div id="inv-panel-header" onclick="toggleInvPanel()">
+      <span id="inv-panel-title">🎒 Inventaire — <span id="inv-panel-igt">—</span></span>
+      <span id="inv-panel-toggle">▼ Réduire</span>
+    </div>
+    <div id="inv-panel-body">
+      <canvas id="skin-canvas-panel" style="width:48px;height:96px;flex-shrink:0;background:transparent;"></canvas>
+      <div style="background:#c6c6c6;border:3px solid;border-color:#fff #555 #555 #fff;padding:4px;display:inline-block;">
+        <div class="inv-grid" id="inv-grid-panel" style="grid-template-columns:repeat(9,36px);gap:2px;"></div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

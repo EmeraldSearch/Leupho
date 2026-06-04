@@ -161,7 +161,7 @@ const EVENT_META = {
 };
 
 let _events   = [];
-let _filter   = 'all';
+let _filters  = new Set(['all']);
 let _lastTs   = null;
 const REFRESH = 30_000;
 
@@ -177,29 +177,37 @@ function fmtDur(t) {
 function downloadLog() {
   if (!_events || _events.length === 0) return;
 
-  const filtered = _filter === 'all' ? _events : _events.filter(e => e.type === _filter);
+  const filtered = _filters.has('all') ? _events : _events.filter(e => _filters.has(e.type));
   const sorted   = [...filtered].sort((a,b) => a.igt - b.igt);
 
-  const lines = ['IGT,Type,Detail'];
+  // Numéroter chaque type (ordre chronologique)
+  const typeCounters = {};
+  for (const ev of sorted) {
+    typeCounters[ev.type] = (typeCounters[ev.type] || 0) + 1;
+    ev._num = typeCounters[ev.type];
+  }
+  const noNum = [];
+
+  const lines = ['IGT,Type,#,Detail'];
   for (const ev of sorted) {
     const igt  = ticksToHMS(ev.igt);
+    const num  = noNum.includes(ev.type) ? '' : ev._num;
     let detail = '';
-    if (ev.type === 'ice_boat_start' && ev.data) detail = 'Session #' + ev.data;
+    if (ev.type === 'ice_boat_start' && ev.data) { detail = ev.data; }
     else if (ev.type === 'segment_10k' && ev.data) {
-      try { const d = JSON.parse(ev.data); detail = 'Seg '+d.seg+' ('+fmtDur(d.dur)+')'; } catch(e) {}
+      try { const d = JSON.parse(ev.data); detail = 'Seg '+d.seg+' '+fmtDur(d.dur); } catch(e) {}
     } else if (ev.type === 'death' && ev.data) {
-      try { const d = JSON.parse(ev.data); detail = '#'+d.n+' X:'+Math.round(d.x)+' Z:'+Math.round(d.z); } catch(e) {}
-    } else if (ev.data) {
-      detail = ev.data;
-    }
-    lines.push([igt, ev.type, detail].map(s => '"'+String(s).replace(/"/g,'""')+'"').join(','));
+      try { const d = JSON.parse(ev.data); detail = 'X:'+Math.round(d.x)+' Z:'+Math.round(d.z); } catch(e) {}
+    } else if (ev.data) { detail = ev.data; }
+    lines.push([igt, ev.type, num, detail].map(s => '"'+String(s).replace(/"/g,'""')+'"').join(','));
   }
 
   const blob = new Blob([lines.join("\r\n")], {type:"text/csv;charset=utf-8;"});
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
   a.href     = url;
-  a.download = 'farlands_log' + (_filter !== 'all' ? '_'+_filter : '') + '.csv';
+  const filterSuffix = _filters.has('all') ? '' : '_' + [..._filters].join('_');
+  a.download = 'farlands_log' + filterSuffix + '.csv';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
@@ -221,17 +229,31 @@ async function load() {
 }
 
 function setFilter(f) {
-  _filter = f;
+  if (f === 'all') {
+    _filters = new Set(['all']);
+  } else {
+    _filters.delete('all');
+    if (_filters.has(f)) {
+      _filters.delete(f);
+      if (_filters.size === 0) _filters = new Set(['all']);
+    } else {
+      _filters.add(f);
+    }
+  }
   document.querySelectorAll('.filter-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.type === f);
+    if (b.dataset.type === 'all') {
+      b.classList.toggle('active', _filters.has('all'));
+    } else {
+      b.classList.toggle('active', _filters.has(b.dataset.type));
+    }
   });
   render();
 }
 
 function render() {
-  const filtered = _filter === 'all'
+  const filtered = _filters.has('all')
     ? _events
-    : _events.filter(e => e.type === _filter);
+    : _events.filter(e => _filters.has(e.type));
 
   if (filtered.length === 0) {
     document.getElementById('log-container').innerHTML =
@@ -245,19 +267,18 @@ function render() {
   let html = '';
   let prevIGT = -1;
 
-  // Compteurs par type pour numéroter (en ordre chronologique)
+  // Numéroter en ordre chronologique avec un index propre à chaque event
   const typeCounters = {};
   const chronological = [...filtered].sort((a,b) => a.igt - b.igt);
-  const evNumbers = {};
   for (const ev of chronological) {
     typeCounters[ev.type] = (typeCounters[ev.type] || 0) + 1;
-    evNumbers[ev.id] = typeCounters[ev.type];
+    ev._num = typeCounters[ev.type];
   }
 
   for (const ev of sorted) {
     const meta = EVENT_META[ev.type] || { icon:'•', label: ev.type };
-    const num = evNumbers[ev.id];
-    const noNum = ['death','weather_rain','weather_thunder','segment_10k','ice_boat_start','night_walked'];
+    const num = ev._num;
+    const noNum = [];
     let label = noNum.includes(ev.type) ? meta.label : meta.label + ' #' + num;
     let detail = '';
 
