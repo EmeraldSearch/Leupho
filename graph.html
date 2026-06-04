@@ -319,7 +319,6 @@
 
 
     /* heatmap */
-    #card-heatmap .plotly-chart { height: 420px; }
     /* inventory */
     #card-items h2 { margin-bottom: 8px; }
     .inv-wrapper {
@@ -550,9 +549,6 @@
         <label><input type="checkbox" checked data-card="card-dist">     Distance (XZ)</label>
         <label><input type="checkbox" checked data-card="card-items">    Inventaire</label>
         <label><input type="checkbox" checked data-card="card-elevation"> Élévation</label>
-        <label><input type="checkbox" checked data-card="card-heatmap">   Chemin (XZ)</label>
-        <label><input type="checkbox" checked data-card="card-deaths">   Death log</label>
-        <label><input type="checkbox" checked data-card="card-weather">  Weather log</label>
       </div>
     </div>
 
@@ -587,12 +583,6 @@
     </div>
 
 
-    <!-- Heatmap -->
-    <div class="chart-card" id="card-heatmap">
-      <h2>🗺 Chemin parcouru (XZ)</h2>
-      <div class="plotly-chart" id="chart-heatmap"></div>
-    </div>
-
     <!-- Inventaire -->
     <div class="chart-card" id="card-items">
       <h2>🎒 Inventaire</h2>
@@ -606,18 +596,6 @@
     <div class="chart-card" id="card-elevation">
       <h2>⛰ Élévation (coordonnée Y)</h2>
       <div class="plotly-chart" id="chart-elevation"></div>
-    </div>
-
-    <!-- Death log -->
-    <div class="chart-card" id="card-deaths">
-      <h2>☠ Death log</h2>
-      <div id="death-log"></div>
-    </div>
-
-    <!-- Weather log -->
-    <div class="chart-card" id="card-weather">
-      <h2>🌦 Weather log</h2>
-      <div id="weather-log"></div>
     </div>
 
 
@@ -1098,75 +1076,12 @@ function renderSlot(slot) {
     '</div>';
 }
 
-async function loadHeatmap() {
-  try {
-    let pts = await apiFetch("/api/heatmap" + rangeParams());
-    if (!pts.length) return;
-
-    const xs = pts.map(p => p.x);
-    const zs = pts.map(p => p.z);
-
-    const tracePath = {
-      x: xs, y: zs,
-      type: "scatter", mode: "lines",
-      name: "Chemin",
-      line: { color: "#53d8fb", width: 1 },
-      hovertemplate: "X: %{x:.0f}<br>Z: %{y:.0f}<extra>Chemin</extra>",
-    };
-
-    const traceStart = {
-      x: [xs[0]], y: [zs[0]],
-      type: "scatter", mode: "markers",
-      name: "Départ",
-      marker: { color: "#a8ff78", size: 10, symbol: "triangle-up" },
-      hovertemplate: "Départ<br>X: %{x:.0f}<br>Z: %{y:.0f}<extra></extra>",
-    };
-
-    const traceCurrent = {
-      x: [xs[xs.length - 1]], y: [zs[zs.length - 1]],
-      type: "scatter", mode: "markers",
-      name: "Position actuelle",
-      marker: { color: "#e94560", size: 10, symbol: "circle" },
-      hovertemplate: "Position actuelle<br>X: %{x:.0f}<br>Z: %{y:.0f}<extra></extra>",
-    };
-
-    const layout = {
-      ...LAYOUT_BASE,
-      xaxis: { ...LAYOUT_BASE.xaxis, title: "X (blocks)" },
-      yaxis: { ...LAYOUT_BASE.yaxis, title: "Z (blocks)", scaleanchor: "x", scaleratio: 1, autorange: "reversed" },
-    };
-
-    Plotly.react("chart-heatmap", [tracePath, traceStart, traceCurrent], layout, PLOTLY_CONFIG);
-  } catch(e) { showError(e.message); }
-}
 
 async function loadItems() {}
 
 // ================================================================
 // Death log
 // ================================================================
-async function loadDeaths() {
-  try {
-    const deaths = await apiFetch("/api/deaths");
-    const el = document.getElementById("death-log");
-    if (!deaths.length) {
-      el.innerHTML = "<span style='color:var(--subtext)'>No deaths recorded.</span>";
-      return;
-    }
-    const rows = deaths.map(d => `
-      <tr>
-        <td>#${d.death_number}</td>
-        <td>${ticksToHMS(d.igt)}</td>
-        <td>${d.x != null ? Math.round(d.x).toLocaleString() : "?"}</td>
-        <td>${d.z != null ? Math.round(d.z).toLocaleString() : "?"}</td>
-      </tr>`).join("");
-    el.innerHTML = `
-      <table class="death-table">
-        <thead><tr><th>#</th><th>IGT</th><th>X</th><th>Z</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>`;
-  } catch(e) { showError(e.message); }
-}
 
 // ================================================================
 // Chart toggle checkboxes
@@ -1346,27 +1261,6 @@ async function loadProgression() {
 // ================================================================
 // Load all
 // ================================================================
-async function loadWeather() {
-  try {
-    const rows = await apiFetch("/api/weather");
-    const el = document.getElementById("weather-log");
-    if (!el) return;
-    if (!rows || !rows.length) {
-      el.innerHTML = '<p style="color:var(--subtext);padding:8px">Aucun épisode météo enregistré.</p>';
-      return;
-    }
-    el.innerHTML = rows.map(r => {
-      const icon  = r.type === 'thunder' ? '⛈' : '🌧';
-      const color = r.type === 'thunder' ? 'var(--gold)' : 'var(--accent3)';
-      return '<div style="display:flex;gap:10px;align-items:center;padding:5px 0;border-bottom:1px solid var(--border)">' +
-        '<span style="font-size:1.1rem">' + icon + '</span>' +
-        '<span style="color:' + color + ';font-weight:600;min-width:70px">' + (r.type === 'thunder' ? 'Thunder' : 'Rain') + '</span>' +
-        '<span style="color:var(--subtext);font-size:.8rem">IGT ' + ticksToHMS(r.igt) + '</span>' +
-        (r.x != null ? '<span style="color:var(--subtext);font-size:.8rem;margin-left:auto">X: ' + Math.round(r.x).toLocaleString() + '</span>' : '') +
-        '</div>';
-    }).join('');
-  } catch(e) { showError(e.message); }
-}
 
 async function loadAll() {
   // Skip si pas de nouvelles données
@@ -1383,10 +1277,7 @@ async function loadAll() {
   loadDistance();
   loadX();
   loadElevation();
-  loadHeatmap();
   loadItems();
-  loadDeaths();
-  loadWeather();
   updateLastUpdated();
 }
 

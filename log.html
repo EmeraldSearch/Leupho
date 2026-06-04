@@ -85,7 +85,10 @@
     .type-shears      .log-icon, .type-shears      .label { color:#909090; }
     .type-ice_boat_start .log-icon, .type-ice_boat_start .label { color:#a8e8ff; }
     .type-night_slept .log-icon, .type-night_slept .label { color:#9080c0; }
-    .type-segment_10k .log-icon, .type-segment_10k .label { color:#a8ff78; }
+    .type-segment_10k  .log-icon, .type-segment_10k  .label { color:#a8ff78; }
+    .type-death         .log-icon, .type-death         .label { color:#e94560; }
+    .type-weather_rain  .log-icon, .type-weather_rain  .label { color:#53d8fb; }
+    .type-weather_thunder .log-icon, .type-weather_thunder .label { color:#a0c0ff; }
 
     .empty { text-align:center; color:var(--subtext); padding:40px;
       font-size:.85rem; }
@@ -123,6 +126,9 @@
     <button class="filter-btn" data-type="ice_boat_start"  onclick="setFilter('ice_boat_start')">🧊 Ice Boat</button>
     <button class="filter-btn" data-type="night_slept"     onclick="setFilter('night_slept')">🌙 Nuits</button>
     <button class="filter-btn" data-type="segment_10k"     onclick="setFilter('segment_10k')">🏁 Segments</button>
+    <button class="filter-btn" data-type="death"           onclick="setFilter('death')">✝ Morts</button>
+    <button class="filter-btn" data-type="weather_rain"    onclick="setFilter('weather_rain')">🌧 Pluie</button>
+    <button class="filter-btn" data-type="weather_thunder" onclick="setFilter('weather_thunder')">⛈ Orage</button>
   </div>
 
   <div class="stats-bar" id="stats-bar" style="display:none"></div>
@@ -145,6 +151,9 @@ const EVENT_META = {
   ice_boat_start: { icon:'🧊', label:'Session Ice Boat #' },
   night_slept:    { icon:'🌙', label:'Nuit dormie' },
   segment_10k:    { icon:'🏁', label:'Segment 10k terminé' },
+  death:          { icon:'✝', label:'Mort' },
+  weather_rain:   { icon:'🌧', label:'Pluie' },
+  weather_thunder:{ icon:'⛈', label:'Orage' },
 };
 
 let _events   = [];
@@ -212,7 +221,8 @@ function render() {
   for (const ev of sorted) {
     const meta = EVENT_META[ev.type] || { icon:'•', label: ev.type };
     const num = evNumbers[ev.id];
-    let label = meta.label + ' #' + num;
+    const noNum = ['death','weather_rain','weather_thunder','segment_10k','ice_boat_start'];
+    let label = noNum.includes(ev.type) ? meta.label : meta.label + ' #' + num;
     let detail = '';
 
     // Détail selon le type
@@ -227,6 +237,14 @@ function render() {
         detail = xStart.toLocaleString() + ' → ' + xEnd.toLocaleString() +
                  '  (' + fmtDur(d.dur) + ')';
       } catch(e) {}
+    } else if (ev.type === 'death' && ev.data) {
+      try {
+        const d = JSON.parse(ev.data);
+        label = 'Mort #' + d.n;
+        detail = 'X: ' + Math.round(d.x).toLocaleString() + '  Z: ' + Math.round(d.z).toLocaleString();
+      } catch(e) {}
+    } else if ((ev.type === 'weather_rain' || ev.type === 'weather_thunder') && ev.data) {
+      detail = 'X: ' + Math.round(parseFloat(ev.data)).toLocaleString();
     }
 
     const igt = ticksToHMS(ev.igt);
@@ -257,8 +275,8 @@ function updateStats() {
   for (const ev of _events) {
     counts[ev.type] = (counts[ev.type] || 0) + 1;
   }
-  const order = ['boat','soup','pork','crafting_table','axe','pickaxe','shears','ice_boat_start','night_slept','segment_10k'];
-  const icons  = {boat:'⚓',soup:'🍲',pork:'🥩',crafting_table:'🛠',axe:'🪓',pickaxe:'⛏',shears:'✂',ice_boat_start:'🧊',night_slept:'🌙',segment_10k:'🏁'};
+  const order = ['boat','soup','pork','crafting_table','axe','pickaxe','shears','ice_boat_start','night_slept','segment_10k','death','weather_rain','weather_thunder'];
+  const icons  = {boat:'⚓',soup:'🍲',pork:'🥩',crafting_table:'🛠',axe:'🪓',pickaxe:'⛏',shears:'✂',ice_boat_start:'🧊',night_slept:'🌙',segment_10k:'🏁',death:'✝',weather_rain:'🌧',weather_thunder:'⛈'};
   let html = '';
   for (const t of order) {
     if (counts[t]) {
