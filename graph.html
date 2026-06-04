@@ -502,32 +502,14 @@
   <!-- ── Sidebar ────────────────────────────────────────────── -->
   <aside>
 
-    <!-- Time filter -->
+    <!-- Vue temporelle -->
     <div class="sidebar-section">
-      <h3>Time window (IGT)</h3>
-      <div class="filter-group">
-        <label>From</label>
-        <div class="filter-row">
-          <input type="number" id="from-h" placeholder="h" min="0"/>
-          <span>h</span>
-          <input type="number" id="from-m" placeholder="mm" min="0" max="59"/>
-          <span>m</span>
-          <input type="number" id="from-s" placeholder="ss" min="0" max="59"/>
-          <span>s</span>
-        </div>
-        <label>To (leave empty = end)</label>
-        <div class="filter-row">
-          <input type="number" id="to-h" placeholder="h" min="0"/>
-          <span>h</span>
-          <input type="number" id="to-m" placeholder="mm" min="0" max="59"/>
-          <span>m</span>
-          <input type="number" id="to-s" placeholder="ss" min="0" max="59"/>
-          <span>s</span>
-        </div>
-        <button class="btn btn-primary" onclick="applyFilter()">Apply</button>
-        <button class="btn btn-ghost"   onclick="resetFilter()">Reset</button>
-        <button class="btn btn-ghost"   onclick="lastHourFilter()" style="color:var(--accent3);border-color:var(--accent3)">Dernière heure IGT</button>
+      <h3>Vue</h3>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <button class="btn btn-ghost active" id="btn-view-all"  onclick="setView('all')"  style="text-align:left">Tout</button>
+        <button class="btn btn-ghost"        id="btn-view-hour" onclick="setView('hour')" style="text-align:left">Dernière heure IGT</button>
       </div>
+      <div style="margin-top:8px;" id="full-link-container"></div>
     </div>
 
     <!-- Axe X toggle -->
@@ -695,25 +677,24 @@ function igtLabels(data, key = "igt") {
 let filterFromTicks = null;
 let filterToTicks   = null;
 
-function applyFilter() {
-  const fh = document.getElementById("from-h").value;
-  const fm = document.getElementById("from-m").value;
-  const fs = document.getElementById("from-s").value;
-  const th = document.getElementById("to-h").value;
-  const tm = document.getElementById("to-m").value;
-  const ts = document.getElementById("to-s").value;
+let _lastMaxIgt = 0;
 
-  filterFromTicks = (fh || fm || fs) ? hmsToTicks(fh, fm, fs) : null;
-  filterToTicks   = (th || tm || ts) ? hmsToTicks(th, tm, ts) : null;
+function setView(v) {
+  document.getElementById('btn-view-all').classList.toggle('active',  v === 'all');
+  document.getElementById('btn-view-hour').classList.toggle('active', v === 'hour');
+  filterFromTicks = v === 'hour' ? Math.max(0, _lastMaxIgt - 72000) : null;
+  filterToTicks   = null;
   loadAll();
 }
 
-function resetFilter() {
-  ["from-h","from-m","from-s","to-h","to-m","to-s"]
-    .forEach(id => document.getElementById(id).value = "");
-  filterFromTicks = null;
-  filterToTicks   = null;
-  loadAll();
+function updateFullLink() {
+  const lc = document.getElementById('full-link-container');
+  if (!lc) return;
+  if (!_fullMode) {
+    lc.innerHTML = '<a href="graph.html?full=1" target="_blank" style="color:var(--accent3);font-size:.7rem;text-decoration:none">↗ Version complète (500k pts)</a>';
+  } else {
+    lc.innerHTML = '<span style="color:var(--subtext);font-size:.7rem">Mode complet actif</span>';
+  }
 }
 
 function rangeParams() {
@@ -740,7 +721,7 @@ function filterByIgt(rows, igtKey = "igt") {
 // Mode local (Flask) ou statique (GitHub Pages) — détecté automatiquement
 let _useFlask = null;
 
-const API_MAP = {
+const API_MAP_HOUR = {
   "/api/summary":   "data/summary.json",
   "/api/hp":        "data/hp.json",
   "/api/speed":     "data/speed.json",
@@ -751,6 +732,16 @@ const API_MAP = {
   "/api/heatmap":   "data/heatmap.json",
 };
 
+const API_MAP_FULL = {
+  "/api/summary":   "data/summary.json",
+  "/api/hp":        "data/hp_full.json",
+  "/api/speed":     "data/speed_full.json",
+  "/api/distance":  "data/distance_full.json",
+  "/api/elevation": "data/elevation_full.json",
+};
+
+
+
 async function apiFetch(endpoint) {
   if (_useFlask === null) {
     try {
@@ -759,7 +750,9 @@ async function apiFetch(endpoint) {
     } catch(_) { _useFlask = false; }
   }
   const base = endpoint.split("?")[0];
-  const url  = _useFlask ? endpoint : (API_MAP[base] || endpoint) + "?_=" + Date.now();
+  const fsfx = (_fullMode && _useFlask) ? (endpoint.includes("?")?"&full=1":"?full=1") : "";
+  const apiMap = _fullMode ? API_MAP_FULL : API_MAP_HOUR;
+  const url  = _useFlask ? endpoint + fsfx : (apiMap[base] || endpoint) + "?_=" + Date.now();
   const r    = await fetch(url);
   if (!r.ok) throw new Error(`${url} → HTTP ${r.status}`);
   return r.json();
@@ -1297,13 +1290,23 @@ async function loadProgression() {
 // Load all
 // ================================================================
 
+const _fullMode = new URLSearchParams(window.location.search).get('full') === '1';
+
 async function loadAll() {
-  // Skip si pas de nouvelles données
   try {
     const s = await apiFetch("/api/summary");
     const ts = s.last_real_ts || s.first_real_ts;
     if (ts && ts === _lastKnownTs) return;
     _lastKnownTs = ts;
+    if (s.total_igt) {
+      _lastMaxIgt = s.total_igt;
+      // Par défaut : dernière heure (sauf en mode full)
+      if (!_fullMode && filterFromTicks === null) {
+        filterFromTicks = Math.max(0, _lastMaxIgt - 72000);
+        document.getElementById('btn-view-hour').classList.add('active');
+        document.getElementById('btn-view-all').classList.remove('active');
+      }
+    }
   } catch(e) { /* continuer */ }
 
   loadSummary();
@@ -1314,6 +1317,7 @@ async function loadAll() {
   loadElevation();
   loadItems();
   updateLastUpdated();
+  updateFullLink();
 }
 
 function updateLastUpdated() {
