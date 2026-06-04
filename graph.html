@@ -533,9 +533,8 @@
       <div class="toggle-list">
         <label><input type="checkbox" checked data-card="card-hp">       Health</label>
         <label><input type="checkbox" checked data-card="card-speed">    Speed</label>
-        <label><input type="checkbox" checked data-card="card-dist">     Distance (XZ)</label>
-        <label><input type="checkbox" checked data-card="card-items">    Inventaire</label>
         <label><input type="checkbox" checked data-card="card-elevation"> Élévation</label>
+        <label><input type="checkbox" checked data-card="card-items">    Inventaire</label>
       </div>
     </div>
 
@@ -564,11 +563,11 @@
     </div>
 
     <!-- Distance -->
-    <div class="chart-card" id="card-dist">
-      <h2>📏 Cumulative distance (XZ)</h2>
-      <div class="plotly-chart" id="chart-dist"></div>
+    <!-- Elevation -->
+    <div class="chart-card" id="card-elevation">
+      <h2>⛰ Élévation (coordonnée Y)</h2>
+      <div class="plotly-chart" id="chart-elevation"></div>
     </div>
-
 
     <!-- Inventaire -->
     <div class="chart-card" id="card-items">
@@ -577,12 +576,6 @@
         <canvas id="skin-canvas" style="width:80px; height:160px; flex-shrink:0; background:transparent;"></canvas>
         <div class="inv-grid" id="inv-grid" style="flex:1"></div>
       </div>
-    </div>
-
-    <!-- Elevation -->
-    <div class="chart-card" id="card-elevation">
-      <h2>⛰ Élévation (coordonnée Y)</h2>
-      <div class="plotly-chart" id="chart-elevation"></div>
     </div>
 
 
@@ -941,47 +934,7 @@ async function loadSpeed() {
 // ================================================================
 // Distance chart (XZ total + X displacement, toggleable)
 // ================================================================
-async function loadDistance() {
-  try {
-    let data = await apiFetch("/api/distance" + rangeParams());
-    data = filterByIgt(data);
-    const x = xAxis(data);
-    const lbl = x.map(v => ticksToHMS(_xAxisMode === "rta" ? Math.round(v*20) : v));
 
-    const traces = [
-      {
-        x, y: data.map(d => d.dist_total),
-        type: "scatter", mode: "lines", name: "XZ distance",
-        line: { color: "#53d8fb", width: 1.5 },
-        fill: "tozeroy", fillcolor: "rgba(83,216,251,.12)",
-        hovertemplate: "%{text}<br>%{y:,.0f} bl<extra>XZ distance</extra>",
-        text: lbl, visible: true,
-      },
-      {
-        x, y: data.map(d => d.x_total),
-        type: "scatter", mode: "lines", name: "Distance -X",
-        line: { color: "#a8ff78", width: 1.5 },
-        fill: "tozeroy", fillcolor: "rgba(168,255,120,.08)",
-        hovertemplate: "%{text}<br>%{y:,.0f} bl<extra>Distance -X</extra>",
-        text: lbl, visible: true,
-      },
-    ];
-
-    const layout = {
-      ...LAYOUT_BASE,
-      yaxis: { ...LAYOUT_BASE.yaxis, title: "Blocks" },
-      xaxis: { ...LAYOUT_BASE.xaxis,
-                tickvals: _tickVals(x, 10),
-                ticktext: _tickVals(x, 10).map(v => ticksToHMS(_xAxisMode === "rta" ? Math.round(v*20) : v)),
-                title: xTitle() },
-      legend: { ...LAYOUT_BASE.legend, itemclick: "toggle", itemdoubleclick: "toggleothers" },
-    };
-    Plotly.react("chart-dist", traces, layout, PLOTLY_CONFIG);
-  } catch(e) { showError(e.message); }
-}
-
-// loadX is now merged into loadDistance — kept as no-op for safety
-async function loadX() {}
 
 // ================================================================
 // Path trace (XZ)
@@ -1312,8 +1265,6 @@ async function loadAll() {
   loadSummary();
   loadHP();
   loadSpeed();
-  loadDistance();
-  loadX();
   loadElevation();
   loadItems();
   updateLastUpdated();
