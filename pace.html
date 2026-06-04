@@ -286,6 +286,18 @@ function renderPace(data) {
   var prevIGT    = 0;
   var rows       = [];
 
+  // Calculer le meilleur segS parmi les segments terminés
+  var bestSegS = Infinity;
+  var SUB7H = 7 * 3600; // 7h en secondes
+  var tmpPrevIGT = 0;
+  Object.keys(pctGroups).map(Number).sort(function(a,b){return a-b;}).forEach(function(p) {
+    if (p < 1) return;
+    var lastM = pctGroups[p][pctGroups[p].length-1];
+    var s = lastM.igt_total_s - tmpPrevIGT;
+    if (p !== currentPct && s > 0) bestSegS = Math.min(bestSegS, s);
+    tmpPrevIGT = lastM.igt_total_s;
+  });
+
   Object.keys(pctGroups).map(Number).sort(function(a, b) { return a - b; }).forEach(function(p) {
     if (p < 1) return;
     var grp   = pctGroups[p];
@@ -293,8 +305,13 @@ function renderPace(data) {
     var segS  = lastM.igt_total_s - prevIGT;
 
     if (p !== currentPct) {
-      // Segment terminé : utiliser le cache HTML si disponible
-      if (rowHtmlCache[p] == null) {
+      // Segment terminé — recalculer si bestSegS a changé
+      var isBestSeg = segS === bestSegS;
+      var isFastSeg = segS > 0 && segS < SUB7H;
+      var segColor  = isBestSeg ? '#f5c542' : (isFastSeg ? '#a8ff78' : '');
+      var tdSty     = segColor ? 'color:' + segColor + ';' : '';
+
+      if (rowHtmlCache[p] == null || isBestSeg) {
         var hIGTp     = HIST[p]     != null ? HIST[p]     : null;
         var hIGTpPrev = HIST[p - 1] != null ? HIST[p - 1] : null;
         var hSegS     = (hIGTp != null && hIGTpPrev != null) ? hIGTp - hIGTpPrev : null;
@@ -303,10 +320,10 @@ function renderPace(data) {
         var paceSeg = segPaceCache[p] != null ? segPaceCache[p].toFixed(4) : '--';
         rowHtmlCache[p] =
           '<tr>' +
-          '<td><b>' + p + '%</b></td>' +
-          '<td>' + (p * 125508).toLocaleString() + ' bl</td>' +
+          '<td style="' + tdSty + '"><b>' + p + '%</b></td>' +
+          '<td style="' + tdSty + '">' + (p * 125508).toLocaleString() + ' bl</td>' +
           '<td>' + fmtS(lastM.igt_total_s) + '</td>' +
-          '<td>' + fmtS(segS) + '</td>' +
+          '<td style="' + tdSty + (isBestSeg ? 'font-weight:bold;' : '') + '">' + fmtS(segS) + '</td>' +
           '<td>' + paceSeg + '</td>' +
           '<td>' + fmtS(lastM.eta_ovr_s) + '</td>' +
           '<td class="neu">' + (hSegS != null ? fmtS(hSegS) : '--') + '</td>' +
