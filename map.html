@@ -169,6 +169,7 @@
       <label class="cb-row"><input type="checkbox" id="show-labels"  checked onchange="redraw()"> Labels grille</label>
       <label class="cb-row"><input type="checkbox" id="show-origin"  checked onchange="redraw()"> Origine (0,0)</label>
       <label class="cb-row"><input type="checkbox" id="show-cur"     checked onchange="redraw()"> Position actuelle</label>
+      <label class="cb-row"><input type="checkbox" id="show-speed-gradient" onchange="redraw()"> Dégradé vitesse</label>
     </div>
 
     <div class="sb">
@@ -414,17 +415,44 @@ function redraw() {
 
   // ── Chemin ──
   if (document.getElementById('show-path').checked && path.length > 1) {
-    ctx.strokeStyle = '#53d8fb';
-    ctx.lineWidth   = Math.max(1, Math.min(2.5, _scale * 5000));
-    ctx.lineJoin    = 'round'; ctx.lineCap = 'round';
-    ctx.beginPath();
+    const lw = Math.max(1, Math.min(2.5, _scale * 5000));
+    const useGradient = document.getElementById('show-speed-gradient').checked;
     const {sx:fx, sz:fz} = w2s(path[0][0], path[0][1]);
-    ctx.moveTo(fx, fz);
-    for (let i = 1; i < path.length; i++) {
-      const {sx, sz} = w2s(path[i][0], path[i][1]);
-      ctx.lineTo(sx, sz);
+
+    if (!useGradient) {
+      ctx.strokeStyle = '#53d8fb';
+      ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(fx, fz);
+      for (let i = 1; i < path.length; i++) {
+        const {sx, sz} = w2s(path[i][0], path[i][1]);
+        ctx.lineTo(sx, sz);
+      }
+      ctx.stroke();
+    } else {
+      // Calculer vitesses sur axe X uniquement (blocs/s), cap à 8
+      const speeds = [];
+      for (let i = 1; i < path.length; i++) {
+        const dx = Math.abs(path[i][0] - path[i-1][0]);
+        const dt = (path[i][2] - path[i-1][2]) / 20;
+        speeds.push(dt > 0 ? Math.min(8, dx / dt) : 0);
+      }
+      const maxSpd = 8;
+      const minSpd = 0;
+      const range  = maxSpd;
+
+      ctx.lineWidth = lw; ctx.lineCap = 'round';
+      for (let i = 1; i < path.length; i++) {
+        const {sx:x0, sz:z0} = w2s(path[i-1][0], path[i-1][1]);
+        const {sx:x1, sz:z1} = w2s(path[i][0], path[i][1]);
+        if (x0 < -10 && x1 < -10) continue;
+        if (x0 > W+10 && x1 > W+10) continue;
+        const t = Math.max(0, Math.min(1, (speeds[i-1] - minSpd) / range));
+        const r = t < 0.5 ? 255 : Math.round(255 * (1 - (t-0.5)*2));
+        const g = t < 0.5 ? Math.round(255 * t * 2) : 255;
+        ctx.strokeStyle = `rgb(${r},${g},0)`;
+        ctx.beginPath(); ctx.moveTo(x0, z0); ctx.lineTo(x1, z1); ctx.stroke();
+      }
     }
-    ctx.stroke();
 
     // Départ
     ctx.fillStyle = '#a8ff78';
