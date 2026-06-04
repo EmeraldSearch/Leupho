@@ -663,7 +663,7 @@ function updateFullLink() {
   const lc = document.getElementById('full-link-container');
   if (!lc) return;
   if (!_fullMode) {
-    lc.innerHTML = '<a href="graph.html?full=1" target="_blank" style="color:var(--accent3);font-size:.7rem;text-decoration:none">↗ Version complète (1M pts)</a>';
+    lc.innerHTML = '<a href="graph.html?full=1" style="color:var(--accent3);font-size:.7rem;text-decoration:none">↗ Version complète (1M pts)</a>';
   } else {
     lc.innerHTML = '<a href="graph.html" style="color:var(--subtext);font-size:.7rem;text-decoration:none">← Dernière heure</a>';
   }
