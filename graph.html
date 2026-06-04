@@ -1031,25 +1031,26 @@ function drawSkin(url) {
   _skinViewer.animation = null;
 }
 
+const MAX_DAMAGE = {
+  "Iron Sword":250,"Iron Shovel":250,"Iron Pickaxe":250,"Iron Axe":250,
+  "Iron Hoe":250,"Iron Helmet":165,"Iron Chestplate":240,"Iron Leggings":225,
+  "Iron Boots":195,"Diamond Sword":1561,"Diamond Shovel":1561,"Diamond Pickaxe":1561,
+  "Diamond Axe":1561,"Diamond Hoe":1561,"Stone Sword":131,"Stone Shovel":131,
+  "Stone Pickaxe":131,"Stone Axe":131,"Wood Sword":59,"Wood Shovel":59,
+  "Wood Pickaxe":59,"Wood Axe":59,"Gold Sword":32,"Gold Shovel":32,
+  "Gold Pickaxe":32,"Gold Axe":32,"Shears":238,"Bow":384,
+  "Fishing Rod":64,"Flint and Steel":64,
+  "Leather Cap":55,"Leather Tunic":80,"Leather Pants":75,"Leather Boots":65,
+  "Chain Helmet":165,"Chain Chestplate":240,"Chain Leggings":225,"Chain Boots":195,
+  "Gold Helmet":77,"Gold Chestplate":112,"Gold Leggings":105,"Gold Boots":91,
+  "Diamond Helmet":363,"Diamond Chestplate":528,"Diamond Leggings":495,"Diamond Boots":429,
+};
+
 function renderInventory(invStr) {
   // Format: "slot:Name:count,slot:Name:count,..."
   // Slots 0-8 = hotbar, 9-35 = inventaire principal
   const slots = new Array(36).fill(null);
 
-  const MAX_DAMAGE = {
-    "Iron Sword":250,"Iron Shovel":250,"Iron Pickaxe":250,"Iron Axe":250,
-    "Iron Hoe":250,"Iron Helmet":165,"Iron Chestplate":240,"Iron Leggings":225,
-    "Iron Boots":195,"Diamond Sword":1561,"Diamond Shovel":1561,"Diamond Pickaxe":1561,
-    "Diamond Axe":1561,"Diamond Hoe":1561,"Stone Sword":131,"Stone Shovel":131,
-    "Stone Pickaxe":131,"Stone Axe":131,"Wood Sword":59,"Wood Shovel":59,
-    "Wood Pickaxe":59,"Wood Axe":59,"Gold Sword":32,"Gold Shovel":32,
-    "Gold Pickaxe":32,"Gold Axe":32,"Shears":238,"Bow":384,
-    "Fishing Rod":64,"Flint and Steel":64,
-    "Leather Cap":55,"Leather Tunic":80,"Leather Pants":75,"Leather Boots":65,
-    "Chain Helmet":165,"Chain Chestplate":240,"Chain Leggings":225,"Chain Boots":195,
-    "Gold Helmet":77,"Gold Chestplate":112,"Gold Leggings":105,"Gold Boots":91,
-    "Diamond Helmet":363,"Diamond Chestplate":528,"Diamond Leggings":495,"Diamond Boots":429,
-  };
   if (invStr) {
     invStr.split(",").forEach(function(part) {
       const bits = part.split(":");
