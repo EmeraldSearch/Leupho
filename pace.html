@@ -155,6 +155,10 @@
         <div class="val" id="s-seg">&#8212;</div>
       </div>
       <div class="sum-card">
+        <div class="lbl">Average 10k time</div>
+        <div class="val" id="s-seg10k">&#8212;</div>
+      </div>
+      <div class="sum-card">
         <div class="lbl">ETA fin (overall)</div>
         <div class="val c1" id="s-eta">&#8212;</div>
       </div>
@@ -291,6 +295,22 @@ function renderPace(data) {
     avgSegS = totalSegS / completedPcts.length;
   }
   document.getElementById('s-seg').textContent = avgSegS != null ? fmtS(avgSegS) : '--';
+
+  // Average 10k time depuis segments_10k.json
+  (async function() {
+    try {
+      var isFlask = await fetch('/api/summary').then(function(r){return r.ok;}).catch(function(){return false;});
+      var url = isFlask ? '/api/segments_10k' : 'data/segments_10k.json?_=' + Date.now();
+      var segs = await fetch(url).then(function(r){return r.json();});
+      if (segs && segs.length > 0) {
+        var totalTicks = segs.reduce(function(acc, s){ return acc + s.duration_ticks; }, 0);
+        var avgTicks   = totalTicks / segs.length;
+        var m = Math.floor(avgTicks / 20 / 60);
+        var s = Math.floor(avgTicks / 20) % 60;
+        document.getElementById('s-seg10k').textContent = m + ':' + String(s).padStart(2,'0');
+      }
+    } catch(e) {}
+  })();
 
   // Le % en cours = le plus grand % dont le suivant n'existe pas encore
   var currentPct = Math.max.apply(null, Object.keys(pctGroups).map(Number).filter(function(p){ return pctGroups[p + 1] == null; }));
