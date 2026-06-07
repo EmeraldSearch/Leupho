@@ -23,304 +23,660 @@
     "x": 160,
     "y": 0
   },
-  "Iron Block": {
+  "Gravel": {
     "x": 192,
+    "y": 0
+  },
+  "Sandstone": {
+    "x": 224,
     "y": 0
   },
   "Glass": {
-    "x": 224,
-    "y": 0
-  },
-  "Oak Wood": {
     "x": 256,
     "y": 0
   },
-  "Spruce Wood": {
+  "Sapling": {
     "x": 288,
     "y": 0
   },
-  "Birch Wood": {
+  "Coal Ore": {
     "x": 320,
     "y": 0
   },
-  "Oak Leaves": {
+  "Iron Ore": {
     "x": 352,
     "y": 0
   },
-  "Spruce Leaves": {
+  "Gold Ore": {
     "x": 384,
     "y": 0
   },
-  "Birch Leaves": {
+  "Diamond Ore": {
     "x": 416,
     "y": 0
   },
-  "White Wool": {
-    "x": 448,
-    "y": 0
+  "Lapis Lazuli Ore": {
+    "x": 384,
+    "y": 224
   },
-  "Orange Wool": {
+  "Lapis Lazuli Block": {
     "x": 480,
     "y": 0
   },
-  "Magenta Wool": {
+  "Iron Block": {
     "x": 0,
+    "y": 32
+  },
+  "Gold Block": {
+    "x": 32,
+    "y": 32
+  },
+  "Diamond Block": {
+    "x": 64,
+    "y": 32
+  },
+  "Oak Wood": {
+    "x": 96,
+    "y": 32
+  },
+  "Spruce Wood": {
+    "x": 128,
+    "y": 32
+  },
+  "Birch Wood": {
+    "x": 160,
+    "y": 32
+  },
+  "Oak Leaves": {
+    "x": 192,
+    "y": 32
+  },
+  "Spruce Leaves": {
+    "x": 224,
+    "y": 32
+  },
+  "Birch Leaves": {
+    "x": 256,
+    "y": 32
+  },
+  "White Wool": {
+    "x": 288,
+    "y": 32
+  },
+  "Orange Wool": {
+    "x": 320,
+    "y": 32
+  },
+  "Magenta Wool": {
+    "x": 352,
     "y": 32
   },
   "Light Blue Wool": {
-    "x": 32,
+    "x": 384,
     "y": 32
   },
   "Yellow Wool": {
-    "x": 64,
+    "x": 416,
     "y": 32
   },
   "Lime Wool": {
-    "x": 96,
+    "x": 448,
     "y": 32
   },
   "Pink Wool": {
-    "x": 128,
+    "x": 480,
     "y": 32
   },
   "Gray Wool": {
-    "x": 160,
-    "y": 32
+    "x": 0,
+    "y": 64
   },
   "Light Gray Wool": {
-    "x": 192,
-    "y": 32
+    "x": 32,
+    "y": 64
   },
   "Cyan Wool": {
-    "x": 224,
-    "y": 32
+    "x": 64,
+    "y": 64
   },
   "Purple Wool": {
-    "x": 256,
-    "y": 32
+    "x": 96,
+    "y": 64
   },
   "Blue Wool": {
-    "x": 288,
-    "y": 32
+    "x": 128,
+    "y": 64
   },
   "Brown Wool": {
-    "x": 320,
-    "y": 32
+    "x": 160,
+    "y": 64
   },
   "Green Wool": {
-    "x": 352,
-    "y": 32
+    "x": 192,
+    "y": 64
   },
   "Red Wool": {
-    "x": 384,
-    "y": 32
+    "x": 224,
+    "y": 64
   },
   "Black Wool": {
-    "x": 416,
-    "y": 32
+    "x": 256,
+    "y": 64
   },
   "Brown Mushroom": {
-    "x": 448,
-    "y": 32
+    "x": 288,
+    "y": 64
   },
   "Red Mushroom": {
-    "x": 480,
-    "y": 32
+    "x": 320,
+    "y": 64
   },
   "Dandelion": {
-    "x": 0,
+    "x": 352,
     "y": 64
   },
   "Rose": {
-    "x": 32,
+    "x": 384,
+    "y": 64
+  },
+  "Cactus": {
+    "x": 416,
     "y": 64
   },
   "Crafting Table": {
-    "x": 64,
+    "x": 448,
     "y": 64
   },
   "Furnace": {
-    "x": 96,
-    "y": 64
-  },
-  "Bed": {
-    "x": 128,
-    "y": 64
-  },
-  "Sign": {
-    "x": 160,
-    "y": 64
-  },
-  "Iron Shovel": {
-    "x": 192,
-    "y": 64
-  },
-  "Iron Pickaxe": {
-    "x": 224,
-    "y": 64
-  },
-  "Iron Axe": {
-    "x": 256,
-    "y": 64
-  },
-  "Wooden Sword": {
-    "x": 288,
-    "y": 64
-  },
-  "Wooden Shovel": {
-    "x": 320,
-    "y": 64
-  },
-  "Wooden Pickaxe": {
-    "x": 352,
-    "y": 64
-  },
-  "Wooden Axe": {
-    "x": 384,
-    "y": 64
-  },
-  "Wooden Hoe": {
-    "x": 416,
-    "y": 64
-  },
-  "Stone Sword": {
-    "x": 448,
-    "y": 64
-  },
-  "Stone Shovel": {
     "x": 480,
     "y": 64
   },
-  "Stone Pickaxe": {
+  "Chest": {
     "x": 0,
     "y": 96
   },
-  "Stone Axe": {
-    "x": 32,
-    "y": 96
+  "Bed": {
+    "x": 416,
+    "y": 320
   },
-  "Stone Hoe": {
-    "x": 64,
-    "y": 96
+  "Sign": {
+    "x": 384,
+    "y": 320
   },
-  "Diamond Sword": {
-    "x": 96,
-    "y": 96
+  "Torch": {
+    "x": 448,
+    "y": 320
   },
-  "Diamond Shovel": {
+  "Ladder": {
     "x": 128,
     "y": 96
   },
-  "Diamond Pickaxe": {
+  "Fence": {
     "x": 160,
     "y": 96
   },
-  "Diamond Axe": {
+  "Wooden Stairs": {
     "x": 192,
     "y": 96
   },
-  "Bow": {
+  "Cobblestone Stairs": {
     "x": 224,
     "y": 96
   },
-  "Arrow": {
+  "Stone Slab": {
     "x": 256,
     "y": 96
   },
-  "Coal": {
+  "Brick Block": {
     "x": 288,
     "y": 96
   },
-  "Diamond": {
+  "Bookshelf": {
     "x": 320,
     "y": 96
   },
-  "Iron Ingot": {
+  "Mossy Cobblestone": {
     "x": 352,
     "y": 96
   },
-  "Gold Ingot": {
+  "Obsidian": {
     "x": 384,
     "y": 96
   },
-  "Iron Ore": {
+  "Ice": {
     "x": 416,
     "y": 96
   },
-  "Stick": {
+  "Snow Block": {
     "x": 448,
     "y": 96
+  },
+  "Clay Block": {
+    "x": 480,
+    "y": 96
+  },
+  "Netherrack": {
+    "x": 0,
+    "y": 128
+  },
+  "Soul Sand": {
+    "x": 32,
+    "y": 128
+  },
+  "Glowstone": {
+    "x": 64,
+    "y": 128
+  },
+  "Jack-o-Lantern": {
+    "x": 96,
+    "y": 128
+  },
+  "Pumpkin": {
+    "x": 128,
+    "y": 128
+  },
+  "TNT": {
+    "x": 160,
+    "y": 128
+  },
+  "Jukebox": {
+    "x": 192,
+    "y": 128
+  },
+  "Note Block": {
+    "x": 224,
+    "y": 128
+  },
+  "Iron Sword": {
+    "x": 256,
+    "y": 128
+  },
+  "Iron Shovel": {
+    "x": 288,
+    "y": 128
+  },
+  "Iron Pickaxe": {
+    "x": 320,
+    "y": 128
+  },
+  "Iron Axe": {
+    "x": 352,
+    "y": 128
+  },
+  "Iron Hoe": {
+    "x": 384,
+    "y": 160
+  },
+  "Wooden Sword": {
+    "x": 416,
+    "y": 128
+  },
+  "Wooden Shovel": {
+    "x": 448,
+    "y": 128
+  },
+  "Wooden Pickaxe": {
+    "x": 480,
+    "y": 128
+  },
+  "Wooden Axe": {
+    "x": 0,
+    "y": 160
+  },
+  "Wooden Hoe": {
+    "x": 32,
+    "y": 160
+  },
+  "Stone Sword": {
+    "x": 64,
+    "y": 160
+  },
+  "Stone Shovel": {
+    "x": 96,
+    "y": 160
+  },
+  "Stone Pickaxe": {
+    "x": 128,
+    "y": 160
+  },
+  "Stone Axe": {
+    "x": 160,
+    "y": 160
+  },
+  "Stone Hoe": {
+    "x": 192,
+    "y": 160
+  },
+  "Diamond Sword": {
+    "x": 224,
+    "y": 160
+  },
+  "Diamond Shovel": {
+    "x": 256,
+    "y": 160
+  },
+  "Diamond Pickaxe": {
+    "x": 288,
+    "y": 160
+  },
+  "Diamond Axe": {
+    "x": 320,
+    "y": 160
+  },
+  "Golden Sword": {
+    "x": 352,
+    "y": 160
+  },
+  "Diamond Hoe": {
+    "x": 416,
+    "y": 160
+  },
+  "Bow": {
+    "x": 448,
+    "y": 160
+  },
+  "Arrow": {
+    "x": 480,
+    "y": 160
+  },
+  "Flint and Steel": {
+    "x": 0,
+    "y": 192
+  },
+  "Leather Helmet": {
+    "x": 32,
+    "y": 192
+  },
+  "Leather Chestplate": {
+    "x": 64,
+    "y": 192
+  },
+  "Leather Pants": {
+    "x": 96,
+    "y": 192
+  },
+  "Leather Boots": {
+    "x": 128,
+    "y": 192
+  },
+  "Chain Helmet": {
+    "x": 160,
+    "y": 192
+  },
+  "Chain Chestplate": {
+    "x": 192,
+    "y": 192
+  },
+  "Chain Pants": {
+    "x": 224,
+    "y": 192
+  },
+  "Chain Boots": {
+    "x": 256,
+    "y": 192
+  },
+  "Iron Helmet": {
+    "x": 288,
+    "y": 192
+  },
+  "Iron Chestplate": {
+    "x": 320,
+    "y": 192
+  },
+  "Iron Pants": {
+    "x": 352,
+    "y": 192
+  },
+  "Iron Boots": {
+    "x": 384,
+    "y": 192
+  },
+  "Diamond Helmet": {
+    "x": 416,
+    "y": 192
+  },
+  "Diamond Chestplate": {
+    "x": 448,
+    "y": 192
+  },
+  "Diamond Pants": {
+    "x": 480,
+    "y": 192
+  },
+  "Diamond Boots": {
+    "x": 0,
+    "y": 224
+  },
+  "Gold Helmet": {
+    "x": 32,
+    "y": 224
+  },
+  "Gold Chestplate": {
+    "x": 64,
+    "y": 224
+  },
+  "Gold Pants": {
+    "x": 96,
+    "y": 224
+  },
+  "Gold Boots": {
+    "x": 128,
+    "y": 224
+  },
+  "Coal": {
+    "x": 160,
+    "y": 224
+  },
+  "Diamond": {
+    "x": 192,
+    "y": 224
+  },
+  "Iron Ingot": {
+    "x": 224,
+    "y": 224
+  },
+  "Gold Ingot": {
+    "x": 256,
+    "y": 224
+  },
+  "Flint": {
+    "x": 288,
+    "y": 224
+  },
+  "Redstone": {
+    "x": 320,
+    "y": 224
+  },
+  "Glowstone Dust": {
+    "x": 352,
+    "y": 224
+  },
+  "Leather": {
+    "x": 416,
+    "y": 224
+  },
+  "Brick": {
+    "x": 448,
+    "y": 224
+  },
+  "Clay": {
+    "x": 480,
+    "y": 224
+  },
+  "Bone": {
+    "x": 0,
+    "y": 256
+  },
+  "Stick": {
+    "x": 32,
+    "y": 256
+  },
+  "String": {
+    "x": 64,
+    "y": 256
+  },
+  "Feather": {
+    "x": 96,
+    "y": 256
+  },
+  "Gunpowder": {
+    "x": 128,
+    "y": 256
+  },
+  "Paper": {
+    "x": 160,
+    "y": 256
+  },
+  "Book": {
+    "x": 192,
+    "y": 256
+  },
+  "Sugar": {
+    "x": 224,
+    "y": 256
+  },
+  "Slimeball": {
+    "x": 256,
+    "y": 256
+  },
+  "Apple": {
+    "x": 288,
+    "y": 256
+  },
+  "Golden Apple": {
+    "x": 320,
+    "y": 256
+  },
+  "Bread": {
+    "x": 352,
+    "y": 256
+  },
+  "Cookie": {
+    "x": 384,
+    "y": 256
+  },
+  "Cake": {
+    "x": 416,
+    "y": 256
+  },
+  "Mushroom Soup": {
+    "x": 448,
+    "y": 256
   },
   "Bowl": {
     "x": 480,
-    "y": 96
-  },
-  "Mushroom Soup": {
-    "x": 0,
-    "y": 128
-  },
-  "Bread": {
-    "x": 32,
-    "y": 128
+    "y": 256
   },
   "Wheat": {
-    "x": 64,
-    "y": 128
+    "x": 0,
+    "y": 288
   },
   "Seeds": {
-    "x": 96,
-    "y": 128
+    "x": 32,
+    "y": 288
   },
   "Raw Porkchop": {
+    "x": 64,
+    "y": 288
+  },
+  "Cooked Porkchop": {
+    "x": 96,
+    "y": 288
+  },
+  "Raw Fish": {
     "x": 128,
-    "y": 128
+    "y": 288
+  },
+  "Cooked Fish": {
+    "x": 160,
+    "y": 288
   },
   "Bucket": {
-    "x": 160,
-    "y": 128
+    "x": 192,
+    "y": 288
   },
   "Water Bucket": {
-    "x": 192,
-    "y": 128
+    "x": 224,
+    "y": 288
+  },
+  "Lava Bucket": {
+    "x": 256,
+    "y": 288
+  },
+  "Milk Bucket": {
+    "x": 288,
+    "y": 288
   },
   "Boat": {
-    "x": 224,
-    "y": 128
+    "x": 320,
+    "y": 288
+  },
+  "Minecart": {
+    "x": 352,
+    "y": 288
+  },
+  "Chest Minecart": {
+    "x": 384,
+    "y": 288
+  },
+  "Saddle": {
+    "x": 416,
+    "y": 288
+  },
+  "Lever": {
+    "x": 448,
+    "y": 288
+  },
+  "Rail": {
+    "x": 480,
+    "y": 288
+  },
+  "Compass": {
+    "x": 0,
+    "y": 320
+  },
+  "Clock": {
+    "x": 32,
+    "y": 320
+  },
+  "Map": {
+    "x": 64,
+    "y": 320
+  },
+  "Redstone Repeater": {
+    "x": 96,
+    "y": 320
   },
   "Shears": {
+    "x": 128,
+    "y": 320
+  },
+  "Fishing Rod": {
+    "x": 160,
+    "y": 320
+  },
+  "Egg": {
+    "x": 192,
+    "y": 320
+  },
+  "Snowball": {
+    "x": 224,
+    "y": 320
+  },
+  "Painting": {
     "x": 256,
-    "y": 128
+    "y": 320
   },
   "Sugar Canes": {
     "x": 288,
-    "y": 128
+    "y": 320
   },
-  "Bone": {
+  "Wooden Door": {
     "x": 320,
-    "y": 128
+    "y": 320
   },
-  "String": {
+  "Iron Door": {
     "x": 352,
-    "y": 128
-  },
-  "Feather": {
-    "x": 384,
-    "y": 128
-  },
-  "Gunpowder": {
-    "x": 416,
-    "y": 128
-  },
-  "Leather Helmet": {
-    "x": 448,
-    "y": 128
-  },
-  "Leather Chestplate": {
-    "x": 480,
-    "y": 128
-  },
-  "Leather Pants": {
-    "x": 0,
-    "y": 160
+    "y": 320
   }
 }
