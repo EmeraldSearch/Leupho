@@ -204,15 +204,15 @@
     "y": 96
   },
   "Bed": {
-    "x": 480,
-    "y": 320
+    "x": 448,
+    "y": 352
   },
   "Sign": {
-    "x": 448,
-    "y": 320
+    "x": 416,
+    "y": 352
   },
   "Torch": {
-    "x": 0,
+    "x": 480,
     "y": 352
   },
   "Ladder": {
@@ -499,196 +499,256 @@
     "x": 416,
     "y": 224
   },
-  "Lapis Lazuli": {
+  "Ink Sac": {
     "x": 448,
     "y": 224
   },
-  "Leather": {
+  "Rose Red": {
     "x": 480,
     "y": 224
   },
-  "Brick": {
+  "Cactus Green": {
     "x": 0,
+    "y": 256
+  },
+  "Cocoa Beans": {
+    "x": 32,
+    "y": 256
+  },
+  "Lapis Lazuli": {
+    "x": 64,
+    "y": 256
+  },
+  "Purple Dye": {
+    "x": 96,
+    "y": 256
+  },
+  "Cyan Dye": {
+    "x": 128,
+    "y": 256
+  },
+  "Light Gray Dye": {
+    "x": 160,
+    "y": 256
+  },
+  "Gray Dye": {
+    "x": 192,
+    "y": 256
+  },
+  "Pink Dye": {
+    "x": 224,
+    "y": 256
+  },
+  "Lime Dye": {
+    "x": 256,
+    "y": 256
+  },
+  "Dandelion Yellow": {
+    "x": 288,
+    "y": 256
+  },
+  "Light Blue Dye": {
+    "x": 320,
+    "y": 256
+  },
+  "Magenta Dye": {
+    "x": 352,
+    "y": 256
+  },
+  "Orange Dye": {
+    "x": 384,
+    "y": 256
+  },
+  "Bone Meal": {
+    "x": 416,
+    "y": 256
+  },
+  "Leather": {
+    "x": 448,
+    "y": 256
+  },
+  "Brick": {
+    "x": 480,
     "y": 256
   },
   "Clay": {
-    "x": 32,
-    "y": 256
+    "x": 0,
+    "y": 288
   },
   "Bone": {
-    "x": 64,
-    "y": 256
+    "x": 32,
+    "y": 288
   },
   "Stick": {
-    "x": 96,
-    "y": 256
+    "x": 64,
+    "y": 288
   },
   "String": {
-    "x": 128,
-    "y": 256
+    "x": 96,
+    "y": 288
   },
   "Feather": {
-    "x": 160,
-    "y": 256
+    "x": 128,
+    "y": 288
   },
   "Gunpowder": {
-    "x": 192,
-    "y": 256
+    "x": 160,
+    "y": 288
   },
   "Paper": {
-    "x": 224,
-    "y": 256
+    "x": 192,
+    "y": 288
   },
   "Book": {
-    "x": 256,
-    "y": 256
+    "x": 224,
+    "y": 288
   },
   "Sugar": {
-    "x": 288,
-    "y": 256
+    "x": 256,
+    "y": 288
   },
   "Slimeball": {
-    "x": 320,
-    "y": 256
+    "x": 288,
+    "y": 288
   },
   "Apple": {
-    "x": 352,
-    "y": 256
+    "x": 320,
+    "y": 288
   },
   "Golden Apple": {
-    "x": 384,
-    "y": 256
+    "x": 352,
+    "y": 288
   },
   "Bread": {
-    "x": 416,
-    "y": 256
+    "x": 384,
+    "y": 288
   },
   "Cookie": {
-    "x": 448,
-    "y": 256
+    "x": 416,
+    "y": 288
   },
   "Cake": {
-    "x": 480,
-    "y": 256
+    "x": 448,
+    "y": 288
   },
   "Mushroom Soup": {
-    "x": 0,
+    "x": 480,
     "y": 288
   },
   "Bowl": {
-    "x": 32,
-    "y": 288
-  },
-  "Wheat": {
-    "x": 64,
-    "y": 288
-  },
-  "Seeds": {
-    "x": 96,
-    "y": 288
-  },
-  "Raw Porkchop": {
-    "x": 128,
-    "y": 288
-  },
-  "Cooked Porkchop": {
-    "x": 160,
-    "y": 288
-  },
-  "Raw Fish": {
-    "x": 192,
-    "y": 288
-  },
-  "Cooked Fish": {
-    "x": 224,
-    "y": 288
-  },
-  "Bucket": {
-    "x": 256,
-    "y": 288
-  },
-  "Water Bucket": {
-    "x": 288,
-    "y": 288
-  },
-  "Lava Bucket": {
-    "x": 320,
-    "y": 288
-  },
-  "Milk Bucket": {
-    "x": 352,
-    "y": 288
-  },
-  "Boat": {
-    "x": 384,
-    "y": 288
-  },
-  "Minecart": {
-    "x": 416,
-    "y": 288
-  },
-  "Chest Minecart": {
-    "x": 448,
-    "y": 288
-  },
-  "Saddle": {
-    "x": 480,
-    "y": 288
-  },
-  "Lever": {
     "x": 0,
     "y": 320
   },
-  "Rail": {
+  "Wheat": {
     "x": 32,
     "y": 320
   },
-  "Compass": {
+  "Seeds": {
     "x": 64,
     "y": 320
   },
-  "Clock": {
+  "Raw Porkchop": {
     "x": 96,
     "y": 320
   },
-  "Map": {
+  "Cooked Porkchop": {
     "x": 128,
     "y": 320
   },
-  "Redstone Repeater": {
+  "Raw Fish": {
     "x": 160,
     "y": 320
   },
-  "Shears": {
+  "Cooked Fish": {
     "x": 192,
     "y": 320
   },
-  "Fishing Rod": {
+  "Bucket": {
     "x": 224,
     "y": 320
   },
-  "Egg": {
+  "Water Bucket": {
     "x": 256,
     "y": 320
   },
-  "Snowball": {
+  "Lava Bucket": {
     "x": 288,
     "y": 320
   },
-  "Painting": {
+  "Milk Bucket": {
     "x": 320,
     "y": 320
   },
-  "Sugar Canes": {
+  "Boat": {
     "x": 352,
     "y": 320
   },
-  "Wooden Door": {
+  "Minecart": {
     "x": 384,
     "y": 320
   },
-  "Iron Door": {
+  "Chest Minecart": {
     "x": 416,
     "y": 320
+  },
+  "Saddle": {
+    "x": 448,
+    "y": 320
+  },
+  "Lever": {
+    "x": 480,
+    "y": 320
+  },
+  "Rail": {
+    "x": 0,
+    "y": 352
+  },
+  "Compass": {
+    "x": 32,
+    "y": 352
+  },
+  "Clock": {
+    "x": 64,
+    "y": 352
+  },
+  "Map": {
+    "x": 96,
+    "y": 352
+  },
+  "Redstone Repeater": {
+    "x": 128,
+    "y": 352
+  },
+  "Shears": {
+    "x": 160,
+    "y": 352
+  },
+  "Fishing Rod": {
+    "x": 192,
+    "y": 352
+  },
+  "Egg": {
+    "x": 224,
+    "y": 352
+  },
+  "Snowball": {
+    "x": 256,
+    "y": 352
+  },
+  "Painting": {
+    "x": 288,
+    "y": 352
+  },
+  "Sugar Canes": {
+    "x": 320,
+    "y": 352
+  },
+  "Wooden Door": {
+    "x": 352,
+    "y": 352
+  },
+  "Iron Door": {
+    "x": 384,
+    "y": 352
   }
 }
