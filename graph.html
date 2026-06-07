@@ -806,7 +806,9 @@ async function loadSummary() {
       _firstRealTs = s.first_real_ts;
       _set("stat-rta", fmtSecs(Date.now() / 1000 - s.first_real_ts));
     }
-    if (s.inventory != null) renderInventory(s.inventory);
+    if (s.inventory != null) {
+      loadSprites().then(function() { renderInventory(s.inventory); });
+    }
     drawSkin(_useFlask ? '/skin.png' : 'skin.png');
   } catch(e) { showError(e.message); }
 }
@@ -944,16 +946,24 @@ async function loadSpeed() {
 // Item flow (gained only, sorted by gained desc)
 // ================================================================
 let ITEM_SPRITES = {};
-(async function loadSprites() {
-  try {
-    const url = _useFlask === false ? 'inventory_sprites.json?_=' + Date.now() : 'inventory_sprites.json';
-    const r = await fetch(url);
-    const data = await r.json();
-    Object.keys(data).forEach(function(name) {
-      ITEM_SPRITES[name] = { s: "inventory_sprites.png", x: data[name].x, y: data[name].y };
-    });
-  } catch(e) { console.warn("inventory_sprites.json introuvable:", e); }
-})();
+let _spritesReady = false;
+let _spritesPromise = null;
+
+function loadSprites() {
+  if (_spritesPromise) return _spritesPromise;
+  _spritesPromise = (async function() {
+    try {
+      const url = _useFlask === false ? 'inventory_sprites.json?_=' + Date.now() : 'inventory_sprites.json';
+      const r = await fetch(url);
+      const data = await r.json();
+      Object.keys(data).forEach(function(name) {
+        ITEM_SPRITES[name] = { s: "inventory_sprites.png", x: data[name].x, y: data[name].y };
+      });
+      _spritesReady = true;
+    } catch(e) { console.warn("inventory_sprites.json introuvable:", e); }
+  })();
+  return _spritesPromise;
+}
 
 
 
@@ -1297,11 +1307,11 @@ function toggleInvPanel() {
 
 async function loadInvPanel() {
   try {
+    await loadSprites();
     if (_useFlask) {
       const data = await apiFetch('/api/inventory');
       renderInvPanel(data.inventory, data.igt);
     } else {
-      // GitHub Pages : lire depuis summary.json qui contient l'inventaire
       const s = await apiFetch('/api/summary');
       if (s && s.inventory) renderInvPanel(s.inventory, s.total_igt || 0);
     }
