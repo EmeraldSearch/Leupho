@@ -70,6 +70,29 @@
       border-right:1px solid var(--border);
       display:flex; flex-direction:column; overflow-y:auto;
     }
+
+    /* ── Mobile : sidebar en bas ── */
+    @media (max-width:600px) {
+      .map-layout { flex-direction:column; }
+      .sidebar {
+        width:100%; height:auto; flex-shrink:0;
+        border-right:none; border-top:1px solid var(--border);
+        order:2; overflow:hidden;
+        max-height:0; transition:max-height .3s ease;
+      }
+      .sidebar.open { max-height:60vh; overflow-y:auto; }
+      .map-container { order:1; flex:1; }
+      #mobile-toggle {
+        display:flex; align-items:center; justify-content:center;
+        position:absolute; bottom:50px; left:50%; transform:translateX(-50%);
+        z-index:20; background:rgba(22,33,62,.9); border:1px solid var(--border);
+        border-radius:20px; padding:6px 16px; font-size:.7rem; color:var(--text);
+        cursor:pointer; gap:6px; white-space:nowrap;
+      }
+    }
+    @media (min-width:601px) {
+      #mobile-toggle { display:none; }
+    }
     .sb { padding:10px 12px; border-bottom:1px solid var(--border); }
     .sb h3 { font-size:.65rem; text-transform:uppercase; letter-spacing:.07em;
       color:var(--subtext); margin-bottom:8px; }
@@ -192,6 +215,7 @@
     <canvas id="map-canvas"></canvas>
     <div id="tooltip"></div>
     <div id="scale-bar">—</div>
+    <div id="mobile-toggle" onclick="toggleSidebar()">⚙ Options</div>
   </div>
 </div>
 
@@ -614,20 +638,66 @@ window.addEventListener('mouseup', () => {
 });
 
 // Touch
+let _pinchDist = null;
+
+function getTouchDist(touches) {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dz = touches[0].clientY - touches[1].clientY;
+  return Math.hypot(dx, dz);
+}
+function getTouchCenter(touches) {
+  const rect = container.getBoundingClientRect();
+  return {
+    x: (touches[0].clientX + touches[1].clientX) / 2 - rect.left,
+    z: (touches[0].clientY + touches[1].clientY) / 2 - rect.top,
+  };
+}
+
 container.addEventListener('touchstart', e => {
-  if (e.touches.length===1) {
+  if (e.touches.length === 1) {
     _drag=true; _dsx=e.touches[0].clientX; _dsz=e.touches[0].clientY;
     _dox=_ox; _doz=_oz;
+    _pinchDist = null;
+  } else if (e.touches.length === 2) {
+    _drag = false;
+    _pinchDist = getTouchDist(e.touches);
+    const c = getTouchCenter(e.touches);
+    _dsx = c.x; _dsz = c.z; _dox = _ox; _doz = _oz;
   }
 },{passive:true});
+
 container.addEventListener('touchmove', e => {
-  if(_drag&&e.touches.length===1) {
-    _ox=_dox+(e.touches[0].clientX-_dsx);
-    _oz=_doz+(e.touches[0].clientY-_dsz);
+  if (e.touches.length === 1 && _drag) {
+    _ox = _dox + (e.touches[0].clientX - _dsx);
+    _oz = _doz + (e.touches[0].clientY - _dsz);
     redraw();
+  } else if (e.touches.length === 2) {
+    const newDist = getTouchDist(e.touches);
+    if (_pinchDist) {
+      const factor = newDist / _pinchDist;
+      const c = getTouchCenter(e.touches);
+      const wx = (c.x - _ox) / _scale;
+      const wz = (c.z - _oz) / _scale;
+      const ms = minScale(container.clientWidth, container.clientHeight);
+      _scale = Math.max(ms * 0.9, Math.min(50, _scale * factor));
+      _ox = c.x - wx * _scale;
+      _oz = c.z - wz * _scale;
+      redraw();
+    }
+    _pinchDist = newDist;
   }
 },{passive:true});
-container.addEventListener('touchend',()=>{ _drag=false; });
+
+container.addEventListener('touchend', e => {
+  if (e.touches.length === 0) { _drag = false; _pinchDist = null; }
+  else if (e.touches.length === 1) {
+    // Repasser en mode pan avec le doigt restant
+    _drag = true;
+    _dsx = e.touches[0].clientX; _dsz = e.touches[0].clientY;
+    _dox = _ox; _doz = _oz;
+    _pinchDist = null;
+  }
+});
 
 // Double-clic reset
 container.addEventListener('dblclick', () => { initView(); redraw(); });
@@ -637,6 +707,13 @@ document.getElementById('tp-x').addEventListener('keydown', e => { if(e.key==='E
 document.getElementById('tp-z').addEventListener('keydown', e => { if(e.key==='Enter') teleport(); });
 
 window.addEventListener('resize', () => { resizeCanvas(); if(_data) redraw(); });
+
+function toggleSidebar() {
+  const s = document.querySelector('.sidebar');
+  const t = document.getElementById('mobile-toggle');
+  s.classList.toggle('open');
+  t.textContent = s.classList.contains('open') ? '✕ Fermer' : '⚙ Options';
+}
 
 loadData();
 </script>
