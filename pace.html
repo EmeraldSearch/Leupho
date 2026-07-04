@@ -319,7 +319,9 @@ function renderPace(data) {
 
   // Calculer le meilleur segS parmi les segments terminés
   var bestSegS = Infinity;
-  var SUB7H = 7 * 3600; // 7h en secondes
+  var ABOVE7H12 = 7 * 3600 + 12 * 60; // 7h12 en secondes
+  var SUB7H     = 7 * 3600;            // 7h en secondes
+  var SUB6H45   = 6 * 3600 + 45 * 60; // 6h45 en secondes
   var tmpPrevIGT = 0;
   Object.keys(pctGroups).map(Number).sort(function(a,b){return a-b;}).forEach(function(p) {
     if (p < 1) return;
@@ -337,10 +339,12 @@ function renderPace(data) {
 
     if (p !== currentPct) {
       // Segment terminé — recalculer si bestSegS a changé
-      var isBestSeg = segS === bestSegS;
-      var isFastSeg = segS > 0 && segS < SUB7H;
-      var segColor  = isBestSeg ? '#f5c542' : (isFastSeg ? '#a8ff78' : '');
-      var tdSty     = segColor ? 'color:' + segColor + ';' : '';
+      var isBestSeg  = segS === bestSegS;
+      var isAbove7h12 = segS > ABOVE7H12;
+      var isSub6h45   = segS > 0 && segS < SUB6H45;
+      var segColor = isBestSeg ? '' : (isAbove7h12 ? '#ff4444' : (isSub6h45 ? '#f5c542' : (segS < SUB7H ? '#a8ff78' : '')));
+      var tdSty    = segColor ? 'color:' + segColor + ';' : '';
+      var isRainbowSeg = isBestSeg;
 
       if (rowHtmlCache[p] == null || isBestSeg) {
         var hIGTp     = HIST[p]     != null ? HIST[p]     : null;
@@ -351,10 +355,10 @@ function renderPace(data) {
         var paceSeg = segPaceCache[p] != null ? segPaceCache[p].toFixed(4) : '--';
         rowHtmlCache[p] =
           '<tr>' +
-          '<td style="' + tdSty + '"><b>' + p + '%</b></td>' +
-          '<td style="' + tdSty + '">' + (p * 125508).toLocaleString() + ' bl</td>' +
+          '<td class="' + (isRainbowSeg?'rainbow':'') + '" style="' + tdSty + '"><b>' + p + '%</b></td>' +
+          '<td class="' + (isRainbowSeg?'rainbow':'') + '" style="' + tdSty + '">' + (p * 125508).toLocaleString() + ' bl</td>' +
           '<td>' + fmtS(lastM.igt_total_s) + '</td>' +
-          '<td style="' + tdSty + (isBestSeg ? 'font-weight:bold;' : '') + '">' + fmtS(segS) + '</td>' +
+          '<td class="' + (isRainbowSeg?'rainbow':'') + '" style="' + tdSty + (isBestSeg ? 'font-weight:bold;' : '') + '">' + fmtS(segS) + '</td>' +
           '<td>' + paceSeg + '</td>' +
           '<td>' + fmtS(lastM.eta_ovr_s) + '</td>' +
           '<td class="neu">' + (hSegS != null ? fmtS(hSegS) : '--') + '</td>' +
