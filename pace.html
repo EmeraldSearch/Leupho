@@ -175,6 +175,7 @@
       <span>
         <span class="view-btn active" id="btn-pct" onclick="setView('pct')">%</span>
         <span class="view-btn" id="btn-10k" onclick="setView('10k')">10k</span>
+        <span class="view-btn" id="btn-hourly" onclick="setView('hourly')">Horaire</span>
       </span>
     </h2>
 
@@ -200,6 +201,18 @@
     </div>
 
     <!-- Vue 10k -->
+    <div id="view-hourly" style="display:none">
+      <table style="width:100%;border-collapse:collapse;font-family:monospace;font-size:.8rem">
+        <thead><tr>
+          <th style="padding:6px 10px;text-align:left;border-bottom:1px solid var(--border);color:var(--subtext)">Heure IGT</th>
+          <th style="padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);color:var(--subtext)">Blocs -X</th>
+          <th style="padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);color:var(--subtext)">Blocs/heure</th>
+          <th style="padding:6px 10px;text-align:right;border-bottom:1px solid var(--border);color:var(--subtext)">Vitesse moy.</th>
+        </tr></thead>
+        <tbody id="hourly-body"></tbody>
+      </table>
+    </div>
+
     <div id="view-10k" style="display:none">
       <div class="table-wrap" id="segments-table"></div>
     </div>
@@ -412,11 +425,14 @@ function setView(v) {
   _currentView = v;
   document.getElementById('btn-pct').classList.toggle('active', v === 'pct');
   document.getElementById('btn-10k').classList.toggle('active', v === '10k');
-  document.getElementById('view-pct').style.display = v === 'pct' ? '' : 'none';
-  document.getElementById('view-10k').style.display = v === '10k' ? '' : 'none';
+  document.getElementById('btn-hourly').classList.toggle('active', v === 'hourly');
+  document.getElementById('view-pct').style.display    = v === 'pct'    ? '' : 'none';
+  document.getElementById('view-10k').style.display    = v === '10k'    ? '' : 'none';
+  document.getElementById('view-hourly').style.display = v === 'hourly' ? '' : 'none';
   document.getElementById('table-title').textContent =
-    v === 'pct' ? 'Tableau par % entier' : 'Segments 10k';
+    v === 'pct' ? 'Tableau par % entier' : v === '10k' ? 'Segments 10k' : 'Progression horaire';
   if (v === '10k') loadSegments();
+  if (v === 'hourly') renderHourly();
 }
 
 async function loadSegments() {
@@ -476,6 +492,42 @@ async function loadSegments() {
   }
 }
 
+function renderHourly() {
+  var data = window._paceData;
+  if (!data || !data.length) return;
+  var hours = [];
+  var prevX = 0, prevIgt = 0;
+  for (var h = 1; h <= 9999; h++) {
+    var cutoff = h * 3600;
+    var inHour = data.filter(function(d) { return d.igt_total_s <= cutoff; });
+    if (!inHour.length) break;
+    var pt = inHour[inHour.length - 1];
+    var dx = pt.distance - prevX;
+    var dt = pt.igt_total_s - prevIgt;
+    var speed = dt > 0 ? dx / dt : 0;
+    var full  = pt.igt_total_s >= cutoff;
+    hours.push({ h: h, dx: Math.round(dx), speed: speed, full: full });
+    prevX = pt.distance; prevIgt = pt.igt_total_s;
+    if (!full) break;
+  }
+  var maxDx = Math.max.apply(null, hours.map(function(h){ return h.dx; }));
+  document.getElementById('hourly-body').innerHTML = hours.map(function(h) {
+    var barW  = maxDx > 0 ? Math.round((h.dx / maxDx) * 100) : 0;
+    var color = h.speed >= 5 ? '#a8ff78' : (h.speed >= 4 ? '#f5c542' : '#ff4444');
+    var label = h.full ? ('Heure ' + h.h) : ('Heure ' + h.h + ' <span style="color:var(--subtext);font-size:.7rem">(en cours)</span>');
+    return '<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">' +
+      '<td style="padding:5px 10px;color:var(--subtext)">' + label + '</td>' +
+      '<td style="padding:5px 10px;text-align:right">' +
+        '<div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">' +
+          '<div style="width:80px;height:4px;background:var(--border);border-radius:2px;overflow:hidden">' +
+            '<div style="width:' + barW + '%;height:100%;background:' + color + ';border-radius:2px"></div>' +
+          '</div>' + h.dx.toLocaleString() + ' bl</div></td>' +
+      '<td style="padding:5px 10px;text-align:right">' + Math.round(h.dx / 3600).toLocaleString() + ' bl/h</td>' +
+      '<td style="padding:5px 10px;text-align:right;color:' + color + '">' + h.speed.toFixed(2) + ' bl/s</td>' +
+    '</tr>';
+  }).join('');
+}
+
 async function loadPace() {
   try {
     await _detect();
@@ -491,6 +543,7 @@ async function loadPace() {
     var resp = await fetch(paceUrl);
     var data = await resp.json();
     if (data.length) {
+      window._paceData = data;
       renderPace(data);
       try {
         var sum = await fetch(summaryUrl).then(function(r){ return r.json(); });
