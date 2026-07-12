@@ -497,18 +497,29 @@ function renderHourly() {
   if (!data || !data.length) return;
   var hours = [];
   var prevX = 0, prevIgt = 0;
-  for (var h = 1; h <= 9999; h++) {
-    var cutoff = h * 3600;
-    var inHour = data.filter(function(d) { return d.igt_total_s <= cutoff; });
-    if (!inHour.length) break;
-    var pt = inHour[inHour.length - 1];
-    var dx = pt.distance - prevX;
-    var dt = pt.igt_total_s - prevIgt;
-    var speed = dt > 0 ? dx / dt : 0;
-    var full  = pt.igt_total_s >= cutoff;
-    hours.push({ h: h, dx: Math.round(dx), speed: speed, full: full });
-    prevX = pt.distance; prevIgt = pt.igt_total_s;
-    if (!full) break;
+  // Parcourir les milestones et regrouper par heure IGT
+  var curHour = 1;
+  for (var i = 0; i < data.length; i++) {
+    var pt = data[i];
+    // Quand on passe dans une nouvelle heure, enregistrer la précédente
+    var ptHour = Math.floor(pt.igt_total_s / 3600) + 1;
+    if (ptHour > curHour) {
+      // Dernier point de l'heure curHour
+      var dx = pt.distance - prevX;
+      var dt = pt.igt_total_s - prevIgt;
+      if (dt > 0) {
+        hours.push({ h: curHour, dx: Math.round(dx), speed: dx / dt, full: true });
+        prevX = pt.distance; prevIgt = pt.igt_total_s;
+      }
+      curHour = ptHour;
+    }
+  }
+  // Heure en cours (dernière, incomplète)
+  var lastPt = data[data.length - 1];
+  var dx = lastPt.distance - prevX;
+  var dt = lastPt.igt_total_s - prevIgt;
+  if (dt > 0) {
+    hours.push({ h: curHour, dx: Math.round(dx), speed: dx / dt, full: false });
   }
   var maxDx = Math.max.apply(null, hours.map(function(h){ return h.dx; }));
   document.getElementById('hourly-body').innerHTML = hours.map(function(h) {
