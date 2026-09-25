@@ -112,6 +112,29 @@
       display:inline-block; margin-right:4px;
     }
     .view-btn:hover, .view-btn.active { background:var(--accent3); color:#000; border-color:var(--accent3); }
+    /* ── Édition ── */
+    .ed-toolbar { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .mc-btn { font-family:"Minecraft",monospace; font-size:.65rem; padding:5px 10px;
+      border:2px solid var(--border); border-radius:4px; cursor:pointer;
+      background:var(--bg); color:var(--text); }
+    .mc-btn:hover { filter:brightness(1.3); }
+    .mc-btn.on { background:var(--gold); color:#000; border-color:var(--gold); }
+    .mc-btn.save { background:var(--accent4); color:#000; border-color:var(--accent4); }
+    .mc-btn.pub  { background:var(--accent3); color:#000; border-color:var(--accent3); }
+    .mc-btn:disabled { opacity:.4; cursor:default; filter:none; }
+    #edit-bar { display:none; position:sticky; top:0; z-index:5; background:#2a2440;
+      border:1px solid var(--gold); border-radius:var(--radius); padding:10px 14px;
+      gap:10px; align-items:center; flex-wrap:wrap; font-size:.78rem; }
+    body.editing #edit-bar { display:flex; }
+    #edit-bar .help { color:var(--subtext); flex:1; min-width:240px; line-height:1.4; }
+    #edit-bar label { display:flex; gap:6px; align-items:center; cursor:pointer; }
+    #edit-status { font-weight:600; }
+    body.editing .ed { cursor:text; text-decoration:underline dotted var(--gold); text-underline-offset:3px; }
+    body.editing .ed:hover { background:rgba(245,197,66,.12); }
+    .changed { background:rgba(245,197,66,.18) !important; }
+    td input.cell-in { width:92px; font:inherit; font-family:monospace; background:#0e1428;
+      color:var(--text); border:1px solid var(--gold); border-radius:3px; padding:2px 4px; }
+    td input.cell-in.bad { border-color:var(--accent1); }
 </style>
 </head>
 <body>
@@ -128,70 +151,51 @@
 
 <div class="container">
 
+  <div id="edit-bar">
+    <span id="edit-status">Aucune modification</span>
+    <span class="help">Clique sur une valeur soulignée, tape le temps (<code>h:mm:ss</code>, <code>m:ss</code> ou secondes) puis Entrée pour passer à la ligne suivante, ou Échap pour annuler.
+      Modifier <b>IGT total</b> ne change que cette ligne.</span>
+    <label><input type="checkbox" id="opt-shift" checked> Modifier un <b>Segment</b> décale les % suivants</label>
+    <button class="mc-btn" id="btn-undo" onclick="undo()" disabled>Annuler</button>
+    <button class="mc-btn" id="btn-revert" onclick="revertAll()" disabled>Tout annuler</button>
+    <button class="mc-btn save" id="btn-save" onclick="save()" disabled>Enregistrer</button>
+    <button class="mc-btn pub" id="btn-pub" onclick="publish()">Publier sur le site</button>
+  </div>
+
   <div class="card">
     <h2>Progression</h2>
     <div class="progress-wrap">
       <div class="progress-fill" id="prog-bar" style="width:0%"></div>
     </div>
     <div class="summary-row">
-      <div class="sum-card">
-        <div class="lbl">Progression</div>
-        <div class="val c3" id="s-pct">&#8212;</div>
-      </div>
-      <div class="sum-card">
-        <div class="lbl">IGT total</div>
-        <div class="val" id="s-igt">&#8212;</div>
-      </div>
-      <div class="sum-card">
-        <div class="lbl">RTA</div>
-        <div class="val" style="color:#53a8d8" id="s-rta">&#8212;</div>
-      </div>
-      <div class="sum-card">
-        <div class="lbl">Pace overall</div>
-        <div class="val cg" id="s-pace">&#8212;</div>
-      </div>
-      <div class="sum-card">
-        <div class="lbl">Average % time</div>
-        <div class="val" id="s-seg">&#8212;</div>
-      </div>
-      <div class="sum-card">
-        <div class="lbl">Average 10k time</div>
-        <div class="val" id="s-seg10k">&#8212;</div>
-      </div>
-      <div class="sum-card">
-        <div class="lbl">ETA fin (overall)</div>
-        <div class="val c1" id="s-eta">&#8212;</div>
-      </div>
-      <div class="sum-card">
-        <div class="lbl">Delta vs run prec.</div>
-        <div class="val" id="s-vs">&#8212;</div>
-      </div>
+      <div class="sum-card"><div class="lbl">Progression</div><div class="val c3" id="s-pct">&#8212;</div></div>
+      <div class="sum-card"><div class="lbl">IGT total</div><div class="val" id="s-igt">&#8212;</div></div>
+      <div class="sum-card"><div class="lbl">RTA</div><div class="val" style="color:#53a8d8" id="s-rta">&#8212;</div></div>
+      <div class="sum-card"><div class="lbl">Pace overall</div><div class="val cg" id="s-pace">&#8212;</div></div>
+      <div class="sum-card"><div class="lbl">Average % time</div><div class="val" id="s-seg">&#8212;</div></div>
+      <div class="sum-card"><div class="lbl">Average 10k time</div><div class="val" id="s-seg10k">&#8212;</div></div>
+      <div class="sum-card"><div class="lbl">Meilleur 10k</div><div class="val rainbow" id="s-best10k">&#8212;</div></div>
+      <div class="sum-card"><div class="lbl" id="s-vs-lbl">Delta vs run prec.</div><div class="val" id="s-vs">&#8212;</div></div>
     </div>
   </div>
 
   <div class="card">
-    <h2 style="display:flex;align-items:center;justify-content:space-between">
+    <h2 style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
       <span id="table-title">Tableau par % entier</span>
-      <span>
+      <span class="ed-toolbar">
         <span class="view-btn active" id="btn-pct" onclick="setView('pct')">%</span>
         <span class="view-btn" id="btn-10k" onclick="setView('10k')">10k</span>
+        <button class="mc-btn" id="btn-edit" style="display:none" onclick="toggleEdit()">✏ Éditer</button>
       </span>
     </h2>
 
-    <!-- Vue % -->
     <div id="view-pct">
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th>%</th>
-              <th>Distance</th>
-              <th>IGT total</th>
-              <th>Segment</th>
-              <th>Pace overall</th>
-              <th>ETA (ovr.)</th>
-              <th>IGT prec.</th>
-              <th>Delta IGT</th>
+              <th>%</th><th>Distance</th><th>IGT total</th><th>Segment</th>
+              <th>Pace seg.</th><th>IGT prec.</th><th>Delta IGT</th>
             </tr>
           </thead>
           <tbody id="pace-tbody"></tbody>
@@ -199,15 +203,22 @@
       </div>
     </div>
 
-    <!-- Vue 10k -->
     <div id="view-10k" style="display:none">
-      <div class="table-wrap" id="segments-table"></div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Seg.</th><th>Zone X</th><th>Durée</th><th>IGT début</th><th>IGT fin</th></tr>
+          </thead>
+          <tbody id="seg-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
 </div>
 
 <script>
+// Temps de la run précédente (IGT total en secondes à chaque %)
 var HIST = {
   0:0, 1:29385, 2:58206, 3:87505, 4:115440, 5:143875,
   6:172011, 7:199574, 8:228040, 9:255789, 10:283182,
@@ -230,295 +241,333 @@ var HIST = {
   91:2458844, 92:2484633, 93:2511555, 94:2539299, 95:2565309,
   96:2592381, 97:2619335, 98:2646314
 };
+var FARLANDS = 12550824;
+var PCT_BL   = FARLANDS / 100;
 
+// Seuils couleurs
+var PCT_RED = 7*3600 + 12*60, PCT_GREEN = 7*3600, PCT_GOLD = 6*3600 + 45*60;
+var K_RED = 43020, K_GREEN = 40140, K_GOLD = 36000;   // ticks : 35:51 / 33:27 / 30:00
+
+var DATA = null;      // état courant (édité)
+var ORIG = null;      // état chargé (pour surligner les changements)
+var HISTORY = [];     // pile d'annulation
+var LOCAL = false;    // true si servi par Flask -> édition possible
+var EDITING = false;
+var VIEW = 'pct';
+
+// ── Formatage / parsing ──────────────────────────────────────
 function pad(n) { return String(n).padStart(2, '0'); }
-
 function fmtS(s) {
-  if (s == null) return '--';
-  var t = Math.round(Math.abs(s));
-  return pad(Math.floor(t / 3600)) + ':' + pad(Math.floor((t % 3600) / 60)) + ':' + pad(t % 60);
+  if (s == null || isNaN(s)) return '--';
+  var neg = s < 0, t = Math.round(Math.abs(s));
+  return (neg ? '-' : '') + pad(Math.floor(t/3600)) + ':' + pad(Math.floor((t%3600)/60)) + ':' + pad(t%60);
 }
-
-function fmtDeltaIGT(diff) {
+function fmtMS(sec) {   // m:ss
+  var t = Math.floor(sec);
+  return Math.floor(t/60) + ':' + pad(t%60);
+}
+function fmtTicksHMS(t) {
+  var s = Math.floor(t/20);
+  return Math.floor(s/3600) + ':' + pad(Math.floor((s%3600)/60)) + ':' + pad(s%60);
+}
+function parseTime(str) {
+  str = String(str).trim().replace(',', '.');
+  if (!str) return null;
+  var parts = str.split(':');
+  if (parts.length > 3) return null;
+  var total = 0;
+  for (var i = 0; i < parts.length; i++) {
+    if (!/^\d+(\.\d+)?$/.test(parts[i])) return null;
+    total = total * 60 + parseFloat(parts[i]);
+  }
+  return total;
+}
+function fmtDelta(diff) {   // diff > 0 = plus rapide que la run précédente
   if (diff == null) return '<span class="neu">--</span>';
-  var cls  = diff >= 0 ? 'faster' : 'slower';
-  var sign = diff >= 0 ? '-' : '+';
-  return '<span class="' + cls + '">' + sign + fmtS(Math.abs(diff)) + '</span>';
+  return '<span class="' + (diff >= 0 ? 'faster' : 'slower') + '">' + (diff >= 0 ? '-' : '+') + fmtS(Math.abs(diff)) + '</span>';
 }
 
-var segPaceCache  = {};   // { pct_int: pace_bl_s } — segments terminés uniquement
-var rowHtmlCache  = {};   // { pct_int: html_string } — lignes terminées
+// ── Accès aux données ───────────────────────────────────────
+function pctRows()  { return DATA.pct.slice().sort(function(a,b){ return a.p - b.p; }); }
+function totalAt(rows, idx) { return idx < 0 ? 0 : rows[idx].igt_total_s; }
+function origPct(p) { for (var i=0;i<ORIG.pct.length;i++) if (ORIG.pct[i].p===p) return ORIG.pct[i]; return null; }
+function origSeg(n) { for (var i=0;i<ORIG.segments_10k.length;i++) if (ORIG.segments_10k[i].n===n) return ORIG.segments_10k[i]; return null; }
 
-function renderPace(data) {
-  if (!data || !data.length) return;
+// ── Rendu ───────────────────────────────────────────────────
+function render() {
+  renderSummary();
+  if (VIEW === 'pct') renderPct(); else render10k();
+  updateEditBar();
+}
 
-  var last = data[data.length - 1];
+function renderSummary() {
+  var rows = pctRows();
+  var last = rows[rows.length - 1];
+  var igt  = last ? last.igt_total_s : 0;
+  var maxP = last ? last.p : 0;
+  document.getElementById('prog-bar').style.width = Math.min(maxP, 100) + '%';
+  document.getElementById('s-pct').textContent  = maxP.toFixed(3) + '%';
+  document.getElementById('s-igt').textContent  = fmtS(igt);
+  document.getElementById('s-pace').textContent = igt > 0 ? (Math.min(maxP,100) * PCT_BL / igt).toFixed(4) + ' bl/s' : '--';
+  document.getElementById('s-seg').textContent  = rows.length ? fmtS(igt / rows.length) : '--';
 
-  document.getElementById('prog-bar').style.width = (last.i / 1000) + '%';
-  document.getElementById('s-pct').textContent    = last.pct.toFixed(3) + '%';
-  if (!window._pacIgtFrozen) document.getElementById('s-igt').textContent = fmtS(last.igt_total_s);
-  document.getElementById('s-pace').textContent   = last.pace_overall.toFixed(4) + ' bl/s';
-  document.getElementById('s-eta').textContent    = fmtS(last.eta_ovr_s);
+  var rtaEl = document.getElementById('s-rta');
+  rtaEl.textContent = fmtS(DATA.rta_s);
+  rtaEl.className = 'val ed' + (ORIG.rta_s !== DATA.rta_s ? ' changed' : '');
+  rtaEl.dataset.k = 'rta';
 
-  var pctF  = last.pct;
-  var lo    = Math.floor(pctF);
-  var hi    = Math.ceil(pctF);
-  var hLo   = HIST[lo];
-  var hHi   = HIST[hi];
-  var hIGT  = (hLo != null && hHi != null && lo !== hi) ? hLo + (pctF - lo) * (hHi - hLo) : hLo;
-  if (hIGT != null) {
-    var diff  = last.igt_total_s - hIGT;
-    var col   = diff <= 0 ? 'var(--accent4)' : 'var(--accent1)';
-    var sign  = diff <= 0 ? '-' : '+';
+  var segs = DATA.segments_10k;
+  if (segs.length) {
+    var tot = 0, best = Infinity;
+    segs.forEach(function(s){ var d = s.igt_end - s.igt_start; tot += d; if (d > 0) best = Math.min(best, d); });
+    document.getElementById('s-seg10k').textContent  = fmtMS(tot / segs.length / 20);
+    document.getElementById('s-best10k').textContent = best < Infinity ? fmtMS(best / 20) : '--';
+  }
+
+  // Delta vs run précédente, au dernier % commun
+  var cmp = null;
+  for (var i = rows.length - 1; i >= 0; i--) if (HIST[rows[i].p] != null) { cmp = rows[i]; break; }
+  if (cmp) {
+    var diff = cmp.igt_total_s - HIST[cmp.p];
+    document.getElementById('s-vs-lbl').textContent = 'Delta vs run prec. (' + cmp.p + '%)';
     document.getElementById('s-vs').innerHTML =
-      '<span style="color:' + col + '">' + sign + fmtS(Math.abs(diff)) + ' vs run prec.</span>';
+      '<span style="color:' + (diff <= 0 ? 'var(--accent4)' : 'var(--accent1)') + '">' + (diff <= 0 ? '-' : '+') + fmtS(Math.abs(diff)) + '</span>';
   }
-
-  var pctGroups = {};
-  data.forEach(function(d) {
-    var p = Math.ceil(d.pct);
-    if (!pctGroups[p]) pctGroups[p] = [];
-    pctGroups[p].push(d);
-  });
-
-  // Un % est terminé seulement si le % suivant a au moins un millième dans les données
-  var completedPcts = Object.keys(pctGroups).map(Number).filter(function(p){ return p >= 1 && pctGroups[p + 1] != null; }).sort(function(a,b){ return a-b; });
-  var avgSegS = null;
-  if (completedPcts.length > 0) {
-    var prevIgtAvg = 0;
-    var totalSegS  = 0;
-    completedPcts.forEach(function(p) {
-      var lastM = pctGroups[p][pctGroups[p].length - 1];
-      totalSegS  += lastM.igt_total_s - prevIgtAvg;
-      prevIgtAvg  = lastM.igt_total_s;
-    });
-    avgSegS = totalSegS / completedPcts.length;
-  }
-  document.getElementById('s-seg').textContent = avgSegS != null ? fmtS(avgSegS) : '--';
-
-  // Average 10k time depuis segments_10k.json
-  (async function() {
-    try {
-      var isFlask = await fetch('/api/summary').then(function(r){return r.ok;}).catch(function(){return false;});
-      var url = isFlask ? '/api/segments_10k' : 'data/segments_10k.json?_=' + Date.now();
-      var segs = await fetch(url).then(function(r){return r.json();});
-      if (segs && segs.length > 0) {
-        var totalTicks = segs.reduce(function(acc, s){ return acc + s.duration_ticks; }, 0);
-        var avgTicks   = totalTicks / segs.length;
-        var m = Math.floor(avgTicks / 20 / 60);
-        var s = Math.floor(avgTicks / 20) % 60;
-        document.getElementById('s-seg10k').textContent = m + ':' + String(s).padStart(2,'0');
-      }
-    } catch(e) {}
-  })();
-
-  // Le % en cours = le plus grand % dont le suivant n'existe pas encore
-  var currentPct = Math.max.apply(null, Object.keys(pctGroups).map(Number).filter(function(p){ return pctGroups[p + 1] == null; }));
-  var prevIGT    = 0;
-  var rows       = [];
-
-  // Calculer le meilleur segS parmi les segments terminés
-  var bestSegS = Infinity;
-  var ABOVE7H12 = 7 * 3600 + 12 * 60; // 7h12 en secondes
-  var SUB7H     = 7 * 3600;            // 7h en secondes
-  var SUB6H45   = 6 * 3600 + 45 * 60; // 6h45 en secondes
-  var tmpPrevIGT = 0;
-  Object.keys(pctGroups).map(Number).sort(function(a,b){return a-b;}).forEach(function(p) {
-    if (p < 1) return;
-    var lastM = pctGroups[p][pctGroups[p].length-1];
-    var s = lastM.igt_total_s - tmpPrevIGT;
-    if (p !== currentPct && s > 0) bestSegS = Math.min(bestSegS, s);
-    tmpPrevIGT = lastM.igt_total_s;
-  });
-
-  Object.keys(pctGroups).map(Number).sort(function(a, b) { return a - b; }).forEach(function(p) {
-    if (p < 1) return;
-    var grp   = pctGroups[p];
-    var lastM = grp[grp.length - 1];
-    var segS  = lastM.igt_total_s - prevIGT;
-
-    if (p !== currentPct) {
-      // Segment terminé — recalculer si bestSegS a changé
-      var isBestSeg  = segS === bestSegS;
-      var isAbove7h12 = segS > ABOVE7H12;
-      var isSub6h45   = segS > 0 && segS < SUB6H45;
-      var segColor = isBestSeg ? '' : (isAbove7h12 ? '#ff4444' : (isSub6h45 ? '#f5c542' : (segS < SUB7H ? '#a8ff78' : '')));
-      var tdSty    = segColor ? 'color:' + segColor + ';' : '';
-      var isRainbowSeg = isBestSeg;
-
-      if (rowHtmlCache[p] == null || isBestSeg) {
-        var hIGTp     = HIST[p]     != null ? HIST[p]     : null;
-        var hIGTpPrev = HIST[p - 1] != null ? HIST[p - 1] : null;
-        var hSegS     = (hIGTp != null && hIGTpPrev != null) ? hIGTp - hIGTpPrev : null;
-        var dIGT      = hIGTp != null ? hIGTp - lastM.igt_total_s : null;
-        if (segPaceCache[p] == null && segS > 0) segPaceCache[p] = 125508.21 / segS;
-        var paceSeg = segPaceCache[p] != null ? segPaceCache[p].toFixed(4) : '--';
-        rowHtmlCache[p] =
-          '<tr>' +
-          '<td class="' + (isRainbowSeg?'rainbow':'') + '" style="' + tdSty + '"><b>' + p + '%</b></td>' +
-          '<td class="' + (isRainbowSeg?'rainbow':'') + '" style="' + tdSty + '">' + (p * 125508).toLocaleString() + ' bl</td>' +
-          '<td>' + fmtS(lastM.igt_total_s) + '</td>' +
-          '<td class="' + (isRainbowSeg?'rainbow':'') + '" style="' + tdSty + (isBestSeg ? 'font-weight:bold;' : '') + '">' + fmtS(segS) + '</td>' +
-          '<td>' + paceSeg + '</td>' +
-          '<td>' + fmtS(lastM.eta_ovr_s) + '</td>' +
-          '<td class="neu">' + (hSegS != null ? fmtS(hSegS) : '--') + '</td>' +
-          '<td>' + fmtDeltaIGT(dIGT) + '</td>' +
-          '</tr>';
-      }
-      rows.push(rowHtmlCache[p]);
-    } else {
-      // Segment en cours : toujours recalculé
-      var hIGTp     = HIST[p]     != null ? HIST[p]     : null;
-      var hIGTpPrev = HIST[p - 1] != null ? HIST[p - 1] : null;
-      var hSegS     = (hIGTp != null && hIGTpPrev != null) ? hIGTp - hIGTpPrev : null;
-      var distInSeg = last.distance - (p - 1) * 125508.21;
-      var paceSeg   = (segS > 0 && distInSeg > 0) ? (distInSeg / segS).toFixed(4) : '--';
-      rows.push(
-        '<tr class="cur">' +
-        '<td><b>' + p + '%</b></td>' +
-        '<td>' + (p * 125508).toLocaleString() + ' bl</td>' +
-        '<td>' + fmtS(lastM.igt_total_s) + '</td>' +
-        '<td>' + fmtS(segS) + '</td>' +
-        '<td>' + paceSeg + '</td>' +
-        '<td>' + fmtS(lastM.eta_ovr_s) + '</td>' +
-        '<td class="neu">' + (hSegS != null ? fmtS(hSegS) : '--') + '</td>' +
-        '<td><span class="neu">—</span></td>' +
-        '</tr>'
-      );
-    }
-    prevIGT = lastM.igt_total_s;
-  });
-
-  document.getElementById('pace-tbody').innerHTML = rows.join('');
-  var cur = document.querySelector('#pace-tbody .cur');
-  if (cur) cur.scrollIntoView({block: 'center', behavior: 'smooth'});
 }
 
-// Détection Flask vs JSON statique
-var _useFlask   = null;
-var _lastPaceTs = null;
+function renderPct() {
+  var rows = pctRows();
+  var segList = rows.map(function(r, i){ return r.igt_total_s - totalAt(rows, i - 1); });
+  var best = Infinity;
+  segList.forEach(function(s){ if (s > 0) best = Math.min(best, s); });
 
-async function _detect() {
-  if (_useFlask !== null) return;
-  try {
-    var p = await fetch('/api/summary');
-    _useFlask = p.ok;
-  } catch(_) { _useFlask = false; }
+  var html = rows.map(function(r, i) {
+    var segS = segList[i];
+    var isBest = segS === best;
+    var col = isBest ? '' : segS > PCT_RED ? '#ff4444' : (segS > 0 && segS < PCT_GOLD) ? '#f5c542' : (segS > 0 && segS < PCT_GREEN) ? '#a8ff78' : '';
+    var sty = col ? ' style="color:' + col + '"' : '';
+    var cls = isBest ? 'rainbow' : '';
+    var o = origPct(r.p), oPrev = i > 0 ? origPct(rows[i-1].p) : null;
+    var totChanged = !o || o.igt_total_s !== r.igt_total_s;
+    var segChanged = !o || (o.igt_total_s - (oPrev ? oPrev.igt_total_s : 0)) !== segS;
+    var hSeg = (HIST[r.p] != null && HIST[r.p-1] != null) ? HIST[r.p] - HIST[r.p-1] : null;
+    var dIGT = HIST[r.p] != null ? HIST[r.p] - r.igt_total_s : null;
+    return '<tr>' +
+      '<td class="' + cls + '"' + sty + '><b>' + r.p + '%</b></td>' +
+      '<td class="' + cls + '"' + sty + '>' + Math.round(r.p * PCT_BL).toLocaleString() + ' bl</td>' +
+      '<td class="ed' + (totChanged ? ' changed' : '') + '" data-k="tot" data-p="' + r.p + '">' + fmtS(r.igt_total_s) + '</td>' +
+      '<td class="ed ' + cls + (segChanged ? ' changed' : '') + '" data-k="seg" data-p="' + r.p + '"' + sty + (isBest ? ' style="font-weight:bold"' : '') + '>' + fmtS(segS) + '</td>' +
+      '<td>' + (segS > 0 ? (PCT_BL / segS).toFixed(4) : '--') + '</td>' +
+      '<td class="neu">' + (hSeg != null ? fmtS(hSeg) : '--') + '</td>' +
+      '<td>' + fmtDelta(dIGT) + '</td>' +
+      '</tr>';
+  });
+  document.getElementById('pace-tbody').innerHTML = html.join('');
 }
 
-var _currentView = 'pct';
+function render10k() {
+  var segs = DATA.segments_10k;
+  var best = Infinity;
+  segs.forEach(function(s){ var d = s.igt_end - s.igt_start; if (d > 0) best = Math.min(best, d); });
+  var html = segs.map(function(s) {
+    var d = s.igt_end - s.igt_start;
+    var isBest = d === best;
+    var col = d > K_RED ? '#ff4444' : d < K_GOLD ? '#f5c542' : d < K_GREEN ? '#a8ff78' : '';
+    var sty = (!isBest && col) ? 'color:' + col + ';' : '';
+    var cls = isBest ? 'rainbow' : '';
+    var o = origSeg(s.n);
+    var chS = !o || o.igt_start !== s.igt_start, chE = !o || o.igt_end !== s.igt_end, chD = !o || (o.igt_end - o.igt_start) !== d;
+    return '<tr>' +
+      '<td class="' + cls + '" style="' + sty + '">' + (isBest ? '🏆 ' : '') + s.n + '</td>' +
+      '<td class="' + cls + '" style="' + sty + 'font-family:monospace">' + (-(s.n-1)*10000).toLocaleString() + ' → ' + (-s.n*10000).toLocaleString() + '</td>' +
+      '<td class="ed ' + cls + (chD ? ' changed' : '') + '" data-k="dur" data-n="' + s.n + '" style="' + sty + 'font-family:monospace;font-weight:' + (isBest ? 'bold' : 'normal') + '">' + fmtMS(d / 20) + '</td>' +
+      '<td class="ed' + (chS ? ' changed' : '') + '" data-k="start" data-n="' + s.n + '" style="font-family:monospace;color:var(--subtext)">' + fmtTicksHMS(s.igt_start) + '</td>' +
+      '<td class="ed' + (chE ? ' changed' : '') + '" data-k="end" data-n="' + s.n + '" style="font-family:monospace;color:var(--subtext)">' + fmtTicksHMS(s.igt_end) + '</td>' +
+      '</tr>';
+  });
+  document.getElementById('seg-tbody').innerHTML = html.join('');
+}
 
 function setView(v) {
-  _currentView = v;
+  VIEW = v;
   document.getElementById('btn-pct').classList.toggle('active', v === 'pct');
   document.getElementById('btn-10k').classList.toggle('active', v === '10k');
   document.getElementById('view-pct').style.display = v === 'pct' ? '' : 'none';
   document.getElementById('view-10k').style.display = v === '10k' ? '' : 'none';
-  document.getElementById('table-title').textContent =
-    v === 'pct' ? 'Tableau par % entier' : 'Segments 10k';
-  if (v === '10k') loadSegments();
+  document.getElementById('table-title').textContent = v === 'pct' ? 'Tableau par % entier' : 'Segments 10k';
+  render();
 }
 
-async function loadSegments() {
-  var el = document.getElementById('segments-table');
-  try {
-    var isFlask = await fetch('/api/summary').then(function(r){return r.ok;}).catch(function(){return false;});
-    var url = isFlask ? '/api/segments_10k' : 'data/segments_10k.json?_=' + Date.now();
-    var segs = await fetch(url).then(function(r){return r.json();});
-    if (!segs || segs.length === 0) {
-      el.innerHTML = '<p style="color:var(--subtext);font-size:.8rem;padding:12px">Aucun segment complete.</p>';
-      return;
-    }
-    var best = Math.min.apply(null, segs.map(function(s){return s.duration_ticks;}));
-    function fmtDur(t) {
-      var s=Math.floor(t/20),m=Math.floor(s/60),sec=s%60;
-      return m+':'+String(sec).padStart(2,'0');
-    }
-    function fmtIGT(t) {
-      var s=Math.floor(t/20),h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
-      return h+':'+String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
-    }
-    var html = '<table style="width:100%;border-collapse:collapse;font-size:.8rem">' +
-      '<thead><tr style="color:var(--subtext);border-bottom:1px solid var(--border)">' +
-      '<th style="text-align:left;padding:5px 8px">Seg.</th>' +
-      '<th style="text-align:left;padding:5px 8px">Zone X</th>' +
-      '<th style="text-align:left;padding:5px 8px">Duree</th>' +
-      '<th style="text-align:left;padding:5px 8px">IGT debut</th>' +
-      '<th style="text-align:left;padding:5px 8px">IGT fin</th>' +
-      '</tr></thead><tbody>';
-    for (var i = 0; i < segs.length; i++) {
-      var s = segs[i];
-      var isBest      = s.duration_ticks === best;
-      var isSub30     = s.duration_ticks < 36000;   // < 30:00
-      var isSub3327   = s.duration_ticks < 40140;   // < 33:27
-      var isAbove3551 = s.duration_ticks > 43020;   // > 35:51
-      var durColor    = isAbove3551 ? '#ff4444' : isSub30 ? '#f5c542' : isSub3327 ? '#a8ff78' : '';
-      var xStart = -((s.segment_num-1)*10000);
-      var xEnd   = -(s.segment_num*10000);
-      var tdStyle  = 'padding:5px 8px' + (!isBest && durColor ? ';color:'+durColor : '');
-      var tdClass  = isBest ? ' class="rainbow"' : '';
-      html += '<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">' +
-        '<td' + tdClass + ' style="' + tdStyle + '">' + (isBest ? '🏆 ' : '') + s.segment_num + '</td>' +
-        '<td' + tdClass + ' style="' + tdStyle + ';font-family:monospace">' +
-          xStart.toLocaleString() + ' → ' + xEnd.toLocaleString() + '</td>' +
-        '<td' + tdClass + ' style="' + tdStyle + ';font-family:monospace;font-weight:' +
-          (isBest?'bold':'normal') + '">' + fmtDur(s.duration_ticks) + '</td>' +
-        '<td style="padding:5px 8px;font-family:monospace;color:var(--subtext)">' +
-          fmtIGT(s.igt_start) + '</td>' +
-        '<td style="padding:5px 8px;font-family:monospace;color:var(--subtext)">' +
-          fmtIGT(s.igt_end) + '</td>' +
-        '</tr>';
-    }
-    html += '</tbody></table>';
-    el.innerHTML = html;
-  } catch(e) {
-    el.innerHTML = '<p style="color:var(--subtext)">Erreur chargement segments.</p>';
+// ── Édition ─────────────────────────────────────────────────
+function isDirty() { return JSON.stringify(DATA) !== JSON.stringify(ORIG); }
+
+function toggleEdit() {
+  EDITING = !EDITING;
+  document.body.classList.toggle('editing', EDITING);
+  document.getElementById('btn-edit').classList.toggle('on', EDITING);
+  document.getElementById('btn-edit').textContent = EDITING ? '✏ Édition active' : '✏ Éditer';
+}
+
+function updateEditBar() {
+  var dirty = isDirty();
+  var n = 0;
+  if (dirty) {
+    DATA.pct.forEach(function(r){ var o = origPct(r.p); if (!o || o.igt_total_s !== r.igt_total_s) n++; });
+    DATA.segments_10k.forEach(function(s){ var o = origSeg(s.n); if (!o || o.igt_start !== s.igt_start || o.igt_end !== s.igt_end) n++; });
+    if (ORIG.rta_s !== DATA.rta_s) n++;
   }
+  var st = document.getElementById('edit-status');
+  st.textContent = dirty ? n + ' valeur(s) modifiée(s), non enregistrée(s)' : 'Aucune modification';
+  st.style.color = dirty ? 'var(--gold)' : 'var(--subtext)';
+  document.getElementById('btn-save').disabled   = !dirty;
+  document.getElementById('btn-revert').disabled = !dirty;
+  document.getElementById('btn-undo').disabled   = HISTORY.length === 0;
 }
 
-async function loadPace() {
-  try {
-    await _detect();
-    var paceUrl    = _useFlask ? '/api/pace'    : 'data/pace.json?_='    + Date.now();
-    var summaryUrl = _useFlask ? '/api/summary' : 'data/summary.json?_=' + Date.now();
-    // Skip si pas de nouvelles données
-    try {
-      var cs = await fetch(summaryUrl).then(function(r){ return r.json(); });
-      var ts = cs.last_real_ts || cs.first_real_ts;
-      if (ts && ts === _lastPaceTs) return;
-      _lastPaceTs = ts;
-    } catch(e) { /* continuer */ }
-    var resp = await fetch(paceUrl);
-    var data = await resp.json();
-    if (data.length) {
-      renderPace(data);
-      try {
-        var sum = await fetch(summaryUrl).then(function(r){ return r.json(); });
-        if (sum.first_real_ts) {
-          if (sum.run_finished && !window._pacRtaFrozen) {
-            window._pacRtaFrozen = true;
-            document.getElementById('s-rta').textContent = fmtS(Date.now() / 1000 - sum.first_real_ts);
-          } else if (!window._pacRtaFrozen) {
-            document.getElementById('s-rta').textContent = fmtS(Date.now() / 1000 - sum.first_real_ts);
-          }
-        }
-        if (sum.run_finished && sum.run_finished_igt) {
-          document.getElementById('s-igt').textContent = fmtS(sum.run_finished_igt / 20);
-          window._pacIgtFrozen = true;
-        }
-      } catch(_) {}
+function currentText(td) { return td.textContent.replace('🏆 ', '').trim(); }
+
+function openEditor(td) {
+  if (td.querySelector('input')) return;
+  var old = currentText(td);
+  var inp = document.createElement('input');
+  inp.className = 'cell-in';
+  inp.value = old;
+  td.textContent = '';
+  td.appendChild(inp);
+  inp.focus(); inp.select();
+  var done = false;
+  function finish(commit, moveDown) {
+    if (done) return; done = true;
+    if (commit && inp.value.trim() !== old) {
+      var v = parseTime(inp.value);
+      if (v == null) { done = false; inp.classList.add('bad'); inp.focus(); return; }
+      applyEdit(td.dataset, v);
+    }
+    render();
+    if (moveDown) {
+      var sel = td.dataset.k === 'rta' ? null :
+        '.ed[data-k="' + td.dataset.k + '"][data-' + (td.dataset.p ? 'p' : 'n') + '="' + (td.dataset.p || td.dataset.n) + '"]';
+      var cur = sel && document.querySelector(sel);
+      var next = cur && cur.parentElement.nextElementSibling;
+      var nextTd = next && next.querySelector('.ed[data-k="' + td.dataset.k + '"]');
+      if (nextTd) { nextTd.scrollIntoView({block:'nearest'}); openEditor(nextTd); }
+    }
+  }
+  inp.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter')  { e.preventDefault(); finish(true, true); }
+    if (e.key === 'Escape') { e.preventDefault(); finish(false, false); }
+    if (e.key === 'Tab')    { e.preventDefault(); finish(true, true); }
+  });
+  inp.addEventListener('blur', function(){
+    if (parseTime(inp.value) == null && inp.value.trim() !== old) finish(false, false);
+    else finish(true, false);
+  });
+}
+
+function applyEdit(ds, v) {
+  HISTORY.push(JSON.stringify(DATA));
+  if (ds.k === 'rta') { DATA.rta_s = Math.round(v); return; }
+  if (ds.k === 'tot' || ds.k === 'seg') {
+    var rows = pctRows();
+    var p = +ds.p, idx = rows.findIndex(function(r){ return r.p === p; });
+    if (ds.k === 'tot') {
+      rows[idx].igt_total_s = Math.round(v);
     } else {
-      document.getElementById('pace-tbody').innerHTML =
-        '<tr><td colspan="8" style="color:var(--subtext);padding:20px;text-align:center">' +
-        'Aucun millieme de % complete pour le moment.</td></tr>';
+      var newTot = Math.round(totalAt(rows, idx - 1) + v);
+      var delta  = newTot - rows[idx].igt_total_s;
+      rows[idx].igt_total_s = newTot;
+      if (document.getElementById('opt-shift').checked)
+        for (var j = idx + 1; j < rows.length; j++) rows[j].igt_total_s += delta;
     }
-  } catch (e) {
-    console.error('loadPace error:', e);
+    return;
   }
+  var s = DATA.segments_10k.find(function(x){ return x.n === +ds.n; });
+  var t = Math.round(v * 20);
+  if (ds.k === 'dur')   s.igt_end   = s.igt_start + t;
+  if (ds.k === 'start') s.igt_start = t;
+  if (ds.k === 'end')   s.igt_end   = t;
 }
 
-loadPace();
-setInterval(loadPace, 30000);
+function undo() {
+  if (!HISTORY.length) return;
+  DATA = JSON.parse(HISTORY.pop());
+  render();
+}
+function revertAll() {
+  if (!confirmBox('Annuler toutes les modifications non enregistrées ?')) return;
+  HISTORY.push(JSON.stringify(DATA));
+  DATA = JSON.parse(JSON.stringify(ORIG));
+  render();
+}
+function confirmBox(msg) { return window.confirm(msg); }
+
+async function save() {
+  var btn = document.getElementById('btn-save');
+  btn.disabled = true; btn.textContent = 'Enregistrement…';
+  try {
+    var r = await fetch('/api/pace_static', {
+      method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(DATA)
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    ORIG = JSON.parse(JSON.stringify(DATA));
+    HISTORY = [];
+    render();
+    flash('Enregistré dans data/pace_static.json', 'var(--accent4)');
+  } catch (e) {
+    render();
+    flash('Erreur d’enregistrement : ' + e.message, 'var(--accent1)');
+  }
+  btn.textContent = 'Enregistrer';
+}
+
+async function publish() {
+  if (isDirty()) { flash('Enregistre d’abord tes modifications.', 'var(--accent1)'); return; }
+  var btn = document.getElementById('btn-pub');
+  btn.disabled = true; btn.textContent = 'Publication…';
+  try {
+    var r = await fetch('/api/pace_publish', { method: 'POST' });
+    var j = await r.json().catch(function(){ return {}; });
+    flash(j.msg || ('HTTP ' + r.status), r.ok ? 'var(--accent3)' : 'var(--accent1)');
+  } catch (e) {
+    flash('Erreur de publication : ' + e.message, 'var(--accent1)');
+  }
+  btn.disabled = false; btn.textContent = 'Publier sur le site';
+}
+
+function flash(msg, color) {
+  var st = document.getElementById('edit-status');
+  st.textContent = msg; st.style.color = color;
+  clearTimeout(flash._t);
+  flash._t = setTimeout(updateEditBar, 5000);
+}
+
+document.addEventListener('click', function(e) {
+  if (!EDITING) return;
+  var td = e.target.closest('.ed');
+  if (td) openEditor(td);
+});
+window.addEventListener('beforeunload', function(e) {
+  if (DATA && isDirty()) { e.preventDefault(); e.returnValue = ''; }
+});
+
+// ── Chargement ──────────────────────────────────────────────
+async function init() {
+  try {
+    var r = await fetch('/api/pace_static?_=' + Date.now());
+    if (r.ok && (r.headers.get('content-type') || '').indexOf('json') >= 0) { DATA = await r.json(); LOCAL = true; }
+  } catch (_) {}
+  try {
+    if (!DATA) DATA = await fetch('data/pace_static.json?_=' + Date.now()).then(function(r){ return r.json(); });
+  } catch (e) {
+    document.getElementById('pace-tbody').innerHTML =
+      '<tr><td colspan="7" style="color:var(--subtext);padding:20px;text-align:center">Impossible de charger data/pace_static.json.</td></tr>';
+    return;
+  }
+  ORIG = JSON.parse(JSON.stringify(DATA));
+  if (LOCAL) document.getElementById('btn-edit').style.display = '';
+  render();
+}
+init();
 </script>
 </body>
 </html>
